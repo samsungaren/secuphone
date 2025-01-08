@@ -15,6 +15,8 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageButton vpn_switch;
     private ImageButton lock_switch;
+    private ImageButton url_checker_switch;
+    private ImageButton find_phone_switch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +36,24 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, LockActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        url_checker_switch = findViewById(R.id.url_checker_switch);
+        url_checker_switch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, URL.class);
+                startActivity(intent);
+            }
+        });
+
+        find_phone_switch = findViewById(R.id.find_phone_switch);
+        find_phone_switch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, FindPhoneActivity.class);
                 startActivity(intent);
             }
         });

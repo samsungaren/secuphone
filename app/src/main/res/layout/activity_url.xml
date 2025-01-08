@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    tools:context=".MainActivity"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="62dp"
+            android:layout_marginStart="27dp"
+            android:layout_marginTop="30dp"
+            android:background="@android:color/transparent"
+            android:src="@drawable/logo"></ImageButton>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SecuPhone"
+            android:textSize="28dp"
+            android:textColor="@color/text"
+            android:layout_marginStart="15dp"
+            android:layout_marginTop="40dp">
+        </TextView>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:width="140dp"
+            android:height="40dp"
+            android:layout_marginStart="25dp"
+            android:layout_marginEnd="27dp"
+            android:layout_marginTop="35dp"
+            android:textSize="16dp"
+            android:text="SUBSCRIBE"
+            android:background="@drawable/btn1">
+        </Button>
+    </LinearLayout>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="78dp"
+        android:layout_marginTop="36dp"
+        android:background="@drawable/button_rounded_green"
+        android:layout_marginStart="27dp"
+        android:layout_marginEnd="27dp"
+        android:drawableEnd="@drawable/ic_paste"
+        android:paddingEnd="17dp"
+        android:text="Вставьте URL сюда"
+        android:paddingLeft="17dp"
+        android:textColor="#707070">
+    </EditText>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:layout_marginStart="27dp"
+        android:layout_marginEnd="27dp"
+        android:layout_marginTop="36dp"
+        android:gravity="center">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Этот URL НЕ безопасный!"
+            android:textSize="24dp"
+            android:textColor="#FFFFFF"
+            android:textAlignment="center">
+        </TextView>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_dangerous"
+            android:layout_gravity="center">
+        </ImageView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="start"
+        android:layout_marginStart="27dp"
+        android:layout_marginEnd="27dp"
+        android:orientation="vertical"
+>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Совет"
+        android:textSize="20sp"
+        android:textColor="#ffffff"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:textColor="#ffffff"
+        android:text="• Внимательно проверяйте электронные письма.\n• Не теряйте бдительность в мессенджерах и социальных сетях.\n• Перед вводом номера карты остановитесь.\n• Используйте разные пароли.\n• Включите двухфакторную аутентификацию для защиты аккаунтов.\n• Используйте надежную защиту."
+        android:textSize="16sp" />
+    </LinearLayout>
+
+</LinearLayout>

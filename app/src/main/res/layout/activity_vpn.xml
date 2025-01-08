@@ -59,11 +59,29 @@
             android:layout_centerInParent="true"
             ></ImageButton>
     </RelativeLayout>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="35dp"
+        android:orientation="vertical"
+        android:layout_marginStart="27dp"
+        android:layout_marginTop="20dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Выберите сервер"
+            android:textSize="24dp"
+            android:fontFamily="sans-serif-thin"
+            android:lineSpacingExtra="4dp"
+            android:letterSpacing="0.01"
+            android:textColor="#FFFFFF"
+            android:gravity="left"
+            android:layout_weight="1"
+            android:layout_gravity="left" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:orientation="vertical">
         <RelativeLayout
             android:layout_width="match_parent"
@@ -78,7 +96,7 @@
                 android:layout_height="wrap_content"
                 android:text="United States"
                 android:textColor="#FFFFFF"
-                android:textStyle="bold"
+                android:fontFamily="sans-serif-light"
                 android:textSize="24dp"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
@@ -108,7 +126,7 @@
                 android:layout_height="wrap_content"
                 android:text="United Kingdom"
                 android:textColor="#FFFFFF"
-                android:textStyle="bold"
+                android:fontFamily="sans-serif-light"
                 android:textSize="24dp"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
@@ -138,7 +156,7 @@
                 android:layout_height="wrap_content"
                 android:text="India"
                 android:textColor="#FFFFFF"
-                android:textStyle="bold"
+                android:fontFamily="sans-serif-light"
                 android:textSize="24dp"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
