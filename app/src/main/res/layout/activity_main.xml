@@ -11,8 +11,9 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="112dp"
+        android:orientation="horizontal"
+        android:background="@color/navbar_background">
 
         <ImageButton
             android:layout_width="wrap_content"
@@ -25,24 +26,23 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="SecuPhone"
-            android:textSize="28dp"
-            android:textColor="@color/text"
             android:layout_marginStart="15dp"
-            android:layout_marginTop="40dp">
-        </TextView>
+            android:layout_marginTop="40dp"
+            android:text="SecuPhone"
+            android:textColor="@color/text"
+            android:textSize="28dp"></TextView>
+
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="25dp"
+            android:layout_marginTop="35dp"
+            android:layout_marginEnd="27dp"
             android:width="140dp"
             android:height="40dp"
-            android:layout_marginStart="25dp"
-            android:layout_marginEnd="27dp"
-            android:layout_marginTop="35dp"
-            android:textSize="16dp"
+            android:background="@drawable/btn1"
             android:text="SUBSCRIBE"
-            android:background="@drawable/btn1">
-        </Button>
+            android:textSize="16dp"></Button>
     </LinearLayout>
 
     <LinearLayout

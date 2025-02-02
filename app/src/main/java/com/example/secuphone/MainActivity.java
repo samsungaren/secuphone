@@ -1,15 +1,18 @@
 package com.example.secuphone;
-
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContract;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.ContextCompat;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -57,5 +60,28 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        // Check camera permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            requestCameraPermission();
+        } else {
+            accessCamera();
+        }
+    }
+
+    private final ActivityResultLauncher<String> requestLauncherPermission = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+       if (isGranted) {
+           accessCamera();
+       } else {
+           Toast.makeText(this, "Camera permission in denied", Toast.LENGTH_LONG).show();
+       }
+    });
+
+    private void requestCameraPermission() {
+        requestLauncherPermission.launch(Manifest.permission.CAMERA);
+    }
+
+    private void accessCamera() {
+        Toast.makeText(this, "Camera access is granted", Toast.LENGTH_LONG).show();
     }
 }

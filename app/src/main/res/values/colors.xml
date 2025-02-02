@@ -3,7 +3,15 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="green">#C4F81A</color>
-    <color name="text">#ECEEED</color>
-    <color name="background">#06090E</color>
     <color name="inactive">#707070</color>
+
+    <color name="navbar_background">#0D0914</color>
+    <color name="navbar_shadow">#914CFF</color>
+    <color name="logo">#CFCFDB</color>
+    <color name="text">#EAEBF1</color>
+    <color name="arrow">#A4A5B6</color>
+    <color name="border">#2A2435</color>
+    <color name="blured_circle">#914CFF</color>
+    <color name="block">#170D28</color>
+    <color name="background">#0D0914</color>
 </resources>
