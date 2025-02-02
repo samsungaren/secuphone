@@ -67,11 +67,19 @@ public class MainActivity extends AppCompatActivity {
         } else {
             accessCamera();
         }
+
+        // Check FOREGROUND_SERVICE permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) != PackageManager.PERMISSION_GRANTED) {
+            requestForegroundPermission();
+        } else {
+            accessForeground();
+        }
     }
 
     private final ActivityResultLauncher<String> requestLauncherPermission = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
        if (isGranted) {
            accessCamera();
+           accessForeground();
        } else {
            Toast.makeText(this, "Camera permission in denied", Toast.LENGTH_LONG).show();
        }
@@ -81,7 +89,14 @@ public class MainActivity extends AppCompatActivity {
         requestLauncherPermission.launch(Manifest.permission.CAMERA);
     }
 
+    private void requestForegroundPermission() {
+        requestLauncherPermission.launch(Manifest.permission.FOREGROUND_SERVICE);
+    }
+
     private void accessCamera() {
         Toast.makeText(this, "Camera access is granted", Toast.LENGTH_LONG).show();
+    }
+    private void accessForeground() {
+        Toast.makeText(this, "Foreground access is granted", Toast.LENGTH_LONG).show();
     }
 }
