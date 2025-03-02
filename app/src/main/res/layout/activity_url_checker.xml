@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/url_checker_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    tools:context=".URLCheckerActivity">
+
+    <!-- Navbar / Toolbar (same as main activity) -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/navbar_background"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/logo"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_shield_logo"
+                android:contentDescription="@string/app_name" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="@string/app_name"
+                android:textColor="@color/logo"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/menu_button"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_menu"
+                android:contentDescription="@string/menu" />
+        </LinearLayout>
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- Navbar Shadow Line -->
+    <View
+        android:id="@+id/navbar_shadow"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@drawable/navbar_shadow"
+        app:layout_constraintTop_toBottomOf="@id/toolbar" />
+
+    <!-- Main Content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/navbar_shadow"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- URL Checker Title -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/url_checker"
+                android:textColor="@color/text"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="24dp" />
+
+            <!-- URL Input -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp">
+
+                <EditText
+                    android:id="@+id/url_input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/url_input_background"
+                    android:hint="@string/paste_url_here"
+                    android:inputType="textUri"
+                    android:padding="16dp"
+                    android:textColor="@color/text"
+                    android:textColorHint="@color/arrow"
+                    android:singleLine="true"
+                    android:importantForAutofill="no" />
+
+                <ImageButton
+                    android:id="@+id/clipboard_button"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_clipboard"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:layout_gravity="end|center_vertical"
+                    android:contentDescription="@string/clipboard" />
+            </FrameLayout>
+
+            <!-- Warning Text -->
+            <TextView
+                android:id="@+id/warning_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/url_dangerous"
+                android:textColor="@color/warning_red"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Warning Icon -->
+            <ImageView
+                android:id="@+id/warning_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_warning_triangle"
+                android:layout_gravity="center"
+                android:layout_marginBottom="24dp"
+                android:contentDescription="@string/warning_icon" />
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/border"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Browser Preview -->
+            <FrameLayout
+                android:id="@+id/browser_preview"
+                android:layout_width="match_parent"
+                android:layout_height="240dp"
+                android:background="@drawable/browser_preview_background"
+                android:layout_marginBottom="16dp"
+                android:padding="2dp">
+
+                <!-- Browser Header -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/navbar_background"
+                    android:padding="8dp"
+                    android:orientation="horizontal">
+
+                    <!-- Close Tab Button -->
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@android:drawable/ic_menu_close_clear_cancel"
+                        android:layout_gravity="center_vertical"
+                        android:tint="@color/text" />
+
+                    <!-- Browser URL Bar -->
+                    <TextView
+                        android:id="@+id/browser_url"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/url_input_background"
+                        android:padding="4dp"
+                        android:text="http://badsite.com"
+                        android:textColor="@color/text"
+                        android:textSize="12sp"
+                        android:singleLine="true"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp" />
+
+                    <!-- New Tab Button -->
+                    <TextView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:text="+"
+                        android:textSize="16sp"
+                        android:textColor="@color/text"
+                        android:gravity="center" />
+                </LinearLayout>
+
+                <!-- Browser Content - Red Warning Screen -->
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="36dp"
+                    android:background="@color/warning_red"
+                    android:src="@drawable/ic_warning_triangle"
+                    android:padding="60dp"
+                    android:contentDescription="@string/browser_preview" />
+            </FrameLayout>
+
+            <!-- Check URL Button -->
+            <Button
+                android:id="@+id/check_url_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/check_url"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:padding="12dp"
+                android:backgroundTint="@color/navbar_shadow"
+                android:layout_marginTop="16dp" />
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout> 

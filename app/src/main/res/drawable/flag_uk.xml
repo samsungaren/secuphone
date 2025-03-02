@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="900dp"
+    android:height="600dp"
+    android:viewportWidth="60"
+    android:viewportHeight="40">
+    
+    <!-- Background blue -->
+    <path
+        android:fillColor="#00247d"
+        android:pathData="M0,0h60v40h-60z" />
+    
+    <!-- White cross of St. George -->
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M0,0l60,40M60,0l-60,40" />
+    
+    <!-- Red cross of St. George -->
+    <path
+        android:fillColor="#cf142b"
+        android:pathData="M30,0l0,40M0,20l60,0" />
+    
+    <!-- White diagonals for Scotland -->
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M0,0l60,40M60,0l-60,40" />
+    
+    <!-- Red diagonal for Northern Ireland -->
+    <path
+        android:fillColor="#cf142b"
+        android:pathData="M25,0l10,0l0,13.3l25,16.7l0,10l-10,0l-25,-16.7l-50,33.4l-10,0l0,-10l50,-33.4l0,-13.3z" />
+    
+    <!-- White diagonal for Scotland -->
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M0,0h25v20h35v20h-25v-20h-35z" />
+    
+    <!-- Red Cross of St. George -->
+    <path
+        android:fillColor="#cf142b"
+        android:pathData="M25,0h10v20h25v-5h-25v-15h-10v15h-25v5h25z" />
+    
+    <!-- Red Cross of St. Patrick -->
+    <path
+        android:fillColor="#cf142b"
+        android:pathData="M0,0 L60,40 M0,40 L60,0"
+        android:strokeWidth="4"
+        android:strokeColor="#cf142b" />
+</vector> 

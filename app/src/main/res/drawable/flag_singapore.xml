@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="900dp"
+    android:height="600dp"
+    android:viewportWidth="30"
+    android:viewportHeight="20">
+    
+    <!-- Red top half -->
+    <path
+        android:fillColor="#ED2939"
+        android:pathData="M0,0h30v10h-30z" />
+    
+    <!-- White bottom half -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M0,10h30v10h-30z" />
+    
+    <!-- White crescent moon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M5,5m-3.5,0a3.5,3.5 0,1 1,7 0a3.5,3.5 0,1 1,-7 0" />
+    
+    <!-- Red inner part of crescent -->
+    <path
+        android:fillColor="#ED2939"
+        android:pathData="M6.5,5m-2.8,0a2.8,2.8 0,1 1,5.6 0a2.8,2.8 0,1 1,-5.6 0" />
+    
+    <!-- Five stars -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M10,2.5l0.4,1.3l1.3,0l-1.1,0.8l0.4,1.3l-1.1,-0.8l-1.1,0.8l0.4,-1.3l-1.1,-0.8l1.3,0z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,4l0.4,1.3l1.3,0l-1.1,0.8l0.4,1.3l-1.1,-0.8l-1.1,0.8l0.4,-1.3l-1.1,-0.8l1.3,0z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,7l0.4,1.3l1.3,0l-1.1,0.8l0.4,1.3l-1.1,-0.8l-1.1,0.8l0.4,-1.3l-1.1,-0.8l1.3,0z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M10,8.5l0.4,1.3l1.3,0l-1.1,0.8l0.4,1.3l-1.1,-0.8l-1.1,0.8l0.4,-1.3l-1.1,-0.8l1.3,0z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8,7l0.4,1.3l1.3,0l-1.1,0.8l0.4,1.3l-1.1,-0.8l-1.1,0.8l0.4,-1.3l-1.1,-0.8l1.3,0z" />
+</vector> 

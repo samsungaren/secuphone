@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- SecuPhone custom colors -->
+    <color name="navbar_background">#0D0914</color>
+    <color name="navbar_shadow">#914CFF</color>
+    <color name="logo">#CFCFDB</color>
+    <color name="text">#EAEBF1</color>
+    <color name="arrow">#A4A5B6</color>
+    <color name="border">#2A2435</color>
+    <color name="blured_circle">#914CFF</color>
+    <color name="block">#170D28</color>
+    <color name="background">#0D0914</color>
+    
+    <!-- VPN Activity colors -->
+    <color name="power_button_green">#1EB980</color>
+    <color name="power_button_gray">#9FA8C4</color>
+    <color name="card_background">#170D28</color>
+    
+    <!-- App Lock Activity colors -->
+    <color name="lock_closed">#1EB980</color>
+    <color name="lock_open">#FF4C8C</color>
+    <color name="snapchat_yellow">#FFFC00</color>
+    <color name="facebook_blue">#1877F2</color>
+    <color name="tiktok_turquoise">#00F2EA</color>
+    <color name="whatsapp_green">#25D366</color>
+    
+    <!-- URL Checker Activity colors -->
+    <color name="warning_red">#FF4C4C</color>
+    <color name="browser_preview_background">#2A2435</color>
+    <color name="url_input_background">#170D28</color>
+    
+    <!-- Find Phone Activity colors -->
+    <color name="success_green">#1EB980</color>
+    <color name="error_red">#FF4C8C</color>
+    <color name="password_input_background">#170D28</color>
+    <color name="button_purple">#914CFF</color>
+</resources>

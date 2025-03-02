@@ -1,0 +1,112 @@
+<resources>
+    <string name="app_name">SecuPhone</string>
+    <string name="menu">Menu</string>
+    <string name="vpn">VPN</string>
+    <string name="app_lock">App Lock</string>
+    <string name="url_checker">URL Checker</string>
+    <string name="hidden_files">Hidden files</string>
+    <string name="find_phone">Find Phone</string>
+    <string name="security_level">Security Level</string>
+    <string name="info">Info</string>
+    
+    <!-- VPN Activity Strings -->
+    <string name="connection_time">Connection Time</string>
+    <string name="vpn_power_button">VPN Power Button</string>
+    <string name="country_flag">Country Flag</string>
+    <string name="united_states">United States</string>
+    <string name="united_kingdom">United Kingdom</string>
+    <string name="germany">Germany</string>
+    <string name="japan">Japan</string>
+    <string name="netherlands">Netherlands</string>
+    <string name="singapore">Singapore</string>
+    <string name="select_server">Select Server</string>
+    <string name="server_selection">Server Selection</string>
+    <string name="download">Download</string>
+    <string name="upload">Upload</string>
+    <string name="vpn_on">VPN is ON</string>
+    <string name="vpn_off">VPN is OFF</string>
+    <string name="vpn_connecting">Connecting...</string>
+    <string name="vpn_disconnecting">Disconnecting...</string>
+    
+    <!-- App Lock Activity Strings -->
+    <string name="choose_apps_to_lock">Choose Applications to lock</string>
+    <string name="locked_apps">Locked Apps</string>
+    <string name="snapchat">Snapchat</string>
+    <string name="facebook">Facebook</string>
+    <string name="tiktok">TikTok</string>
+    <string name="whatsapp">WhatsApp</string>
+    <string name="locked">Locked</string>
+    <string name="unlocked">Unlocked</string>
+    
+    <!-- URL Checker Activity Strings -->
+    <string name="paste_url_here">Paste your URL here</string>
+    <string name="url_dangerous">This URL is DANGEROUS!</string>
+    <string name="url_safe">This URL is SAFE</string>
+    <string name="check_url">Check URL</string>
+    <string name="clipboard">Clipboard</string>
+    <string name="warning_icon">Warning Icon</string>
+    <string name="browser_preview">Browser Preview</string>
+    
+    <!-- Find Phone Activity Strings -->
+    <string name="enter_password">Enter Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="save_password">Save Password</string>
+    <string name="verify_password">Verify Password</string>
+    <string name="password_hint">Enter your password</string>
+    <string name="wrong_password">Wrong password. Try again.</string>
+    <string name="photo_saved">Intruder photo saved to gallery!</string>
+    <string name="password_saved">Password saved successfully</string>
+    <string name="setup_complete">Security setup complete</string>
+    <string name="find_phone_description">This feature takes a photo with the front camera after 3 failed password attempts</string>
+    <string name="attempts_remaining">Attempts remaining: %1$d</string>
+    <string name="camera_permission_required">Camera permission is required for this feature</string>
+    <string name="storage_permission_required">Storage permission is required to save photos</string>
+    
+    <!-- Hidden Files Activity Strings -->
+    <string name="hidden_files_description">Hide important files from prying eyes. Only you can access them with your password.</string>
+    <string name="hide_file">Hide a New File</string>
+    <string name="your_hidden_files">Your Hidden Files</string>
+    <string name="no_hidden_files">You don\'t have any hidden files yet</string>
+    <string name="unhide_file">Unhide File</string>
+    <string name="file_hidden_success">File hidden successfully</string>
+    <string name="file_unhidden_success">File unhidden successfully</string>
+    <string name="storage_access_required">Storage access is required for this feature</string>
+    
+    <!-- Navigation Drawer Strings -->
+    <string name="profile">Profile</string>
+    <string name="subscription">Subscription</string>
+    <string name="free_plan">Free Plan</string>
+    <string name="premium_plan">Premium Plan</string>
+    <string name="subscribe_now">Subscribe Now</string>
+    <string name="settings">Settings</string>
+    <string name="help">Help</string>
+    <string name="logout">Logout</string>
+    <string name="close_drawer">Close navigation drawer</string>
+    <string name="open_drawer">Open navigation drawer</string>
+    
+    <!-- Storage Permission Strings -->
+    <string name="storage_permission">Storage Access</string>
+    <string name="storage_permission_explanation">SecuPhone needs access to your storage to protect your files and provide security features.</string>
+    <string name="storage_reason_1">Hide your private files from prying eyes</string>
+    <string name="storage_reason_2">Save security photos for the Find Phone feature</string>
+    <string name="storage_reason_3">Store app data for enhanced protection</string>
+    <string name="grant_permission">Grant Storage Access</string>
+    <string name="not_now">Not Now</string>
+    <string name="skip_for_now">Skip for now</string>
+    <string name="bullet_point">Bullet point</string>
+    <string name="permission_denied">Features requiring storage access will be limited</string>
+    <string name="permission_denied_explanation">You can grant this permission later in app settings</string>
+    <string name="open_settings">Open Settings</string>
+    
+    <!-- Splash Screen Strings -->
+    <string name="splash_tagline">Advanced Protection for Your Device</string>
+    <string name="securing_your_device">Securing your device</string>
+    
+    <!-- VPN Status - Re-added to fix duplicate issues -->
+    <string name="vpn_is_on">VPN is ON</string>
+    <string name="vpn_is_off">VPN is OFF</string>
+    
+    <!-- Color names for screen readers -->
+    <string name="success">Success</string>
+    <string name="error">Error</string>
+</resources>
