@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="900dp"
+    android:height="600dp"
+    android:viewportWidth="30"
+    android:viewportHeight="20">
+    
+    <!-- White background -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M0,0h30v20h-30z" />
+    
+    <!-- Red circle (sun) -->
+    <path
+        android:fillColor="#BC002D"
+        android:pathData="M15,10m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+</vector> 

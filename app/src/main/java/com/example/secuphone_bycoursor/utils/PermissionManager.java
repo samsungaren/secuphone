@@ -227,9 +227,15 @@ public class PermissionManager {
      * Get the appropriate storage permission based on Android version
      */
     private String getStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 13+ requires more specific permissions for media
+            // For this app, we'll use READ_MEDIA_IMAGES as a representative permission
+            return Manifest.permission.READ_MEDIA_IMAGES;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Android 10-12
             return Manifest.permission.READ_EXTERNAL_STORAGE;
         } else {
+            // Android 9 and below
             return Manifest.permission.WRITE_EXTERNAL_STORAGE;
         }
     }

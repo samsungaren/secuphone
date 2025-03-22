@@ -96,6 +96,65 @@
                         android:gravity="center" />
                 </LinearLayout>
             </FrameLayout>
+            
+            <!-- PIN Setup Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/pin_setup_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+                
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_pin"
+                        android:textColor="@color/text"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
+                        
+                    <EditText
+                        android:id="@+id/pin_input"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/enter_pin"
+                        android:inputType="numberPassword"
+                        android:maxLength="6"
+                        android:background="@drawable/url_input_background"
+                        android:padding="12dp"
+                        android:layout_marginBottom="8dp"
+                        android:importantForAutofill="no"
+                        android:textColorHint="@color/arrow" />
+                        
+                    <EditText
+                        android:id="@+id/confirm_pin_input"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/confirm_pin"
+                        android:inputType="numberPassword"
+                        android:maxLength="6"
+                        android:background="@drawable/url_input_background"
+                        android:padding="12dp"
+                        android:layout_marginBottom="16dp"
+                        android:importantForAutofill="no"
+                        android:textColorHint="@color/arrow" />
+                        
+                    <Button
+                        android:id="@+id/set_pin_button"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/setup_pin"
+                        android:backgroundTint="@color/power_button_green" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
             <!-- Locked Apps Header -->
             <TextView

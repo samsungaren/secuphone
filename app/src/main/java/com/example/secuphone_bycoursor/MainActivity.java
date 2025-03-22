@@ -2,6 +2,7 @@ package com.example.secuphone_bycoursor;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.service.voice.VoiceInteractionSession;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
@@ -9,6 +10,8 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
+import androidx.activity.OnBackPressedDispatcher;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -49,6 +52,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         
         // Check permissions on startup
         checkAppPermissions();
+        
+        // Handle back button press
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
     }
     
     private void setupNavigationDrawer() {
@@ -197,14 +213,5 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
-    }
-    
-    @Override
-    public void onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
     }
 }
