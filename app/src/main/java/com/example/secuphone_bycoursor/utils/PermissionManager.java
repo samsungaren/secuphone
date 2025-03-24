@@ -311,6 +311,25 @@ public class PermissionManager {
     }
     
     /**
+     * Check if storage permission is granted
+     * 
+     * @return true if permission is granted, false otherwise
+     */
+    public boolean hasStoragePermission() {
+        return StoragePermissionActivity.hasStoragePermission(activity);
+    }
+    
+    /**
+     * Check if camera permission is granted
+     * 
+     * @return true if permission is granted, false otherwise
+     */
+    public boolean hasCameraPermission() {
+        return ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) 
+                == PackageManager.PERMISSION_GRANTED;
+    }
+    
+    /**
      * Static helper method to check if camera permission is granted
      * 
      * @param activity The activity context
@@ -319,5 +338,15 @@ public class PermissionManager {
     public static boolean hasCameraPermission(AppCompatActivity activity) {
         return ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) 
                 == PackageManager.PERMISSION_GRANTED;
+    }
+    
+    /**
+     * Static helper method to check if storage permission is granted
+     * 
+     * @param activity The activity context
+     * @return true if permission is granted, false otherwise
+     */
+    public static boolean hasStoragePermission(AppCompatActivity activity) {
+        return StoragePermissionActivity.hasStoragePermission(activity);
     }
 } 

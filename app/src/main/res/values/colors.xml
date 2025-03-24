@@ -3,24 +3,32 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     
-    <!-- SecuPhone custom colors -->
-    <color name="navbar_background">#0D0914</color>
-    <color name="navbar_shadow">#914CFF</color>
-    <color name="logo">#CFCFDB</color>
-    <color name="text">#EAEBF1</color>
-    <color name="arrow">#A4A5B6</color>
-    <color name="border">#2A2435</color>
-    <color name="blured_circle">#914CFF</color>
-    <color name="block">#170D28</color>
-    <color name="background">#0D0914</color>
+    <!-- SecuPhone updated color scheme -->
+    <color name="background">#0F1C3F</color>
+    <color name="navbar_background">#0A1229</color>
+    <color name="navbar_shadow">#00BFB2</color>
+    <color name="card_background">#192D55</color>
+    <color name="card_border">#2A3F6A</color>
+    <color name="card_shadow">#09101F</color>
+    
+    <color name="logo">#FFFFFF</color>
+    <color name="text">#FFFFFF</color>
+    <color name="text_secondary">#B4C6E4</color>
+    <color name="text_disabled">#6A819F</color>
+    
+    <color name="accent_primary">#00BFB2</color>
+    <color name="accent_secondary">#4A6FA5</color>
+    <color name="arrow">#4A6FA5</color>
+    <color name="border">#2A3F6A</color>
+    <color name="blured_circle">#00BFB2</color>
+    <color name="block">#192D55</color>
     
     <!-- VPN Activity colors -->
-    <color name="power_button_green">#1EB980</color>
-    <color name="power_button_gray">#9FA8C4</color>
-    <color name="card_background">#170D28</color>
+    <color name="power_button_green">#17C37B</color>
+    <color name="power_button_gray">#6A819F</color>
     
     <!-- App Lock Activity colors -->
-    <color name="lock_closed">#1EB980</color>
+    <color name="lock_closed">#17C37B</color>
     <color name="lock_open">#FF4C8C</color>
     <color name="snapchat_yellow">#FFFC00</color>
     <color name="facebook_blue">#1877F2</color>
@@ -29,12 +37,15 @@
     
     <!-- URL Checker Activity colors -->
     <color name="warning_red">#FF4C4C</color>
-    <color name="browser_preview_background">#2A2435</color>
-    <color name="url_input_background">#170D28</color>
+    <color name="warning_amber">#FFB30F</color>
+    <color name="browser_preview_background">#192D55</color>
+    <color name="url_input_background">#0F1C3F</color>
     
     <!-- Find Phone Activity colors -->
-    <color name="success_green">#1EB980</color>
+    <color name="success_green">#17C37B</color>
     <color name="error_red">#FF4C8C</color>
-    <color name="password_input_background">#170D28</color>
-    <color name="button_purple">#914CFF</color>
+    <color name="password_input_background">#192D55</color>
+    <color name="button_primary">#00BFB2</color>
+    <color name="button_secondary">#4A6FA5</color>
+    <color name="button_purple">#00BFB2</color>
 </resources>

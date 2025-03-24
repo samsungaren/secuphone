@@ -24,49 +24,38 @@
     <string name="download">Download</string>
     <string name="upload">Upload</string>
     <string name="vpn_on">VPN is ON</string>
-    <string name="vpn_off">VPN is OFF</string>
-    <string name="vpn_connecting">Connecting...</string>
-    <string name="vpn_disconnecting">Disconnecting...</string>
+    <string name="vpn_off">VPN is Off</string>
+    <string name="vpn_connecting">Connecting…</string>
+    <string name="vpn_connected">Connected</string>
+    <string name="vpn_disconnecting">Disconnecting…</string>
     
     <!-- App Lock Activity Strings -->
-    <string name="choose_apps_to_lock">Choose Applications to lock</string>
+    <string name="choose_apps_to_lock">Choose apps to lock</string>
     <string name="locked_apps">Locked Apps</string>
     <string name="snapchat">Snapchat</string>
     <string name="facebook">Facebook</string>
     <string name="tiktok">TikTok</string>
     <string name="whatsapp">WhatsApp</string>
-    <string name="locked">Locked</string>
-    <string name="unlocked">Unlocked</string>
+    <string name="locked">locked</string>
+    <string name="unlocked">unlocked</string>
     <string name="app_locked">App Locked</string>
     <string name="locked_app">Locked Application</string>
     <string name="app_icon">App Icon</string>
-    <string name="enter_pin">Enter PIN to unlock</string>
+    <string name="enter_pin">Enter PIN</string>
     <string name="pin_hint">Enter your PIN</string>
     <string name="unlock">Unlock</string>
     <string name="cancel">Cancel</string>
     <string name="incorrect_pin">Incorrect PIN, please try again</string>
     <string name="setup_pin">Set up PIN</string>
-    <string name="setup_pin_first">You need to set up a PIN first before locking apps</string>
+    <string name="setup_pin_first">Please set up a PIN first</string>
     <string name="confirm_pin">Confirm PIN</string>
-    <string name="pins_dont_match">PINs don\'t match, please try again</string>
+    <string name="pins_dont_match">PINs don\'t match</string>
     <string name="pin_set_success">PIN set successfully</string>
-    <string name="usage_access_required">Usage access permission is required</string>
-    <string name="overlay_permission_required">Overlay permission is required</string>
+    <string name="usage_access_required">Usage Access Required</string>
+    <string name="overlay_permission_required">Overlay Permission Required</string>
     <string name="grant_usage_access">Grant Usage Access</string>
     <string name="grant_overlay_permission">Grant Overlay Permission</string>
     <string name="app_lock_active">App lock protection active</string>
-    
-    <!-- URL Checker Activity Strings -->
-    <string name="paste_url_here">Paste your URL here</string>
-    <string name="url_dangerous">This URL is DANGEROUS!</string>
-    <string name="url_safe">This URL is SAFE</string>
-    <string name="check_url">Check URL</string>
-    <string name="clipboard">Clipboard</string>
-    <string name="warning_icon">Warning Icon</string>
-    <string name="browser_preview">Browser Preview</string>
-    <string name="url_checking">Checking URL safety...</string>
-    <string name="url_check_failed">Failed to check URL safety</string>
-    <string name="url_check_stats">Report: %1$d malicious, %2$d suspicious out of %3$d engines</string>
     
     <!-- Find Phone Activity Strings -->
     <string name="enter_password">Enter Password</string>
@@ -84,13 +73,13 @@
     <string name="storage_permission_required">Storage permission is required to save photos</string>
     
     <!-- Hidden Files Activity Strings -->
-    <string name="hidden_files_description">Hide important files from prying eyes. Only you can access them with your password.</string>
+    <string name="hidden_files_description">Hide your sensitive photos, documents and other files to keep them private and secure.</string>
     <string name="hide_file">Hide a New File</string>
     <string name="your_hidden_files">Your Hidden Files</string>
-    <string name="no_hidden_files">You don\'t have any hidden files yet</string>
+    <string name="no_hidden_files">No hidden files yet</string>
     <string name="unhide_file">Unhide File</string>
     <string name="file_hidden_success">File hidden successfully</string>
-    <string name="file_unhidden_success">File unhidden successfully</string>
+    <string name="file_unhidden_success">File unhidden successfully and moved to Downloads</string>
     <string name="storage_access_required">Storage access is required for this feature</string>
     
     <!-- Navigation Drawer Strings -->
@@ -123,11 +112,108 @@
     <string name="splash_tagline">Advanced Protection for Your Device</string>
     <string name="securing_your_device">Securing your device</string>
     
-    <!-- VPN Status - Re-added to fix duplicate issues -->
+    <!-- VPN Status -->
     <string name="vpn_is_on">VPN is ON</string>
     <string name="vpn_is_off">VPN is OFF</string>
     
     <!-- Color names for screen readers -->
     <string name="success">Success</string>
     <string name="error">Error</string>
+    
+    <!-- New string resource for "coming_soon" -->
+    <string name="coming_soon">Coming Soon</string>
+    
+    <!-- VPN Activity -->
+    <string name="back">Back</string>
+    <string name="server_location">Server Location</string>
+    <string name="change">Change</string>
+    <string name="connection_stats">Connection Statistics</string>
+    <string name="connection_details">Connection Details</string>
+    <string name="encryption">Encryption</string>
+    <string name="protocol">Protocol</string>
+    <string name="public_ip">Public IP</string>
+    
+    <!-- New App Lock strings -->
+    <string name="popular_apps">Popular Apps</string>
+    <string name="security_settings">Security Settings</string>
+    <string name="change_pin">Change PIN</string>
+    <string name="auto_lock">Auto-lock</string>
+    <string name="immediately">Immediately</string>
+    <string name="required_permissions">Required Permissions</string>
+    <string name="permission_granted">Permission granted</string>
+    <string name="usage_access">Usage Access</string>
+    <string name="overlay_permission">Screen Overlay</string>
+    <string name="grant">Grant</string>
+    <string name="app_lock_info">App Lock Information</string>
+    <string name="app_lock_explanation">App Lock protects your private apps with a PIN code. When you open a locked app, you\'ll need to enter your PIN to access it.</string>
+    <string name="usage_access_explanation">This permission allows SecuPhone to detect when you open a locked app.</string>
+    <string name="overlay_permission_explanation">This permission allows SecuPhone to display the PIN entry screen over other apps.</string>
+    <string name="ok">OK</string>
+    
+    <!-- Feature Status strings -->
+    <string name="feature_status">Feature Status</string>
+    <string name="feature_active">Active</string>
+    <string name="feature_inactive">Inactive</string>
+    <string name="feature_active_detail">Your apps are protected. Anyone attempting to open a locked app will need to enter your PIN.</string>
+    <string name="feature_permission_needed">Permission needed</string>
+    <string name="feature_pin_needed">PIN setup needed</string>
+    
+    <!-- Feature Status for Main Activity -->
+    <string name="status_enabled">Enabled</string>
+    <string name="status_disabled">Disabled</string>
+    <string name="status_setup_needed">Setup Needed</string>
+    <string name="status_coming_soon">Coming Soon</string>
+    
+    <!-- URL Checker Strings -->
+    <string name="secure_browsing">Secure Browsing</string>
+    <string name="url_checker_description">Check if a URL is safe before visiting it</string>
+    <string name="check_url">Check URL</string>
+    <string name="check_url_safety">Check URL Safety</string>
+    <string name="paste_url_here">Paste URL here</string>
+    <string name="clipboard">Paste from clipboard</string>
+    <string name="url_dangerous">This URL may be unsafe to visit!</string>
+    <string name="url_safe">This URL appears to be safe</string>
+    <string name="warning_icon">Warning icon</string>
+    <string name="browser_preview">Browser preview</string>
+    <string name="recently_checked_urls">Recently Checked URLs</string>
+    <string name="clear_history">Clear History</string>
+    <string name="no_url_history">No URL history yet</string>
+    <string name="enter_url_to_check">Enter URL to check</string>
+    <string name="url_preview">URL Preview</string>
+    <string name="open_in_browser">Open in browser</string>
+    <string name="recent_urls">Recent URLs</string>
+    
+    <!-- New Security Features -->
+    <string name="password_manager">Password Manager</string>
+    <string name="password_manager_description">Securely store and manage your passwords</string>
+    <string name="secure_notes">Secure Notes</string>
+    <string name="secure_notes_description">Store encrypted notes with sensitive information</string>
+    <string name="secure_cloud">Secure Cloud Storage</string>
+    <string name="secure_cloud_description">Encrypted cloud storage for sensitive files</string>
+    <string name="network_scanner">Network Scanner</string>
+    <string name="network_scanner_description">Scan your network for security vulnerabilities</string>
+    <string name="secret_feature">Hidden Feature</string>
+    <string name="secret_feature_locked">This feature requires premium access</string>
+    <string name="premium_required">Premium Required</string>
+    <string name="upgrade_now">Upgrade Now</string>
+    
+    <!-- Hidden Files Extra Strings -->
+    <string name="file_type">File type</string>
+    <string name="hide_folder">Hide Entire Folder</string>
+    <string name="select_files">Select Files</string>
+    
+    <!-- Navigation Drawer New Strings -->
+    <string name="app_tagline">Your All-in-One Security Solution</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="sign_in_message">Sign in to unlock all security features and sync your data across devices</string>
+    <string name="upgrade">Upgrade</string>
+    
+    <!-- New Premium Feature Strings -->
+    <string name="secure_file_sharing">Secure File Sharing</string>
+    <string name="secure_file_sharing_description">Share files securely with end-to-end encryption</string>
+    <string name="ad_blocker">Ad Blocker</string>
+    <string name="ad_blocker_description">Block unwanted ads and trackers</string>
+    <string name="qr_scanner">QR Code Scanner</string>
+    <string name="qr_scanner_description">Scan and verify QR codes securely</string>
 </resources>

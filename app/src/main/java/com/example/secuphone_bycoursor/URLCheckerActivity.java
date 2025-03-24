@@ -3,6 +3,7 @@ package com.example.secuphone_bycoursor;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -10,25 +11,43 @@ import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -43,20 +62,31 @@ public class URLCheckerActivity extends AppCompatActivity {
     private static final String VIRUSTOTAL_API_KEY = "f07bcbac1cd67fd448a98464a2a694bc62aa61003a1ef7604e49b0ed10247988";
     private static final String VIRUSTOTAL_API_URL = "https://www.virustotal.com/api/v3/urls";
     private static final int SUSPICIOUS_THRESHOLD = 1; // Number of engines needed to flag as suspicious
+    private static final String PREF_URL_HISTORY = "url_history";
+    private static final String PREF_URL_RESULTS = "url_results";
+    private static final int MAX_HISTORY_ITEMS = 10;
 
-    private EditText urlInput;
+    private TextInputEditText urlInput;
+    private TextInputLayout urlInputLayout;
     private TextView warningText;
     private ImageView warningIcon;
     private TextView browserUrl;
-    private Button checkUrlButton;
+    private MaterialButton checkUrlButton;
     private ImageButton clipboardButton;
     private View browserPreview;
     private ProgressBar progressBar;
     private ImageView browserContent;
+    private LinearLayout resultsSection;
+    private LinearLayout historySection;
+    private TextView noHistoryText;
+    private RecyclerView urlHistoryList;
+    private Button clearHistoryButton;
     
     private OkHttpClient client;
     private ExecutorService executorService;
     private Handler mainHandler;
+    private SharedPreferences prefs;
+    private List<UrlHistoryItem> historyItems = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +100,9 @@ public class URLCheckerActivity extends AppCompatActivity {
             return insets;
         });
         
+        // Initialize preferences
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        
         // Initialize networking components
         client = new OkHttpClient();
         executorService = Executors.newSingleThreadExecutor();
@@ -77,6 +110,7 @@ public class URLCheckerActivity extends AppCompatActivity {
         
         // Initialize views
         urlInput = findViewById(R.id.url_input);
+        urlInputLayout = (TextInputLayout) urlInput.getParent().getParent();
         warningText = findViewById(R.id.warning_text);
         warningIcon = findViewById(R.id.warning_icon);
         browserUrl = findViewById(R.id.browser_url);
@@ -85,13 +119,18 @@ public class URLCheckerActivity extends AppCompatActivity {
         browserPreview = findViewById(R.id.browser_preview);
         progressBar = findViewById(R.id.progress_bar);
         browserContent = findViewById(R.id.browser_content);
+        resultsSection = findViewById(R.id.results_section);
+        historySection = findViewById(R.id.history_section);
+        noHistoryText = findViewById(R.id.no_history_text);
+        urlHistoryList = findViewById(R.id.url_history_list);
+        clearHistoryButton = findViewById(R.id.clear_history_button);
         
         // Setup back navigation
         ImageButton menuButton = findViewById(R.id.menu_button);
         menuButton.setOnClickListener(v -> finish());
         
-        // Initially hide the warning elements until URL is checked
-        setWarningVisibility(false);
+        // Initially hide the results section until URL is checked
+        resultsSection.setVisibility(View.GONE);
         progressBar.setVisibility(View.GONE);
         
         // Setup clipboard button
@@ -102,6 +141,17 @@ public class URLCheckerActivity extends AppCompatActivity {
         
         // Add text change listener to URL input
         setupUrlInputListener();
+        
+        // Setup URL history list
+        setupUrlHistoryList();
+        
+        // Setup clear history button
+        clearHistoryButton.setOnClickListener(v -> {
+            showClearHistoryConfirmation();
+        });
+        
+        // Load URL history
+        loadUrlHistory();
     }
     
     @Override
@@ -123,25 +173,43 @@ public class URLCheckerActivity extends AppCompatActivity {
                 Toast.makeText(this, "Clipboard is empty", Toast.LENGTH_SHORT).show();
             }
         });
+        
+        // Setup TextInputLayout end icon
+        if (urlInputLayout != null) {
+            urlInputLayout.setEndIconOnClickListener(v -> {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                if (clipboard.hasPrimaryClip()) {
+                    ClipData.Item item = clipboard.getPrimaryClip().getItemAt(0);
+                    String pastedText = item.getText().toString();
+                    urlInput.setText(pastedText);
+                    Toast.makeText(this, "URL pasted from clipboard", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Clipboard is empty", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
     
     private void setupCheckUrlButton() {
         checkUrlButton.setOnClickListener(v -> {
             String url = urlInput.getText().toString().trim();
             if (url.isEmpty()) {
-                Toast.makeText(this, "Please enter a URL", Toast.LENGTH_SHORT).show();
+                urlInputLayout.setError("Please enter a URL");
                 return;
+            } else {
+                urlInputLayout.setError(null);
             }
             
             // Add http:// prefix if not present
-            if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                url = "http://" + url;
+            if (!url.startsWith("https://") && !url.startsWith("https://")) {
+                url = "https://" + url;
                 urlInput.setText(url);
             }
             
             // Show progress and disable button during API call
             progressBar.setVisibility(View.VISIBLE);
             checkUrlButton.setEnabled(false);
+            resultsSection.setVisibility(View.GONE);
             
             // Check URL using VirusTotal API
             checkUrlWithVirusTotal(url);
@@ -158,7 +226,8 @@ public class URLCheckerActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 // Reset warning when text changes
-                setWarningVisibility(false);
+                urlInputLayout.setError(null);
+                resultsSection.setVisibility(View.GONE);
             }
 
             @Override
@@ -166,6 +235,101 @@ public class URLCheckerActivity extends AppCompatActivity {
                 // Not needed
             }
         });
+    }
+    
+    private void setupUrlHistoryList() {
+        urlHistoryList.setLayoutManager(new LinearLayoutManager(this));
+    }
+    
+    private void loadUrlHistory() {
+        historyItems.clear();
+        
+        // Get saved URLs from SharedPreferences
+        Set<String> urlHistory = prefs.getStringSet(PREF_URL_HISTORY, new HashSet<>());
+        
+        if (urlHistory.isEmpty()) {
+            noHistoryText.setVisibility(View.VISIBLE);
+            urlHistoryList.setVisibility(View.GONE);
+            return;
+        }
+        
+        for (String urlEntry : urlHistory) {
+            String[] parts = urlEntry.split("\\|");
+            if (parts.length >= 3) {
+                String url = parts[0];
+                boolean isSafe = Boolean.parseBoolean(parts[1]);
+                long timestamp = Long.parseLong(parts[2]);
+                
+                historyItems.add(new UrlHistoryItem(url, isSafe, timestamp));
+            }
+        }
+        
+        // Sort by most recent first
+        Collections.sort(historyItems, (a, b) -> Long.compare(b.timestamp, a.timestamp));
+        
+        // Update UI
+        if (historyItems.isEmpty()) {
+            noHistoryText.setVisibility(View.VISIBLE);
+            urlHistoryList.setVisibility(View.GONE);
+        } else {
+            noHistoryText.setVisibility(View.GONE);
+            urlHistoryList.setVisibility(View.VISIBLE);
+            
+            // Create adapter and set to RecyclerView
+            UrlHistoryAdapter adapter = new UrlHistoryAdapter(historyItems, url -> {
+                urlInput.setText(url);
+                urlInput.setSelection(url.length());
+            });
+            urlHistoryList.setAdapter(adapter);
+        }
+    }
+    
+    private void saveUrlToHistory(String url, boolean isSafe) {
+        // Create the data to save
+        String urlEntry = url + "|" + isSafe + "|" + System.currentTimeMillis();
+        
+        // Get existing history
+        Set<String> urlHistory = new HashSet<>(prefs.getStringSet(PREF_URL_HISTORY, new HashSet<>()));
+        
+        // Add new entry
+        urlHistory.add(urlEntry);
+        
+        // If history is too large, remove oldest entries
+        if (urlHistory.size() > MAX_HISTORY_ITEMS) {
+            // Convert to list for sorting
+            List<String> urlList = new ArrayList<>(urlHistory);
+            
+            // Sort by timestamp (oldest first)
+            Collections.sort(urlList, (a, b) -> {
+                long timestampA = Long.parseLong(a.split("\\|")[2]);
+                long timestampB = Long.parseLong(b.split("\\|")[2]);
+                return Long.compare(timestampA, timestampB);
+            });
+            
+            // Remove oldest entries
+            urlList = urlList.subList(urlList.size() - MAX_HISTORY_ITEMS, urlList.size());
+            
+            // Convert back to set
+            urlHistory = new HashSet<>(urlList);
+        }
+        
+        // Save updated history
+        prefs.edit().putStringSet(PREF_URL_HISTORY, urlHistory).apply();
+        
+        // Reload history list
+        loadUrlHistory();
+    }
+    
+    private void showClearHistoryConfirmation() {
+        new MaterialAlertDialogBuilder(this)
+            .setTitle("Clear History")
+            .setMessage("Are you sure you want to clear your URL check history?")
+            .setPositiveButton("Clear", (dialog, which) -> {
+                prefs.edit().remove(PREF_URL_HISTORY).apply();
+                loadUrlHistory();
+            })
+            .setNegativeButton("Cancel", null)
+            .show();
     }
     
     private void checkUrlWithVirusTotal(String url) {
@@ -273,39 +437,64 @@ public class URLCheckerActivity extends AppCompatActivity {
             // Get the number of engines that flagged this as malicious
             int malicious = stats.getInt("malicious");
             int suspicious = stats.getInt("suspicious");
-            int totalEngines = malicious + suspicious + stats.getInt("harmless") + stats.getInt("undetected");
+            int harmless = stats.getInt("harmless");
+            int undetected = stats.getInt("undetected");
+            int totalEngines = malicious + suspicious + harmless + undetected;
             
             // Determine if the URL is dangerous
             final boolean isDangerous = (malicious > 0 || suspicious >= SUSPICIOUS_THRESHOLD);
+            
+            // Save to history
+            saveUrlToHistory(url, !isDangerous);
             
             // Update UI on main thread
             mainHandler.post(() -> {
                 progressBar.setVisibility(View.GONE);
                 checkUrlButton.setEnabled(true);
+                resultsSection.setVisibility(View.VISIBLE);
                 
-        if (isDangerous) {
+                if (isDangerous) {
                     // Update UI for dangerous URL
                     warningText.setText(getString(R.string.url_dangerous));
-            warningText.setTextColor(getResources().getColor(R.color.warning_red, null));
+                    warningText.setTextColor(ContextCompat.getColor(this, R.color.warning_red));
                     warningIcon.setImageResource(R.drawable.ic_warning_triangle);
-                    browserContent.setBackgroundColor(getResources().getColor(R.color.warning_red, null));
+                    browserContent.setBackgroundColor(ContextCompat.getColor(this, R.color.warning_red));
                     browserContent.setImageResource(R.drawable.ic_warning_triangle);
-        } else {
+                    
+                    // Show detailed warning message
+                    String dangerMessage = String.format(
+                        "DANGER: %d of %d security engines detected this URL as malicious", 
+                        malicious + suspicious, 
+                        totalEngines
+                    );
+                    Toast.makeText(URLCheckerActivity.this, dangerMessage, Toast.LENGTH_LONG).show();
+                } else {
                     // Update UI for safe URL
                     warningText.setText(getString(R.string.url_safe));
-            warningText.setTextColor(getResources().getColor(R.color.power_button_green, null));
+                    warningText.setTextColor(ContextCompat.getColor(this, R.color.power_button_green));
                     warningIcon.setImageResource(R.drawable.ic_shield_logo);
-                    browserContent.setBackgroundColor(getResources().getColor(R.color.power_button_green, null));
+                    browserContent.setBackgroundColor(ContextCompat.getColor(this, R.color.power_button_green));
                     browserContent.setImageResource(R.drawable.ic_shield_logo);
-        }
-        
-                // Show the safety result and browser preview
-        setWarningVisibility(true);
-        
-                // Show detailed stats in a toast
-                String stats_message = "Report: " + malicious + " malicious, " + 
-                                       suspicious + " suspicious out of " + totalEngines + " engines";
-                Toast.makeText(URLCheckerActivity.this, stats_message, Toast.LENGTH_LONG).show();
+                    
+                    // Show safe message
+                    String safeMessage = String.format(
+                        "SAFE: %d of %d security engines confirmed this URL is harmless", 
+                        harmless, 
+                        totalEngines
+                    );
+                    Toast.makeText(URLCheckerActivity.this, safeMessage, Toast.LENGTH_LONG).show();
+                }
+                
+                // Add a TextView to show detailed scan statistics
+                TextView scanStatsText = findViewById(R.id.scan_stats_text);
+                if (scanStatsText != null) {
+                    String statsDetail = String.format(
+                        "Scan Results: %d malicious, %d suspicious, %d harmless, %d undetected", 
+                        malicious, suspicious, harmless, undetected
+                    );
+                    scanStatsText.setText(statsDetail);
+                    scanStatsText.setVisibility(View.VISIBLE);
+                }
             });
         } catch (JSONException e) {
             showError("Error processing scan results");
@@ -321,10 +510,94 @@ public class URLCheckerActivity extends AppCompatActivity {
         });
     }
     
-    private void setWarningVisibility(boolean isVisible) {
-        int visibility = isVisible ? View.VISIBLE : View.GONE;
-        warningText.setVisibility(visibility);
-        warningIcon.setVisibility(visibility);
-        browserPreview.setVisibility(visibility);
+    /**
+     * Class to represent a URL history item
+     */
+    private static class UrlHistoryItem {
+        String url;
+        boolean isSafe;
+        long timestamp;
+        
+        UrlHistoryItem(String url, boolean isSafe, long timestamp) {
+            this.url = url;
+            this.isSafe = isSafe;
+            this.timestamp = timestamp;
+        }
+    }
+    
+    /**
+     * Adapter for URL history list
+     */
+    private static class UrlHistoryAdapter extends RecyclerView.Adapter<UrlHistoryAdapter.ViewHolder> {
+        
+        private final List<UrlHistoryItem> items;
+        private final OnUrlClickListener listener;
+        private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault());
+        
+        interface OnUrlClickListener {
+            void onUrlClick(String url);
+        }
+        
+        UrlHistoryAdapter(List<UrlHistoryItem> items, OnUrlClickListener listener) {
+            this.items = items;
+            this.listener = listener;
+        }
+        
+        @Override
+        public ViewHolder onCreateViewHolder(android.view.ViewGroup parent, int viewType) {
+            // Get the activity context from parent
+            Context context = parent.getContext();
+            LayoutInflater inflater = LayoutInflater.from(context);
+            View view = inflater.inflate(R.layout.item_url_history, parent, false);
+            return new ViewHolder(view);
+        }
+        
+        @Override
+        public void onBindViewHolder(ViewHolder holder, int position) {
+            UrlHistoryItem item = items.get(position);
+            Context context = holder.itemView.getContext();
+            
+            holder.urlText.setText(item.url);
+            holder.dateText.setText(dateFormat.format(new Date(item.timestamp)));
+            
+            // Set status icon and color
+            if (item.isSafe) {
+                holder.statusIcon.setImageResource(R.drawable.ic_shield_logo);
+                holder.statusIcon.setColorFilter(ContextCompat.getColor(context, R.color.power_button_green));
+                holder.statusText.setText("Safe");
+                holder.statusText.setTextColor(ContextCompat.getColor(context, R.color.power_button_green));
+            } else {
+                holder.statusIcon.setImageResource(R.drawable.ic_warning_triangle);
+                holder.statusIcon.setColorFilter(ContextCompat.getColor(context, R.color.warning_red));
+                holder.statusText.setText("Unsafe");
+                holder.statusText.setTextColor(ContextCompat.getColor(context, R.color.warning_red));
+            }
+            
+            holder.itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onUrlClick(item.url);
+                }
+            });
+        }
+        
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+        
+        static class ViewHolder extends RecyclerView.ViewHolder {
+            TextView urlText;
+            TextView dateText;
+            ImageView statusIcon;
+            TextView statusText;
+            
+            ViewHolder(View itemView) {
+                super(itemView);
+                urlText = itemView.findViewById(R.id.url_text);
+                dateText = itemView.findViewById(R.id.date_text);
+                statusIcon = itemView.findViewById(R.id.status_icon);
+                statusText = itemView.findViewById(R.id.status_text);
+            }
+        }
     }
 } 

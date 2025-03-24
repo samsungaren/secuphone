@@ -13,6 +13,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
+import android.animation.ValueAnimator;
+import android.view.animation.AccelerateDecelerateInterpolator;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,7 +34,7 @@ public class VPNActivity extends AppCompatActivity {
     private TextView connectionTimeValue;
     private TextView connectionStatus;
     private ImageView powerButton;
-    private ImageView powerButtonRing;
+    private View powerButtonBg;
     private boolean isConnected = false;
     private boolean isConnecting = false;
     
@@ -43,6 +47,11 @@ public class VPNActivity extends AppCompatActivity {
     private ImageView countryFlag;
     private TextView countryName;
     private TextView serverIp;
+    
+    // Connection stats
+    private TextView downloadSpeed;
+    private TextView uploadSpeed;
+    private TextView publicIpValue;
     
     // Current server selection
     private String currentCountry = "united_states";
@@ -64,8 +73,8 @@ public class VPNActivity extends AppCompatActivity {
         // Initialize views
         connectionTimeValue = findViewById(R.id.connection_time_value);
         powerButton = findViewById(R.id.power_button);
-        powerButtonRing = findViewById(R.id.power_button_ring);
-        connectionStatus = findViewById(R.id.connection_time_label);
+        powerButtonBg = findViewById(R.id.power_button_bg);
+        connectionStatus = findViewById(R.id.connection_status);
         
         // Initialize server selection views
         serverLocationCard = findViewById(R.id.server_location_card);
@@ -73,9 +82,20 @@ public class VPNActivity extends AppCompatActivity {
         countryName = findViewById(R.id.country_name);
         serverIp = findViewById(R.id.server_ip);
         
+        // Initialize connection stats
+        downloadSpeed = findViewById(R.id.download_speed);
+        uploadSpeed = findViewById(R.id.upload_speed);
+        publicIpValue = findViewById(R.id.public_ip_value);
+        
         // Setup back navigation
-        ImageButton menuButton = findViewById(R.id.menu_button);
-        menuButton.setOnClickListener(v -> finish());
+        ImageButton backButton = findViewById(R.id.back_button);
+        backButton.setOnClickListener(v -> finish());
+        
+        // Setup settings button
+        ImageButton settingsButton = findViewById(R.id.settings_button);
+        settingsButton.setOnClickListener(v -> {
+            Toast.makeText(this, "VPN Settings coming soon", Toast.LENGTH_SHORT).show();
+        });
         
         // Setup connection timer
         setupConnectionTimer();
@@ -97,6 +117,7 @@ public class VPNActivity extends AppCompatActivity {
             public void run() {
                 if (isConnected) {
                     updateConnectionTime();
+                    updateNetworkStats();
                     timerHandler.postDelayed(this, 1000);
                 }
             }
@@ -119,8 +140,19 @@ public class VPNActivity extends AppCompatActivity {
         connectionTimeValue.setText(timeString);
     }
     
+    private void updateNetworkStats() {
+        // Generate random network stats for demo
+        Random random = new Random();
+        double download = 5.0 + random.nextDouble() * 45.0;
+        double upload = 3.0 + random.nextDouble() * 15.0;
+        
+        downloadSpeed.setText(String.format(Locale.US, "%.2f Mbps", download));
+        uploadSpeed.setText(String.format(Locale.US, "%.2f Mbps", upload));
+    }
+    
     private void setupVpnToggle() {
-        powerButtonRing.setOnClickListener(v -> {
+        View powerButtonContainer = findViewById(R.id.power_button_container);
+        powerButtonContainer.setOnClickListener(v -> {
             if (isConnecting) {
                 return; // Ignore clicks while in transition state
             }
@@ -252,37 +284,56 @@ public class VPNActivity extends AppCompatActivity {
     
     private void simulateConnect() {
         isConnecting = true;
+        
+        // Update UI to show connecting state
         updateConnectingUI();
         
-        // Delay to simulate connection establishment
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            isConnected = true;
+        // Simulate connection delay
+        new Handler().postDelayed(() -> {
             isConnecting = false;
+            isConnected = true;
+            
+            // Set connection start time
             connectionStartTime = System.currentTimeMillis();
+            
+            // Update UI to show connected state
             updateVpnState(true);
+            
+            // Start connection timer
             timerHandler.post(timerRunnable);
-        }, 2000);
+            
+            // Generate random public IP
+            publicIpValue.setText(generateRandomIp());
+            
+        }, 2000); // 2 second delay
     }
     
     private void simulateDisconnect() {
         isConnecting = true;
+        
+        // Update UI to show disconnecting state
         updateDisconnectingUI();
         
-        // Delay to simulate disconnection
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            isConnected = false;
+        // Simulate disconnection delay
+        new Handler().postDelayed(() -> {
             isConnecting = false;
-            timerHandler.removeCallbacks(timerRunnable);
+            isConnected = false;
+            
+            // Update UI to show disconnected state
             updateVpnState(false);
-        }, 1500);
+            
+            // Stop connection timer
+            timerHandler.removeCallbacks(timerRunnable);
+            
+        }, 1000); // 1 second delay
     }
     
     private void updateConnectingUI() {
+        powerButtonBg.setBackground(ContextCompat.getDrawable(this, R.drawable.vpn_toggle_background_connecting));
         connectionStatus.setText(R.string.vpn_connecting);
-        powerButton.setImageResource(R.drawable.ic_power);
         
-        // Use the green power button ring during connecting state
-        powerButtonRing.setImageResource(R.drawable.power_button_ring_on);
+        // Animate power button (pulse effect)
+        animatePowerButton();
     }
     
     private void updateDisconnectingUI() {
@@ -291,23 +342,47 @@ public class VPNActivity extends AppCompatActivity {
     
     private void updateVpnState(boolean connected) {
         if (connected) {
-            // VPN is connected - Green color
-            connectionStatus.setText(R.string.vpn_on);
-            powerButton.setImageResource(R.drawable.ic_power);
-            powerButtonRing.setImageResource(R.drawable.power_button_ring_on);
+            powerButtonBg.setBackground(ContextCompat.getDrawable(this, R.drawable.vpn_toggle_background_on));
+            connectionStatus.setText(R.string.vpn_connected);
+            powerButton.setColorFilter(ContextCompat.getColor(this, R.color.text));
         } else {
-            // VPN is disconnected - Red color
+            powerButtonBg.setBackground(ContextCompat.getDrawable(this, R.drawable.vpn_toggle_background_off));
             connectionStatus.setText(R.string.vpn_off);
-            powerButton.setImageResource(R.drawable.ic_power_off);
-            powerButtonRing.setImageResource(R.drawable.power_button_ring_off);
-            connectionTimeValue.setText("00:00:00");
+            connectionTimeValue.setText("--:--:--");
+            downloadSpeed.setText("--.- Mbps");
+            uploadSpeed.setText("--.- Mbps");
+            publicIpValue.setText("---.---.---.---");
+            powerButton.setColorFilter(ContextCompat.getColor(this, R.color.text));
         }
+    }
+    
+    private void animatePowerButton() {
+        // Create a pulse animation
+        ObjectAnimator scaleDown = ObjectAnimator.ofPropertyValuesHolder(
+                powerButton,
+                PropertyValuesHolder.ofFloat("scaleX", 1.0f, 0.9f, 1.0f),
+                PropertyValuesHolder.ofFloat("scaleY", 1.0f, 0.9f, 1.0f));
+        
+        scaleDown.setDuration(1000);
+        scaleDown.setRepeatCount(ValueAnimator.INFINITE);
+        scaleDown.setInterpolator(new AccelerateDecelerateInterpolator());
+        scaleDown.start();
+        
+        // Stop animation when connection is established or failed
+        new Handler().postDelayed(() -> {
+            if (!isConnecting) {
+                scaleDown.cancel();
+                powerButton.setScaleX(1.0f);
+                powerButton.setScaleY(1.0f);
+            }
+        }, 2100);
     }
     
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (timerHandler != null) {
+        // Make sure to remove any pending callbacks
+        if (timerHandler != null && timerRunnable != null) {
             timerHandler.removeCallbacks(timerRunnable);
         }
     }

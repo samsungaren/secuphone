@@ -24,7 +24,10 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.secuphone_bycoursor.adapters.HiddenFilesAdapter;
 import com.example.secuphone_bycoursor.utils.PermissionManager;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,6 +44,7 @@ public class HiddenFilesActivity extends AppCompatActivity {
     private Button hideFileButton;
     private TextView noFilesText;
     private RecyclerView hiddenFilesList;
+    private FloatingActionButton hideFileFab;
 
     private List<File> hiddenFiles = new ArrayList<>();
 
@@ -62,6 +66,7 @@ public class HiddenFilesActivity extends AppCompatActivity {
         hideFileButton = findViewById(R.id.hide_file_button);
         noFilesText = findViewById(R.id.no_files_text);
         hiddenFilesList = findViewById(R.id.hidden_files_list);
+        hideFileFab = findViewById(R.id.hide_file_fab);
 
         ImageButton menuButton = findViewById(R.id.menu_button);
         menuButton.setOnClickListener(v -> finish());
@@ -82,18 +87,29 @@ public class HiddenFilesActivity extends AppCompatActivity {
         permissionManager = new PermissionManager(this);
 
         hideFileButton.setOnClickListener(v -> {
-            if (StoragePermissionActivity.hasStoragePermission(this)) {
+            if (permissionManager.hasStoragePermission()) {
                 openFilePicker();
             } else {
                 permissionManager.requestDirectStoragePermission();
             }
         });
+        
+        // Set up floating action button
+        if (hideFileFab != null) {
+            hideFileFab.setOnClickListener(v -> {
+                if (permissionManager.hasStoragePermission()) {
+                    openFilePicker();
+                } else {
+                    permissionManager.requestDirectStoragePermission();
+                }
+            });
+        }
 
         loadHiddenFilesWithPermissionCheck();
     }
 
     private void loadHiddenFilesWithPermissionCheck() {
-        if (StoragePermissionActivity.hasStoragePermission(this)) {
+        if (permissionManager.hasStoragePermission()) {
             loadHiddenFiles();
         } else {
             permissionManager.checkStoragePermission(new PermissionManager.OnPermissionResultListener() {
@@ -215,14 +231,36 @@ public class HiddenFilesActivity extends AppCompatActivity {
             hiddenFilesList.setVisibility(View.GONE);
             noFilesText.setVisibility(View.VISIBLE);
             noFilesText.setText(R.string.no_hidden_files);
+            
+            // Hide FAB if we have a button
+            if (hideFileFab != null) {
+                hideFileFab.setVisibility(View.GONE);
+            }
         } else {
             hiddenFilesList.setVisibility(View.VISIBLE);
             noFilesText.setVisibility(View.GONE);
             
+            // Show FAB if we have files
+            if (hideFileFab != null) {
+                hideFileFab.setVisibility(View.VISIBLE);
+            }
+            
             // Create and set adapter
-            // Implementation of HiddenFilesAdapter is needed
-            // hiddenFilesList.setAdapter(new HiddenFilesAdapter(hiddenFiles, this::unhideFile));
+            HiddenFilesAdapter adapter = new HiddenFilesAdapter(hiddenFiles, this::confirmUnhideFile);
+            hiddenFilesList.setAdapter(adapter);
         }
+    }
+    
+    /**
+     * Show confirmation dialog before unhiding file
+     */
+    private void confirmUnhideFile(File file) {
+        new MaterialAlertDialogBuilder(this)
+            .setTitle("Unhide File")
+            .setMessage("This file will be moved to your Downloads folder. Continue?")
+            .setPositiveButton("Unhide", (dialog, which) -> unhideFile(file))
+            .setNegativeButton("Cancel", null)
+            .show();
     }
     
     private void unhideFile(File file) {
@@ -276,7 +314,7 @@ public class HiddenFilesActivity extends AppCompatActivity {
         super.onResume();
         
         // Check permissions and load files
-        if (StoragePermissionActivity.hasStoragePermission(this)) {
+        if (permissionManager.hasStoragePermission()) {
             loadHiddenFiles();
         }
     }

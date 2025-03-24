@@ -4,18 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="24dp"
     android:background="@color/background">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/server_selection"
-        android:textSize="20sp"
+        android:text="@string/select_server"
+        android:textSize="22sp"
         android:textStyle="bold"
         android:textColor="@color/text"
         android:gravity="center"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="24dp" />
 
     <!-- United States -->
     <LinearLayout
@@ -24,17 +24,25 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="12dp"
-        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/server_card_ripple"
         android:clickable="true"
         android:focusable="true">
 
-        <ImageView
-            android:layout_width="30dp"
-            android:layout_height="20dp"
-            android:src="@drawable/flag_us"
-            android:contentDescription="@string/country_flag"
-            android:layout_marginEnd="16dp" />
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/circle_background"
+            android:padding="12dp">
+            
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/flag_us"
+                android:contentDescription="@string/country_flag" />
+        </FrameLayout>
 
         <TextView
             android:layout_width="0dp"
@@ -42,13 +50,15 @@
             android:layout_weight="1"
             android:text="@string/united_states"
             android:textSize="16sp"
-            android:textColor="@color/text" />
+            android:textColor="@color/text"
+            android:layout_marginStart="16dp" />
 
         <ImageView
             android:id="@+id/check_us"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_check"
+            android:tint="@color/accent_primary"
             android:visibility="visible"
             android:contentDescription="@string/select_server" />
     </LinearLayout>
@@ -60,17 +70,25 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="12dp"
-        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/server_card_ripple"
         android:clickable="true"
         android:focusable="true">
 
-        <ImageView
-            android:layout_width="30dp"
-            android:layout_height="20dp"
-            android:src="@drawable/flag_uk"
-            android:contentDescription="@string/country_flag"
-            android:layout_marginEnd="16dp" />
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/circle_background"
+            android:padding="12dp">
+            
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/flag_uk"
+                android:contentDescription="@string/country_flag" />
+        </FrameLayout>
 
         <TextView
             android:layout_width="0dp"
@@ -78,13 +96,15 @@
             android:layout_weight="1"
             android:text="@string/united_kingdom"
             android:textSize="16sp"
-            android:textColor="@color/text" />
+            android:textColor="@color/text"
+            android:layout_marginStart="16dp" />
 
         <ImageView
             android:id="@+id/check_uk"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_check"
+            android:tint="@color/accent_primary"
             android:visibility="gone"
             android:contentDescription="@string/select_server" />
     </LinearLayout>
@@ -96,17 +116,25 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="12dp"
-        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/server_card_ripple"
         android:clickable="true"
         android:focusable="true">
 
-        <ImageView
-            android:layout_width="30dp"
-            android:layout_height="20dp"
-            android:src="@drawable/flag_germany"
-            android:contentDescription="@string/country_flag"
-            android:layout_marginEnd="16dp" />
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/circle_background"
+            android:padding="12dp">
+            
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/flag_germany"
+                android:contentDescription="@string/country_flag" />
+        </FrameLayout>
 
         <TextView
             android:layout_width="0dp"
@@ -114,13 +142,15 @@
             android:layout_weight="1"
             android:text="@string/germany"
             android:textSize="16sp"
-            android:textColor="@color/text" />
+            android:textColor="@color/text"
+            android:layout_marginStart="16dp" />
 
         <ImageView
             android:id="@+id/check_germany"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_check"
+            android:tint="@color/accent_primary"
             android:visibility="gone"
             android:contentDescription="@string/select_server" />
     </LinearLayout>
@@ -132,17 +162,25 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="12dp"
-        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/server_card_ripple"
         android:clickable="true"
         android:focusable="true">
 
-        <ImageView
-            android:layout_width="30dp"
-            android:layout_height="20dp"
-            android:src="@drawable/flag_japan"
-            android:contentDescription="@string/country_flag"
-            android:layout_marginEnd="16dp" />
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/circle_background"
+            android:padding="12dp">
+            
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/flag_japan"
+                android:contentDescription="@string/country_flag" />
+        </FrameLayout>
 
         <TextView
             android:layout_width="0dp"
@@ -150,13 +188,15 @@
             android:layout_weight="1"
             android:text="@string/japan"
             android:textSize="16sp"
-            android:textColor="@color/text" />
+            android:textColor="@color/text"
+            android:layout_marginStart="16dp" />
 
         <ImageView
             android:id="@+id/check_japan"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_check"
+            android:tint="@color/accent_primary"
             android:visibility="gone"
             android:contentDescription="@string/select_server" />
     </LinearLayout>
@@ -168,17 +208,25 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="12dp"
-        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/server_card_ripple"
         android:clickable="true"
         android:focusable="true">
 
-        <ImageView
-            android:layout_width="30dp"
-            android:layout_height="20dp"
-            android:src="@drawable/flag_netherlands"
-            android:contentDescription="@string/country_flag"
-            android:layout_marginEnd="16dp" />
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/circle_background"
+            android:padding="12dp">
+            
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/flag_netherlands"
+                android:contentDescription="@string/country_flag" />
+        </FrameLayout>
 
         <TextView
             android:layout_width="0dp"
@@ -186,13 +234,15 @@
             android:layout_weight="1"
             android:text="@string/netherlands"
             android:textSize="16sp"
-            android:textColor="@color/text" />
+            android:textColor="@color/text"
+            android:layout_marginStart="16dp" />
 
         <ImageView
             android:id="@+id/check_netherlands"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_check"
+            android:tint="@color/accent_primary"
             android:visibility="gone"
             android:contentDescription="@string/select_server" />
     </LinearLayout>
@@ -204,17 +254,24 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="12dp"
-        android:background="?attr/selectableItemBackground"
+        android:padding="16dp"
+        android:background="@drawable/server_card_ripple"
         android:clickable="true"
         android:focusable="true">
 
-        <ImageView
-            android:layout_width="30dp"
-            android:layout_height="20dp"
-            android:src="@drawable/flag_singapore"
-            android:contentDescription="@string/country_flag"
-            android:layout_marginEnd="16dp" />
+        <FrameLayout
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/circle_background"
+            android:padding="12dp">
+            
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/flag_singapore"
+                android:contentDescription="@string/country_flag" />
+        </FrameLayout>
 
         <TextView
             android:layout_width="0dp"
@@ -222,13 +279,15 @@
             android:layout_weight="1"
             android:text="@string/singapore"
             android:textSize="16sp"
-            android:textColor="@color/text" />
+            android:textColor="@color/text"
+            android:layout_marginStart="16dp" />
 
         <ImageView
             android:id="@+id/check_singapore"
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_check"
+            android:tint="@color/accent_primary"
             android:visibility="gone"
             android:contentDescription="@string/select_server" />
     </LinearLayout>

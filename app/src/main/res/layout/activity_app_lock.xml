@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/app_lock_layout"
@@ -8,13 +9,19 @@
     android:background="@color/background"
     tools:context=".AppLockActivity">
 
-    <!-- Navbar / Toolbar (same as main activity) -->
+    <!-- App Bar with enhanced styling -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/navbar_gradient_background"
+        android:elevation="0dp">
+
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/navbar_background"
-        app:layout_constraintTop_toTopOf="parent">
+            android:layout_height="70dp"
+            app:contentInsetStart="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -22,95 +29,124 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <ImageView
-                android:id="@+id/logo"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_shield_logo"
-                android:contentDescription="@string/app_name" />
+                <ImageButton
+                    android:id="@+id/back_button"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_arrow_back"
+                    android:tint="@color/text"
+                    android:contentDescription="@string/back" />
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="@string/app_name"
-                android:textColor="@color/logo"
-                android:textSize="20sp"
+                    android:layout_marginStart="16dp"
+                    android:text="@string/app_lock"
+                    android:textColor="@color/text"
+                    android:textSize="22sp"
                 android:textStyle="bold" />
 
             <ImageButton
-                android:id="@+id/menu_button"
+                    android:id="@+id/info_button"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/ic_menu"
-                android:contentDescription="@string/menu" />
+                    android:src="@drawable/ic_info"
+                    android:tint="@color/text"
+                    android:contentDescription="@string/info" />
         </LinearLayout>
-
     </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- Navbar Shadow Line -->
-    <View
-        android:id="@+id/navbar_shadow"
+    <!-- Main scrollable content -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@drawable/navbar_shadow"
-        app:layout_constraintTop_toBottomOf="@id/toolbar" />
-
-    <!-- Main Content -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:fillViewport="true"
-        app:layout_constraintTop_toBottomOf="@id/navbar_shadow"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:scrollbars="none"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="match_parent"
+            android:paddingBottom="24dp">
 
-            <!-- App Selection Area -->
-            <FrameLayout
-                android:id="@+id/app_selection_container"
+            <!-- Feature Status Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/feature_status_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp">
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="24dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardElevation="0dp"
+                app:layout_constraintTop_toTopOf="parent">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/server_card_background"
                     android:orientation="vertical"
-                    android:gravity="center"
-                    android:padding="32dp"
-                    android:background="@drawable/dashed_border_container">
+                    android:padding="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:id="@+id/feature_status_icon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_error"
+                            android:tint="@color/error_red"
+                            android:contentDescription="@string/feature_status" />
+
+                        <TextView
+                            android:id="@+id/feature_status_text"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/feature_inactive"
+                            android:textColor="@color/text"
+                            android:textSize="16sp"
+                            android:layout_marginStart="12dp" />
+                    </LinearLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:id="@+id/feature_status_detail"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/choose_apps_to_lock"
-                        android:textColor="@color/text"
-                        android:textSize="18sp"
-                        android:gravity="center" />
+                        android:text="@string/setup_pin_first"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginStart="36dp" />
                 </LinearLayout>
-            </FrameLayout>
+            </androidx.cardview.widget.CardView>
             
             <!-- PIN Setup Card -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/pin_setup_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp">
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardElevation="0dp"
+                app:layout_constraintTop_toBottomOf="@id/feature_status_card">
                 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/vpn_connection_card_background"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="24dp">
                     
                     <TextView
                         android:layout_width="match_parent"
@@ -119,69 +155,116 @@
                         android:textColor="@color/text"
                         android:textSize="18sp"
                         android:textStyle="bold"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="16dp" />
+                    
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        app:boxBackgroundColor="@android:color/transparent"
+                        app:boxStrokeColor="@color/accent_primary"
+                        app:hintTextColor="@color/accent_primary"
+                        android:textColorHint="@color/text_secondary"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
                         
-                    <EditText
+                        <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/pin_input"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/enter_pin"
                         android:inputType="numberPassword"
                         android:maxLength="6"
-                        android:background="@drawable/url_input_background"
-                        android:padding="12dp"
-                        android:layout_marginBottom="8dp"
-                        android:importantForAutofill="no"
-                        android:textColorHint="@color/arrow" />
+                            android:textColor="@color/text"
+                            android:importantForAutofill="no" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                    
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="24dp"
+                        app:boxBackgroundColor="@android:color/transparent"
+                        app:boxStrokeColor="@color/accent_primary"
+                        app:hintTextColor="@color/accent_primary"
+                        android:textColorHint="@color/text_secondary"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
                         
-                    <EditText
+                        <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/confirm_pin_input"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/confirm_pin"
                         android:inputType="numberPassword"
                         android:maxLength="6"
-                        android:background="@drawable/url_input_background"
-                        android:padding="12dp"
-                        android:layout_marginBottom="16dp"
-                        android:importantForAutofill="no"
-                        android:textColorHint="@color/arrow" />
+                            android:textColor="@color/text"
+                            android:importantForAutofill="no" />
+                    </com.google.android.material.textfield.TextInputLayout>
                         
                     <Button
                         android:id="@+id/set_pin_button"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/setup_pin"
-                        android:backgroundTint="@color/power_button_green" />
+                        android:backgroundTint="@color/accent_primary"
+                        android:textColor="@color/text"
+                        android:padding="12dp" />
+
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Locked Apps Header -->
-            <TextView
+            <!-- Popular Apps Section Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/popular_apps_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/locked_apps"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardElevation="0dp"
+                app:layout_constraintTop_toBottomOf="@id/pin_setup_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/server_card_background"
+                    android:orientation="vertical">
+                    
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/popular_apps"
                 android:textColor="@color/text"
-                android:textSize="24sp"
+                        android:textSize="16sp"
                 android:textStyle="bold"
-                android:layout_marginBottom="16dp" />
+                        android:padding="16dp" />
+                    
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/card_border" />
 
             <!-- Snapchat App -->
             <LinearLayout
                 android:id="@+id/snapchat_app"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/menu_item_background"
                 android:padding="16dp"
-                android:layout_marginBottom="12dp"
+                        android:background="?attr/selectableItemBackground"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <ImageView
+                        <FrameLayout
                     android:layout_width="36dp"
                     android:layout_height="36dp"
+                            android:background="@drawable/circle_app_icon">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center"
                     android:src="@drawable/ic_snapchat"
                     android:contentDescription="@string/snapchat" />
+                        </FrameLayout>
 
                 <TextView
                     android:layout_width="0dp"
@@ -189,33 +272,43 @@
                     android:layout_weight="1"
                     android:text="@string/snapchat"
                     android:textColor="@color/text"
-                    android:textSize="18sp"
-                    android:layout_marginStart="12dp" />
+                            android:textSize="16sp"
+                            android:layout_marginStart="16dp" />
 
-                <ImageView
-                    android:id="@+id/snapchat_lock_icon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_lock_closed"
-                    android:contentDescription="@string/locked" />
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/snapchat_lock_switch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="false" />
             </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/card_border" />
 
             <!-- Facebook App -->
             <LinearLayout
                 android:id="@+id/facebook_app"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/menu_item_background"
                 android:padding="16dp"
-                android:layout_marginBottom="12dp"
+                        android:background="?attr/selectableItemBackground"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <ImageView
+                        <FrameLayout
                     android:layout_width="36dp"
                     android:layout_height="36dp"
+                            android:background="@drawable/circle_app_icon">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center"
                     android:src="@drawable/ic_facebook"
                     android:contentDescription="@string/facebook" />
+                        </FrameLayout>
 
                 <TextView
                     android:layout_width="0dp"
@@ -223,33 +316,43 @@
                     android:layout_weight="1"
                     android:text="@string/facebook"
                     android:textColor="@color/text"
-                    android:textSize="18sp"
-                    android:layout_marginStart="12dp" />
+                            android:textSize="16sp"
+                            android:layout_marginStart="16dp" />
 
-                <ImageView
-                    android:id="@+id/facebook_lock_icon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_lock_closed"
-                    android:contentDescription="@string/locked" />
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/facebook_lock_switch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="false" />
             </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/card_border" />
 
             <!-- TikTok App -->
             <LinearLayout
                 android:id="@+id/tiktok_app"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/menu_item_background"
                 android:padding="16dp"
-                android:layout_marginBottom="12dp"
+                        android:background="?attr/selectableItemBackground"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <ImageView
+                        <FrameLayout
                     android:layout_width="36dp"
                     android:layout_height="36dp"
+                            android:background="@drawable/circle_app_icon">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center"
                     android:src="@drawable/ic_tiktok"
                     android:contentDescription="@string/tiktok" />
+                        </FrameLayout>
 
                 <TextView
                     android:layout_width="0dp"
@@ -257,33 +360,43 @@
                     android:layout_weight="1"
                     android:text="@string/tiktok"
                     android:textColor="@color/text"
-                    android:textSize="18sp"
-                    android:layout_marginStart="12dp" />
+                            android:textSize="16sp"
+                            android:layout_marginStart="16dp" />
 
-                <ImageView
-                    android:id="@+id/tiktok_lock_icon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_lock_open"
-                    android:contentDescription="@string/unlocked" />
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/tiktok_lock_switch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="false" />
             </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/card_border" />
 
             <!-- WhatsApp App -->
             <LinearLayout
                 android:id="@+id/whatsapp_app"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/menu_item_background"
                 android:padding="16dp"
-                android:layout_marginBottom="12dp"
+                        android:background="?attr/selectableItemBackground"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <ImageView
+                        <FrameLayout
                     android:layout_width="36dp"
                     android:layout_height="36dp"
+                            android:background="@drawable/circle_app_icon">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center"
                     android:src="@drawable/ic_whatsapp"
                     android:contentDescription="@string/whatsapp" />
+                        </FrameLayout>
 
                 <TextView
                     android:layout_width="0dp"
@@ -291,17 +404,246 @@
                     android:layout_weight="1"
                     android:text="@string/whatsapp"
                     android:textColor="@color/text"
-                    android:textSize="18sp"
-                    android:layout_marginStart="12dp" />
+                            android:textSize="16sp"
+                            android:layout_marginStart="16dp" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/whatsapp_lock_switch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="false" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Security Settings Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/security_settings_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="24dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardElevation="0dp"
+                app:layout_constraintTop_toBottomOf="@id/popular_apps_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/server_card_background"
+                    android:orientation="vertical">
+                    
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/security_settings"
+                        android:textColor="@color/text"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:padding="16dp" />
+                    
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/card_border" />
+
+                    <!-- Change PIN option -->
+                    <LinearLayout
+                        android:id="@+id/change_pin_option"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="16dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_lock_closed"
+                            android:tint="@color/accent_primary"
+                            android:contentDescription="@string/change_pin" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/change_pin"
+                            android:textColor="@color/text"
+                            android:textSize="16sp"
+                            android:layout_marginStart="16dp" />
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_arrow_right"
+                            android:tint="@color/text_secondary"
+                            android:contentDescription="@string/change_pin" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/card_border" />
+
+                    <!-- Auto-lock option -->
+                    <LinearLayout
+                        android:id="@+id/auto_lock_option"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="16dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_time"
+                            android:tint="@color/accent_primary"
+                            android:contentDescription="@string/auto_lock" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/auto_lock"
+                                android:textColor="@color/text"
+                                android:textSize="16sp" />
+
+                            <TextView
+                                android:id="@+id/auto_lock_value"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/immediately"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="14sp" />
+                        </LinearLayout>
 
                 <ImageView
-                    android:id="@+id/whatsapp_lock_icon"
                     android:layout_width="24dp"
                     android:layout_height="24dp"
-                    android:src="@drawable/ic_lock_open"
-                    android:contentDescription="@string/unlocked" />
+                            android:src="@drawable/ic_arrow_right"
+                            android:tint="@color/text_secondary"
+                            android:contentDescription="@string/auto_lock" />
             </LinearLayout>
         </LinearLayout>
-    </ScrollView>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Permission Status Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/permission_status_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="24dp"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardElevation="0dp"
+                app:layout_constraintTop_toBottomOf="@id/security_settings_card">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/server_card_background"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/required_permissions"
+                        android:textColor="@color/text"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
+                    
+                    <!-- Usage Stats Permission Status -->
+                    <LinearLayout
+                        android:id="@+id/usage_stats_permission"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="8dp"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:id="@+id/usage_stats_icon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_check_circle"
+                            android:tint="@color/success_green"
+                            android:contentDescription="@string/permission_granted" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/usage_access"
+                            android:textColor="@color/text"
+                            android:textSize="14sp"
+                            android:layout_marginStart="8dp" />
+
+                        <Button
+                            android:id="@+id/usage_stats_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/grant"
+                            android:textSize="12sp"
+                            android:minHeight="36dp"
+                            android:minWidth="72dp"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:textColor="@color/accent_primary" />
+                    </LinearLayout>
+                    
+                    <!-- Overlay Permission Status -->
+                    <LinearLayout
+                        android:id="@+id/overlay_permission"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:padding="8dp"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:id="@+id/overlay_icon"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_check_circle"
+                            android:tint="@color/success_green"
+                            android:contentDescription="@string/permission_granted" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/overlay_permission"
+                            android:textColor="@color/text"
+                            android:textSize="14sp"
+                            android:layout_marginStart="8dp" />
+
+                        <Button
+                            android:id="@+id/overlay_button"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/grant"
+                            android:textSize="12sp"
+                            android:minHeight="36dp"
+                            android:minWidth="72dp"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:textColor="@color/accent_primary" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout> 
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout> 

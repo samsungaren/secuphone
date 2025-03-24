@@ -1,102 +1,216 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/navbar_background"
+    android:background="@drawable/sidebar_header_background"
     android:orientation="vertical"
-    android:padding="24dp"
+    android:padding="0dp"
     android:theme="@style/ThemeOverlay.AppCompat.Dark">
 
-    <!-- Profile Section -->
-    <LinearLayout
+    <!-- Stylish Header with App Logo -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="16dp">
-
-        <!-- Profile Image -->
-        <de.hdodenhof.circleimageview.CircleImageView
-            android:id="@+id/profile_image"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:src="@drawable/ic_shield_logo"
-            android:layout_marginEnd="16dp" />
-
+        android:layout_height="160dp">
+        
+        <!-- Background with overlay -->
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/security_background"
+            android:alpha="0.4"
+            android:contentDescription="@string/app_name" />
+            
+        <!-- Gradient overlay -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/sidebar_header_gradient" />
+            
+        <!-- Logo and app name -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <!-- Username -->
+            android:orientation="vertical"
+            android:layout_gravity="center"
+            android:gravity="center">
+            
+            <ImageView
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:src="@drawable/ic_shield_logo"
+                android:tint="@color/white"
+                android:contentDescription="@string/app_name" />
+                
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="John Doe"
-                android:textColor="@color/text"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <!-- Email -->
+                android:text="@string/app_name"
+                android:textColor="@color/white"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginTop="8dp" />
+                
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="john.doe@example.com"
-                android:textColor="@color/arrow"
-                android:textSize="16sp"
-                android:layout_marginTop="4dp" />
+                android:text="@string/app_tagline"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:alpha="0.8" />
         </LinearLayout>
-    </LinearLayout>
+    </FrameLayout>
+
+    <!-- User Section Container -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+        
+        <!-- Guest UI (sign in/sign up) -->
+        <LinearLayout
+            android:id="@+id/guest_ui"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+            
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/sign_in_message"
+                android:textColor="@color/text"
+                android:textSize="16sp"
+                android:layout_marginBottom="16dp" />
+                
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                
+                <!-- Sign In Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/sign_in_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:text="@string/sign_in"
+                    android:textAllCaps="false"
+                    app:cornerRadius="8dp"
+                    app:strokeColor="@color/accent_primary"
+                    app:strokeWidth="1dp"
+                    android:backgroundTint="@android:color/transparent"
+                    android:textColor="@color/accent_primary" />
+                    
+                <!-- Sign Up Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/sign_up_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:text="@string/sign_up"
+                    android:textAllCaps="false"
+                    app:cornerRadius="8dp"
+                    android:backgroundTint="@color/accent_primary" />
+            </LinearLayout>
+        </LinearLayout>
+        
+        <!-- Logged in User UI -->
+        <LinearLayout
+            android:id="@+id/user_ui"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+            
+            <!-- Profile Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="16dp">
+        
+                <!-- Profile Image -->
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/profile_image"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_shield_logo"
+                    android:layout_marginEnd="16dp" />
+        
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+        
+                    <!-- Username -->
+                    <TextView
+                        android:id="@+id/username_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="John Doe"
+                        android:textColor="@color/text"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+        
+                    <!-- Email -->
+                    <TextView
+                        android:id="@+id/email_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="john.doe@example.com"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp" />
+                </LinearLayout>
+            </LinearLayout>
+        
+            <!-- Subscription Badge -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@drawable/premium_badge_background"
+                android:padding="12dp"
+                android:gravity="center_vertical">
+                
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_shield_logo"
+                    android:layout_marginEnd="12dp" />
+                    
+                <TextView
+                    android:id="@+id/current_plan"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/free_plan"
+                    android:textColor="@color/text"
+                    android:textSize="16sp" />
+                    
+                <TextView
+                    android:id="@+id/upgrade_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/upgrade"
+                    android:textColor="@color/accent_primary"
+                    android:textStyle="bold"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
 
     <!-- Divider -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/border"
-        android:layout_marginBottom="16dp" />
-
-    <!-- Subscription Section -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/subscription"
-        android:textColor="@color/text"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="12dp" />
-
-    <!-- Current Plan -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="16dp">
-
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_shield_logo"
-            android:layout_marginEnd="12dp"
-            android:tint="@color/power_button_gray" />
-
-        <TextView
-            android:id="@+id/current_plan"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/free_plan"
-            android:textColor="@color/power_button_gray"
-            android:textSize="16sp" />
-    </LinearLayout>
-
-    <!-- Upgrade Button -->
-    <Button
-        android:id="@+id/subscribe_button"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="@string/subscribe_now"
-        android:textSize="18sp"
-        android:textAllCaps="false"
-        android:backgroundTint="@color/button_purple" />
-
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp" />
 </LinearLayout> 
