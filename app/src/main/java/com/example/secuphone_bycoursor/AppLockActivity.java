@@ -1,13 +1,15 @@
 package com.example.secuphone_bycoursor;
 
-import android.app.AppOpsManager;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -26,53 +28,36 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.preference.PreferenceManager;
 
-import com.example.secuphone_bycoursor.services.AppLockService;
+import com.example.secuphone_bycoursor.admin.AppLockManager;
+import com.example.secuphone_bycoursor.admin.LockScreenService;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.util.Collections;
+import java.util.List;
+
 public class AppLockActivity extends AppCompatActivity {
 
-    private LinearLayout snapchatApp;
-    private LinearLayout facebookApp;
-    private LinearLayout tiktokApp;
-    private LinearLayout whatsappApp;
+    private static final String TAG = "AppLockActivity";
     
-    private SwitchMaterial snapchatLockSwitch;
-    private SwitchMaterial facebookLockSwitch;
-    private SwitchMaterial tiktokLockSwitch;
-    private SwitchMaterial whatsappLockSwitch;
-    
-    private CardView pinSetupCard;
     private TextInputEditText pinInput;
     private TextInputEditText confirmPinInput;
     private Button setPinButton;
-    
-    private LinearLayout changePinOption;
-    private LinearLayout autoLockOption;
+    private Button enableAdminButton;
+    private CardView pinSetupCard;
+    private LinearLayout appListContainer;
+    private TextView noAppsText;
     
     // Feature status UI elements
     private ImageView featureStatusIcon;
     private TextView featureStatusText;
     private TextView featureStatusDetail;
+    private ImageView adminPermissionIcon;
     
-    private boolean isSnapchatLocked = false;
-    private boolean isFacebookLocked = false;
-    private boolean isTiktokLocked = false;
-    private boolean isWhatsappLocked = false;
-    
-    private static final String PACKAGE_SNAPCHAT = "com.snapchat.android";
-    private static final String PACKAGE_FACEBOOK = "com.facebook.katana";
-    private static final String PACKAGE_TIKTOK = "com.zhiliaoapp.musically";
-    private static final String PACKAGE_WHATSAPP = "com.whatsapp";
-    
-    private ActivityResultLauncher<Intent> usageAccessLauncher;
-    private ActivityResultLauncher<Intent> overlayPermissionLauncher;
-    
-    private ImageView usageStatsIcon;
-    private ImageView overlayIcon;
-    private Button usageStatsButton;
-    private Button overlayButton;
+    private AppLockManager appLockManager;
+    private ActivityResultLauncher<Intent> adminRequestLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,22 +71,18 @@ public class AppLockActivity extends AppCompatActivity {
             return insets;
         });
         
-        // Register activity result launchers
-        usageAccessLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> checkAndRequestPermissions()
-        );
+        // Initialize AppLockManager
+        appLockManager = new AppLockManager(this);
         
-        overlayPermissionLauncher = registerForActivityResult(
+        // Register activity launcher for device admin request
+        adminRequestLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
-            result -> checkAndRequestPermissions()
+            result -> updateAdminStatus()
         );
         
         initializeViews();
         setupListeners();
-        loadLockStatuses();
-        updateLockSwitches();
-        checkAndRequestPermissions();
+        updateAdminStatus();
         updateFeatureStatus();
     }
     
@@ -109,67 +90,48 @@ public class AppLockActivity extends AppCompatActivity {
         try {
             // Initialize back navigation
             ImageButton backButton = findViewById(R.id.back_button);
-            if (backButton != null) {
                 backButton.setOnClickListener(v -> finish());
-            }
             
             // Setup info button
             ImageButton infoButton = findViewById(R.id.info_button);
-            if (infoButton != null) {
                 infoButton.setOnClickListener(v -> showInfoDialog());
-            }
-        
-        // Initialize app views
-        snapchatApp = findViewById(R.id.snapchat_app);
-        facebookApp = findViewById(R.id.facebook_app);
-        tiktokApp = findViewById(R.id.tiktok_app);
-        whatsappApp = findViewById(R.id.whatsapp_app);
-        
-            // Find lock switches
-            snapchatLockSwitch = findViewById(R.id.snapchat_lock_switch);
-            facebookLockSwitch = findViewById(R.id.facebook_lock_switch);
-            tiktokLockSwitch = findViewById(R.id.tiktok_lock_switch);
-            whatsappLockSwitch = findViewById(R.id.whatsapp_lock_switch);
-        
-        // Initialize PIN setup card
+            
+            // Initialize PIN setup
         pinSetupCard = findViewById(R.id.pin_setup_card);
         pinInput = findViewById(R.id.pin_input);
         confirmPinInput = findViewById(R.id.confirm_pin_input);
         setPinButton = findViewById(R.id.set_pin_button);
         
-            // Initialize security settings
-            changePinOption = findViewById(R.id.change_pin_option);
-            autoLockOption = findViewById(R.id.auto_lock_option);
+            // Initialize admin permission button
+            enableAdminButton = findViewById(R.id.enable_admin_button);
+            adminPermissionIcon = findViewById(R.id.admin_permission_icon);
+            
+            // Initialize app list container
+            appListContainer = findViewById(R.id.app_list_container);
+            noAppsText = findViewById(R.id.no_apps_text);
             
             // Initialize feature status views
             featureStatusIcon = findViewById(R.id.feature_status_icon);
             featureStatusText = findViewById(R.id.feature_status_text);
             featureStatusDetail = findViewById(R.id.feature_status_detail);
             
-            // Initialize permission related views
-            usageStatsIcon = findViewById(R.id.usage_stats_icon);
-            overlayIcon = findViewById(R.id.overlay_icon);
-            usageStatsButton = findViewById(R.id.usage_stats_button);
-            overlayButton = findViewById(R.id.overlay_button);
         } catch (Exception e) {
-            Toast.makeText(this, "Error initializing views: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "Error initializing views", e);
+            Toast.makeText(this, "Error initializing UI: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
     private void setupListeners() {
         try {
             // Setup PIN button listener
-            if (setPinButton != null) {
                 setPinButton.setOnClickListener(this::onSetPinClicked);
-            }
         
-        // Setup app click listeners
-        setupAppClickListeners();
+            // Setup admin button listener
+            enableAdminButton.setOnClickListener(v -> requestAdminPermission());
         
-            // Setup security settings listeners
-            setupSecuritySettingsListeners();
         } catch (Exception e) {
-            Toast.makeText(this, "Error setting up listeners: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "Error setting up listeners", e);
+            Toast.makeText(this, "Error setting up UI: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
@@ -178,340 +140,33 @@ public class AppLockActivity extends AppCompatActivity {
         super.onResume();
         
         try {
-        // Check if PIN is set and update UI
-        boolean isPinSet = AppLockService.isPinSet(this);
-            if (pinSetupCard != null) {
+            // Check admin status
+            updateAdminStatus();
+            
+            // Check if PIN is set
+            boolean isPinSet = appLockManager.isPinSet();
                 pinSetupCard.setVisibility(isPinSet ? View.GONE : View.VISIBLE);
-            }
             
-            // Reload lock statuses if PIN is set
-        if (isPinSet) {
-            loadLockStatuses();
-                updateLockSwitches();
+            // Load apps if PIN is set and admin is active
+            if (isPinSet && appLockManager.isAdminActive()) {
+                loadInstalledApps();
             }
-            
-            // Update permission statuses
-            updatePermissionStatus();
             
             // Update feature status
             updateFeatureStatus();
+            
         } catch (Exception e) {
-            Toast.makeText(this, "Error in onResume: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private void updateFeatureStatus() {
-        try {
-            boolean isPinSet = AppLockService.isPinSet(this);
-            boolean hasUsageStats = hasUsageStatsPermission();
-            boolean hasOverlay = hasOverlayPermission();
-            boolean hasAnyLockedApps = isSnapchatLocked || isFacebookLocked || isTiktokLocked || isWhatsappLocked;
-            
-            // Update status UI based on current state
-            if (!isPinSet) {
-                // PIN not set - inactive
-                if (featureStatusIcon != null) {
-                    featureStatusIcon.setImageResource(R.drawable.ic_error);
-                    featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.error_red));
-                }
-                if (featureStatusText != null) {
-                    featureStatusText.setText(R.string.feature_inactive);
-                }
-                if (featureStatusDetail != null) {
-                    featureStatusDetail.setText(R.string.feature_pin_needed);
-                }
-            } else if (!hasUsageStats || !hasOverlay) {
-                // Permissions missing - inactive
-                if (featureStatusIcon != null) {
-                    featureStatusIcon.setImageResource(R.drawable.ic_error);
-                    featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.warning_amber));
-                }
-                if (featureStatusText != null) {
-                    featureStatusText.setText(R.string.feature_inactive);
-                }
-                if (featureStatusDetail != null) {
-                    featureStatusDetail.setText(R.string.feature_permission_needed);
-                }
-            } else if (!hasAnyLockedApps) {
-                // No apps locked - ready but not active
-                if (featureStatusIcon != null) {
-                    featureStatusIcon.setImageResource(R.drawable.ic_check_circle);
-                    featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.accent_primary));
-                }
-                if (featureStatusText != null) {
-                    featureStatusText.setText(R.string.feature_inactive);
-                }
-                if (featureStatusDetail != null) {
-                    featureStatusDetail.setText(R.string.choose_apps_to_lock);
-                }
-        } else {
-                // Active and protecting apps
-                if (featureStatusIcon != null) {
-                    featureStatusIcon.setImageResource(R.drawable.ic_check_circle);
-                    featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.success_green));
-                }
-                if (featureStatusText != null) {
-                    featureStatusText.setText(R.string.feature_active);
-                }
-                if (featureStatusDetail != null) {
-                    featureStatusDetail.setText(R.string.feature_active_detail);
-                }
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Error updating feature status: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private void loadLockStatuses() {
-        try {
-        isSnapchatLocked = AppLockService.isAppLocked(this, PACKAGE_SNAPCHAT);
-        isFacebookLocked = AppLockService.isAppLocked(this, PACKAGE_FACEBOOK);
-        isTiktokLocked = AppLockService.isAppLocked(this, PACKAGE_TIKTOK);
-        isWhatsappLocked = AppLockService.isAppLocked(this, PACKAGE_WHATSAPP);
-        } catch (Exception e) {
-            Toast.makeText(this, "Error loading lock statuses: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private void setupAppClickListeners() {
-        try {
-            // Only set up listeners if the views exist
-            if (snapchatApp != null) {
-                snapchatApp.setOnClickListener(v -> {
-                    if (AppLockService.isPinSet(this) && snapchatLockSwitch != null) {
-                        snapchatLockSwitch.setChecked(!snapchatLockSwitch.isChecked());
-                        toggleAppLock(PACKAGE_SNAPCHAT, isSnapchatLocked);
-                    } else {
-                        Toast.makeText(this, R.string.setup_pin_first, Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-            
-            if (facebookApp != null) {
-                facebookApp.setOnClickListener(v -> {
-                    if (AppLockService.isPinSet(this) && facebookLockSwitch != null) {
-                        facebookLockSwitch.setChecked(!facebookLockSwitch.isChecked());
-                        toggleAppLock(PACKAGE_FACEBOOK, isFacebookLocked);
-                    } else {
-                        Toast.makeText(this, R.string.setup_pin_first, Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-            
-            if (tiktokApp != null) {
-                tiktokApp.setOnClickListener(v -> {
-                    if (AppLockService.isPinSet(this) && tiktokLockSwitch != null) {
-                        tiktokLockSwitch.setChecked(!tiktokLockSwitch.isChecked());
-                        toggleAppLock(PACKAGE_TIKTOK, isTiktokLocked);
-                    } else {
-                        Toast.makeText(this, R.string.setup_pin_first, Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-            
-            if (whatsappApp != null) {
-                whatsappApp.setOnClickListener(v -> {
-                    if (AppLockService.isPinSet(this) && whatsappLockSwitch != null) {
-                        whatsappLockSwitch.setChecked(!whatsappLockSwitch.isChecked());
-                        toggleAppLock(PACKAGE_WHATSAPP, isWhatsappLocked);
-                    } else {
-                        Toast.makeText(this, R.string.setup_pin_first, Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-            
-            // Setup change listeners for the switches if they exist
-            if (snapchatLockSwitch != null) {
-                snapchatLockSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    if (buttonView.isPressed()) {  // Only react to user input, not programmatic changes
-                        if (AppLockService.isPinSet(this)) {
-                            toggleAppLock(PACKAGE_SNAPCHAT, isSnapchatLocked);
-                        } else {
-                            buttonView.setChecked(!isChecked);  // Revert switch state
-                            Toast.makeText(this, R.string.setup_pin_first, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
-            
-            if (facebookLockSwitch != null) {
-                facebookLockSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    if (buttonView.isPressed()) {
-                        if (AppLockService.isPinSet(this)) {
-                            toggleAppLock(PACKAGE_FACEBOOK, isFacebookLocked);
-                        } else {
-                            buttonView.setChecked(!isChecked);
-                            Toast.makeText(this, R.string.setup_pin_first, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
-            
-            if (tiktokLockSwitch != null) {
-                tiktokLockSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    if (buttonView.isPressed()) {
-                        if (AppLockService.isPinSet(this)) {
-                            toggleAppLock(PACKAGE_TIKTOK, isTiktokLocked);
-                        } else {
-                            buttonView.setChecked(!isChecked);
-                            Toast.makeText(this, R.string.setup_pin_first, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
-            
-            if (whatsappLockSwitch != null) {
-                whatsappLockSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                    if (buttonView.isPressed()) {
-                        if (AppLockService.isPinSet(this)) {
-                            toggleAppLock(PACKAGE_WHATSAPP, isWhatsappLocked);
-                        } else {
-                            buttonView.setChecked(!isChecked);
-                            Toast.makeText(this, R.string.setup_pin_first, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Error setting up app click listeners: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private void setupSecuritySettingsListeners() {
-        try {
-            if (changePinOption != null) {
-                changePinOption.setOnClickListener(v -> {
-                    if (AppLockService.isPinSet(this)) {
-                        showChangePinDialog();
-                    } else {
-                        Toast.makeText(this, R.string.setup_pin_first, Toast.LENGTH_SHORT).show();
-                        if (pinInput != null) {
-                            pinInput.requestFocus();
-                        }
-                    }
-                });
-            }
-            
-            if (autoLockOption != null) {
-                autoLockOption.setOnClickListener(v -> {
-                    if (AppLockService.isPinSet(this)) {
-                        showAutoLockOptionsDialog();
-                    } else {
-                        Toast.makeText(this, R.string.setup_pin_first, Toast.LENGTH_SHORT).show();
-                        if (pinInput != null) {
-                            pinInput.requestFocus();
-                        }
-                    }
-                });
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Error setting up security settings listeners: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private void toggleAppLock(String packageName, boolean currentLockState) {
-        try {
-        // Only allow toggling if PIN is set
-        if (AppLockService.isPinSet(this)) {
-            boolean newLockState = !currentLockState;
-            
-            // Update lock state
-            AppLockService.setAppLockStatus(this, packageName, newLockState);
-            
-            // Update the UI
-            loadLockStatuses();
-                updateLockSwitches();
-                
-                // Update feature status
-                updateFeatureStatus();
-            
-            // Give user feedback
-            String appName = getAppName(packageName);
-            String status = newLockState ? getString(R.string.locked) : getString(R.string.unlocked);
-            Toast.makeText(this, appName + " " + status, Toast.LENGTH_SHORT).show();
-            
-            // Make sure the service is running if we've locked an app
-            if (newLockState) {
-                startAppLockService();
-            }
-        } else {
-            // Direct user's attention to the PIN setup
-            Toast.makeText(this, R.string.setup_pin_first, Toast.LENGTH_SHORT).show();
-                if (pinInput != null) {
-            pinInput.requestFocus();
-                }
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Error toggling app lock: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private void showChangePinDialog() {
-        // Implementation for changing PIN
-        Toast.makeText(this, R.string.coming_soon, Toast.LENGTH_SHORT).show();
-    }
-    
-    private void showAutoLockOptionsDialog() {
-        // Implementation for auto-lock options
-        Toast.makeText(this, R.string.coming_soon, Toast.LENGTH_SHORT).show();
-    }
-    
-    private void showInfoDialog() {
-        try {
-            new AlertDialog.Builder(this)
-                .setTitle(R.string.app_lock_info)
-                .setMessage(R.string.app_lock_explanation)
-                .setPositiveButton(R.string.ok, null)
-                .show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Error showing info dialog: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private String getAppName(String packageName) {
-        switch (packageName) {
-            case PACKAGE_SNAPCHAT:
-                return getString(R.string.snapchat);
-            case PACKAGE_FACEBOOK:
-                return getString(R.string.facebook);
-            case PACKAGE_TIKTOK:
-                return getString(R.string.tiktok);
-            case PACKAGE_WHATSAPP:
-                return getString(R.string.whatsapp);
-            default:
-                return "App";
-        }
-    }
-    
-    private void updateLockSwitches() {
-        try {
-            // Update switch states based on current lock state
-            if (snapchatLockSwitch != null) {
-                snapchatLockSwitch.setChecked(isSnapchatLocked);
-            }
-            if (facebookLockSwitch != null) {
-                facebookLockSwitch.setChecked(isFacebookLocked);
-            }
-            if (tiktokLockSwitch != null) {
-                tiktokLockSwitch.setChecked(isTiktokLocked);
-            }
-            if (whatsappLockSwitch != null) {
-                whatsappLockSwitch.setChecked(isWhatsappLocked);
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Error updating lock switches: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "Error in onResume", e);
+            Toast.makeText(this, "Error refreshing UI: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
     private void onSetPinClicked(View view) {
         try {
-            if (pinInput == null || confirmPinInput == null) {
-                Toast.makeText(this, "Error: PIN input fields not found", Toast.LENGTH_SHORT).show();
-                return;
-            }
+            String pin = pinInput.getText().toString().trim();
+            String confirmPin = confirmPinInput.getText().toString().trim();
             
-        String pin = pinInput.getText().toString();
-        String confirmPin = confirmPinInput.getText().toString();
+            Log.d(TAG, "Setting PIN: pin length " + pin.length() + ", confirm length " + confirmPin.length());
         
         if (pin.isEmpty() || confirmPin.isEmpty()) {
             Toast.makeText(this, R.string.enter_pin, Toast.LENGTH_SHORT).show();
@@ -526,194 +181,251 @@ public class AppLockActivity extends AppCompatActivity {
         }
         
         // Save PIN
-        AppLockService.setPin(this, pin);
-        Toast.makeText(this, R.string.pin_set_success, Toast.LENGTH_SHORT).show();
+        boolean pinSetSuccess = false;
+        try {
+            appLockManager.setPin(pin);
+            pinSetSuccess = appLockManager.isPinSet();
+            Log.d(TAG, "PIN set successfully: " + pinSetSuccess);
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting PIN in AppLockManager", e);
+            pinSetSuccess = false;
+        }
+        
+        if (pinSetSuccess) {
+            Toast.makeText(this, R.string.pin_set_success, Toast.LENGTH_SHORT).show();
         
         // Hide PIN setup card
-            if (pinSetupCard != null) {
         pinSetupCard.setVisibility(View.GONE);
+                
+            // Request admin permissions if not yet granted
+            if (!appLockManager.isAdminActive()) {
+                requestAdminPermission();
+            } else {
+                // Load apps if admin is already active
+                loadInstalledApps();
             }
-        
-        // Check permissions and start service if needed
-        checkAndRequestPermissions();
             
             // Update feature status
             updateFeatureStatus();
-        } catch (Exception e) {
-            Toast.makeText(this, "Error setting PIN: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private void updatePermissionStatus() {
-        try {
-            // Update UI based on permission status
-            boolean hasUsageStats = hasUsageStatsPermission();
-            boolean hasOverlay = hasOverlayPermission();
-            
-            // Update usage stats permission if the view exists
-            if (usageStatsIcon != null) {
-                usageStatsIcon.setImageResource(hasUsageStats ? 
-                        R.drawable.ic_check_circle : R.drawable.ic_error);
-                usageStatsIcon.setColorFilter(ContextCompat.getColor(this, hasUsageStats ? 
-                        R.color.success_green : R.color.error_red));
-            }
-            
-            if (usageStatsButton != null) {
-                usageStatsButton.setVisibility(hasUsageStats ? View.GONE : View.VISIBLE);
-            }
-            
-            // Update overlay permission if the view exists
-            if (overlayIcon != null) {
-                overlayIcon.setImageResource(hasOverlay ? 
-                        R.drawable.ic_check_circle : R.drawable.ic_error);
-                overlayIcon.setColorFilter(ContextCompat.getColor(this, hasOverlay ? 
-                        R.color.success_green : R.color.error_red));
-            }
-            
-            if (overlayButton != null) {
-                overlayButton.setVisibility(hasOverlay ? View.GONE : View.VISIBLE);
-            }
-            
-            // Set button click listeners if the buttons exist
-            if (usageStatsButton != null) {
-                usageStatsButton.setOnClickListener(v -> {
-                    Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-                    usageAccessLauncher.launch(intent);
-                });
-            }
-            
-            if (overlayButton != null) {
-                overlayButton.setOnClickListener(v -> {
-                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, 
-                            Uri.parse("package:" + getPackageName()));
-                    overlayPermissionLauncher.launch(intent);
-                });
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Error updating permission status: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private void startAppLockService() {
-        try {
-        Intent serviceIntent = new Intent(this, AppLockService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
         } else {
-            startService(serviceIntent);
-            }
-        } catch (Exception e) {
-            Toast.makeText(this, "Error starting app lock service: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private boolean hasUsageStatsPermission() {
-        try {
-        AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
-            if (appOps == null) {
-                return false;
-            }
-        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, 
-                android.os.Process.myUid(), getPackageName());
-        return mode == AppOpsManager.MODE_ALLOWED;
-        } catch (Exception e) {
-            Toast.makeText(this, "Error checking usage stats permission: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            return false;
-        }
-    }
-    
-    private boolean hasOverlayPermission() {
-        try {
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M || 
-               Settings.canDrawOverlays(this);
-        } catch (Exception e) {
-            Toast.makeText(this, "Error checking overlay permission: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            return false;
-        }
-    }
-    
-    private void checkAndRequestPermissions() {
-        try {
-            // Update the permission status UI
-            updatePermissionStatus();
-            
-        // Check for usage stats permission
-        if (!hasUsageStatsPermission()) {
-            showUsageAccessPermissionDialog();
-            return;
+            Toast.makeText(this, "Failed to set PIN. Please try again.", Toast.LENGTH_LONG).show();
         }
         
-        // Check for overlay permission
-        if (!hasOverlayPermission()) {
-            showOverlayPermissionDialog();
-            return;
-        }
+    } catch (Exception e) {
+        Log.e(TAG, "Error setting PIN", e);
+        Toast.makeText(this, "Error setting PIN: " + e.getMessage(), Toast.LENGTH_LONG).show();
+    }
+}
+    
+    private void updateAdminStatus() {
+        boolean isAdminActive = appLockManager.isAdminActive();
         
-        // If all permissions are granted and PIN is set, start the service
-        if (AppLockService.isPinSet(this)) {
-            startAppLockService();
-            }
+        // Update admin permission icon
+        adminPermissionIcon.setImageResource(isAdminActive ? 
+            R.drawable.ic_check_circle : R.drawable.ic_error);
+        adminPermissionIcon.setColorFilter(ContextCompat.getColor(this, isAdminActive ? 
+            R.color.success_green : R.color.error_red));
             
-            // Update feature status
-            updateFeatureStatus();
+        // Update admin button visibility
+        enableAdminButton.setVisibility(isAdminActive ? View.GONE : View.VISIBLE);
+        
+        // Update feature status
+        updateFeatureStatus();
+    }
+    
+    private void requestAdminPermission() {
+        try {
+            Intent intent = appLockManager.getAdminRequestIntent();
+            adminRequestLauncher.launch(intent);
         } catch (Exception e) {
-            Toast.makeText(this, "Error checking permissions: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "Error requesting device admin", e);
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
-    private void showUsageAccessPermissionDialog() {
+    private void loadInstalledApps() {
         try {
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.usage_access_required)
-                .setMessage(R.string.usage_access_explanation)
-            .setPositiveButton(R.string.grant_usage_access, (dialog, which) -> {
-                Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-                usageAccessLauncher.launch(intent);
-            })
-            .setNegativeButton(R.string.cancel, (dialog, which) -> {
-                Toast.makeText(this, R.string.usage_access_required, Toast.LENGTH_SHORT).show();
-            })
-            .setCancelable(false)
-            .show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Error showing usage access dialog: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            
-            // Try to launch the settings directly if the dialog fails
-            try {
-                Intent intent = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
-                startActivity(intent);
-            } catch (Exception e2) {
-                Toast.makeText(this, "Could not open settings", Toast.LENGTH_SHORT).show();
+            // Clear existing apps
+            if (appListContainer != null) {
+                appListContainer.removeAllViews();
             }
+            
+            // Hide no apps text
+            if (noAppsText != null) {
+                noAppsText.setVisibility(View.GONE);
+            }
+            
+            // Get user installed apps
+            List<ApplicationInfo> userApps = appLockManager.getUserInstalledApps();
+            
+            // Sort apps by name
+            PackageManager pm = getPackageManager();
+            Collections.sort(userApps, (app1, app2) -> {
+                String name1 = pm.getApplicationLabel(app1).toString();
+                String name2 = pm.getApplicationLabel(app2).toString();
+                return name1.compareToIgnoreCase(name2);
+            });
+            
+            // Add apps to UI
+            for (ApplicationInfo appInfo : userApps) {
+                addAppToList(appInfo);
+            }
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading apps", e);
+            Toast.makeText(this, "Error loading apps: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
-    private void showOverlayPermissionDialog() {
+    private void addAppToList(ApplicationInfo appInfo) {
         try {
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.overlay_permission_required)
-                .setMessage(R.string.overlay_permission_explanation)
-            .setPositiveButton(R.string.grant_overlay_permission, (dialog, which) -> {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, 
-                        Uri.parse("package:" + getPackageName()));
-                overlayPermissionLauncher.launch(intent);
-            })
-            .setNegativeButton(R.string.cancel, (dialog, which) -> {
-                Toast.makeText(this, R.string.overlay_permission_required, Toast.LENGTH_SHORT).show();
-            })
-            .setCancelable(false)
-            .show();
-        } catch (Exception e) {
-            Toast.makeText(this, "Error showing overlay permission dialog: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            PackageManager pm = getPackageManager();
+            View appRow = getLayoutInflater().inflate(R.layout.item_app_lock, appListContainer, false);
             
-            // Try to launch the settings directly if the dialog fails
-            try {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, 
-                        Uri.parse("package:" + getPackageName()));
-                startActivity(intent);
-            } catch (Exception e2) {
-                Toast.makeText(this, "Could not open settings", Toast.LENGTH_SHORT).show();
+            // Set app details
+            ImageView appIcon = appRow.findViewById(R.id.app_icon);
+            TextView appName = appRow.findViewById(R.id.app_name);
+            SwitchMaterial lockSwitch = appRow.findViewById(R.id.app_lock_switch);
+            
+            if (appIcon == null || appName == null || lockSwitch == null) {
+                Log.e(TAG, "One or more views not found in app_lock item layout");
+                return;
             }
+            
+            // Set icon and name
+            appIcon.setImageDrawable(pm.getApplicationIcon(appInfo));
+            appName.setText(pm.getApplicationLabel(appInfo));
+            
+            // Set switch state
+            String packageName = appInfo.packageName;
+            boolean isLocked = appLockManager.isAppLocked(packageName);
+            lockSwitch.setChecked(isLocked);
+            
+            // Set switch listener
+            lockSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                try {
+                    if (buttonView.isPressed()) {
+                        // Update lock status
+                        if (isChecked) {
+                            try {
+                                appLockManager.addLockedApp(packageName);
+                                Log.d(TAG, "Added app to locked list: " + packageName);
+                                
+                                // Start the lock screen service if not running
+                                startLockScreenService();
+        } catch (Exception e) {
+                                Log.e(TAG, "Error locking app", e);
+                                Toast.makeText(AppLockActivity.this, 
+                                    "Error locking app: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                buttonView.setChecked(false);
+                                return;
+                            }
+                        } else {
+                            appLockManager.removeLockedApp(packageName);
+                            Log.d(TAG, "Removed app from locked list: " + packageName);
+                        }
+                        
+                        // Show toast message
+                        String appLabel = pm.getApplicationLabel(appInfo).toString();
+                        String statusMessage = appLabel + " " + 
+                            (isChecked ? getString(R.string.locked) : getString(R.string.unlocked));
+                        Toast.makeText(this, statusMessage, Toast.LENGTH_SHORT).show();
+                        
+                        // Update feature status
+                        updateFeatureStatus();
+                    }
+        } catch (Exception e) {
+                    Log.e(TAG, "Error toggling app lock state for " + packageName, e);
+                    Toast.makeText(AppLockActivity.this, 
+                        "Error locking app: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    // Reset switch to previous state
+                    buttonView.setChecked(!isChecked);
+                }
+            });
+            
+            // Add to container
+            appListContainer.addView(appRow);
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding app to list", e);
         }
+    }
+    
+    private void updateFeatureStatus() {
+        try {
+            boolean isPinSet = appLockManager.isPinSet();
+            boolean isAdminActive = appLockManager.isAdminActive();
+            boolean hasLockedApps = !appLockManager.getLockedApps().isEmpty();
+            
+            // Update status icon and text
+            if (!isPinSet) {
+                // PIN not set - inactive
+                featureStatusIcon.setImageResource(R.drawable.ic_error);
+                featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.error_red));
+                featureStatusText.setText(R.string.feature_inactive);
+                featureStatusDetail.setText(R.string.feature_pin_needed);
+            } else if (!isAdminActive) {
+                // Admin not active - inactive
+                featureStatusIcon.setImageResource(R.drawable.ic_error);
+                featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.warning_amber));
+                featureStatusText.setText(R.string.feature_inactive);
+                featureStatusDetail.setText(R.string.admin_request_message);
+            } else if (!hasLockedApps) {
+                // No apps locked - ready but not active
+                featureStatusIcon.setImageResource(R.drawable.ic_check_circle);
+                featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.accent_primary));
+                featureStatusText.setText(R.string.feature_inactive);
+                featureStatusDetail.setText(R.string.choose_apps_to_lock);
+            } else {
+                // Active and protecting apps
+                featureStatusIcon.setImageResource(R.drawable.ic_check_circle);
+                featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.success_green));
+                featureStatusText.setText(R.string.feature_active);
+                featureStatusDetail.setText(R.string.feature_active_detail);
+                
+                // Start the lock screen service
+                startLockScreenService();
+            }
+            
+            // Update app list visibility
+            if (noAppsText != null) {
+                noAppsText.setVisibility((isPinSet && isAdminActive) ? View.GONE : View.VISIBLE);
+            }
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating feature status", e);
+        }
+    }
+    
+    private void startLockScreenService() {
+        try {
+            // Create intent for the service
+            Intent serviceIntent = new Intent(this, LockScreenService.class);
+            
+            // Add flags to ensure service starts properly
+            serviceIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+            
+            // Start the service as a foreground service
+            Log.d(TAG, "Starting lock screen service as foreground service");
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+            
+            Log.d(TAG, "Lock screen service start command sent");
+        } catch (Exception e) {
+            Log.e(TAG, "Error starting lock screen service", e);
+            Toast.makeText(this, "Error starting lock service: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void showInfoDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.app_lock_info)
+            .setMessage(R.string.app_lock_explanation)
+            .setPositiveButton(R.string.ok, null)
+            .show();
     }
 } 

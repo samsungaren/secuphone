@@ -200,10 +200,29 @@ public class URLCheckerActivity extends AppCompatActivity {
                 urlInputLayout.setError(null);
             }
             
-            // Add http:// prefix if not present
-            if (!url.startsWith("https://") && !url.startsWith("https://")) {
+            // Validate URL format
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
                 url = "https://" + url;
                 urlInput.setText(url);
+            }
+            
+            // Further validate the URL structure
+            try {
+                Uri uri = Uri.parse(url);
+                String host = uri.getHost();
+                if (host == null || host.isEmpty()) {
+                    urlInputLayout.setError("Invalid URL format");
+                    return;
+                }
+                
+                // Basic domain validation (must have at least one dot)
+                if (!host.contains(".")) {
+                    urlInputLayout.setError("Invalid domain");
+                    return;
+                }
+            } catch (Exception e) {
+                urlInputLayout.setError("Invalid URL");
+                return;
             }
             
             // Show progress and disable button during API call
@@ -291,33 +310,49 @@ public class URLCheckerActivity extends AppCompatActivity {
         // Get existing history
         Set<String> urlHistory = new HashSet<>(prefs.getStringSet(PREF_URL_HISTORY, new HashSet<>()));
         
+        // Remove existing entries with the same URL to avoid duplicates
+        Set<String> filteredHistory = new HashSet<>();
+        for (String entry : urlHistory) {
+            String storedUrl = entry.split("\\|")[0];
+            if (!storedUrl.equals(url)) {
+                filteredHistory.add(entry);
+            }
+        }
+        
         // Add new entry
-        urlHistory.add(urlEntry);
+        filteredHistory.add(urlEntry);
         
         // If history is too large, remove oldest entries
-        if (urlHistory.size() > MAX_HISTORY_ITEMS) {
+        if (filteredHistory.size() > MAX_HISTORY_ITEMS) {
             // Convert to list for sorting
-            List<String> urlList = new ArrayList<>(urlHistory);
+            List<String> urlList = new ArrayList<>(filteredHistory);
             
             // Sort by timestamp (oldest first)
             Collections.sort(urlList, (a, b) -> {
-                long timestampA = Long.parseLong(a.split("\\|")[2]);
-                long timestampB = Long.parseLong(b.split("\\|")[2]);
-                return Long.compare(timestampA, timestampB);
+                try {
+                    long timestampA = Long.parseLong(a.split("\\|")[2]);
+                    long timestampB = Long.parseLong(b.split("\\|")[2]);
+                    return Long.compare(timestampA, timestampB);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error sorting history entries", e);
+                    return 0;
+                }
             });
             
             // Remove oldest entries
             urlList = urlList.subList(urlList.size() - MAX_HISTORY_ITEMS, urlList.size());
             
             // Convert back to set
-            urlHistory = new HashSet<>(urlList);
+            filteredHistory = new HashSet<>(urlList);
         }
         
-        // Save updated history
-        prefs.edit().putStringSet(PREF_URL_HISTORY, urlHistory).apply();
+        // Apply the edit with commit (more reliable than apply for SharedPreferences sets)
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putStringSet(PREF_URL_HISTORY, filteredHistory);
+        editor.commit(); // Use commit instead of apply for immediate write
         
-        // Reload history list
-        loadUrlHistory();
+        // Reload history list on main thread
+        mainHandler.post(this::loadUrlHistory);
     }
     
     private void showClearHistoryConfirmation() {
@@ -341,7 +376,8 @@ public class URLCheckerActivity extends AppCompatActivity {
                 // Step 1: Submit URL for scanning
                 String urlId = submitUrlToVirusTotal(url);
                 if (urlId == null) {
-                    showError("Failed to submit URL for analysis");
+                    // Fallback to basic checks when API fails
+                    performBasicUrlCheck(url);
                     return;
                 }
                 
@@ -351,7 +387,8 @@ public class URLCheckerActivity extends AppCompatActivity {
                 // Step 3: Get scan results
                 JSONObject scanResult = getVirusTotalResults(urlId);
                 if (scanResult == null) {
-                    showError("Failed to retrieve scan results");
+                    // Fallback to basic checks when API fails
+                    performBasicUrlCheck(url);
                     return;
                 }
                 
@@ -362,8 +399,9 @@ public class URLCheckerActivity extends AppCompatActivity {
                 showError("Scan was interrupted");
                 Log.e(TAG, "URL checking interrupted", e);
             } catch (Exception e) {
-                showError("Error checking URL: " + e.getMessage());
-                Log.e(TAG, "Error checking URL", e);
+                // Fallback to basic checks when any exception occurs
+                performBasicUrlCheck(url);
+                Log.e(TAG, "Error checking URL with VirusTotal, falling back to basic check", e);
             }
         });
     }
@@ -386,7 +424,16 @@ public class URLCheckerActivity extends AppCompatActivity {
             
             try (Response response = client.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
-                    Log.e(TAG, "API error: " + response.code());
+                    String errorBody = response.body() != null ? response.body().string() : "No response body";
+                    Log.e(TAG, "API error: " + response.code() + " - " + errorBody);
+                    
+                    if (response.code() == 401) {
+                        showError("API key invalid or expired");
+                    } else if (response.code() == 429) {
+                        showError("Rate limit exceeded. Please try again later.");
+                    } else {
+                        showError("API error: " + response.code());
+                    }
                     return null;
                 }
                 
@@ -500,6 +547,109 @@ public class URLCheckerActivity extends AppCompatActivity {
             showError("Error processing scan results");
             Log.e(TAG, "Error processing scan results", e);
         }
+    }
+    
+    private void performBasicUrlCheck(String url) {
+        // Perform simple heuristic checks on the URL when VirusTotal API fails
+        boolean isSuspicious = false;
+        String suspiciousReason = "";
+        
+        // Check for suspicious keywords in the URL
+        String[] suspiciousKeywords = {"phishing", "login", "verify", "account", "secure", "banking", 
+                                      "paypal", "signin", "ebay", "apple", "microsoft", "google", 
+                                      "facebook", "password", "verify"};
+        
+        Uri uri = Uri.parse(url);
+        String host = uri.getHost();
+        String path = uri.getPath() != null ? uri.getPath().toLowerCase() : "";
+        
+        // Check for IP address instead of domain name (potential phishing sign)
+        if (host != null && host.matches("\\d+\\.\\d+\\.\\d+\\.\\d+")) {
+            isSuspicious = true;
+            suspiciousReason = "Uses IP address instead of domain name";
+        }
+        
+        // Check for suspicious domain
+        if (!isSuspicious && host != null) {
+            for (String keyword : suspiciousKeywords) {
+                if (host.contains(keyword) && !isKnownSafeDomain(host)) {
+                    isSuspicious = true;
+                    suspiciousReason = "Suspicious domain name";
+                    break;
+                }
+            }
+        }
+        
+        // Check for suspicious URL path
+        if (!isSuspicious && !path.isEmpty()) {
+            for (String keyword : suspiciousKeywords) {
+                if (path.contains(keyword)) {
+                    isSuspicious = true;
+                    suspiciousReason = "Suspicious URL path";
+                    break;
+                }
+            }
+        }
+        
+        // Update UI based on basic check results
+        boolean finalIsSuspicious = isSuspicious;
+        String finalSuspiciousReason = suspiciousReason;
+        
+        mainHandler.post(() -> {
+            progressBar.setVisibility(View.GONE);
+            checkUrlButton.setEnabled(true);
+            resultsSection.setVisibility(View.VISIBLE);
+            
+            if (finalIsSuspicious) {
+                // Update UI for suspicious URL
+                warningText.setText("Potentially Unsafe URL");
+                warningText.setTextColor(ContextCompat.getColor(this, R.color.warning_red));
+                warningIcon.setImageResource(R.drawable.ic_warning_triangle);
+                browserContent.setBackgroundColor(ContextCompat.getColor(this, R.color.warning_red));
+                browserContent.setImageResource(R.drawable.ic_warning_triangle);
+                
+                Toast.makeText(URLCheckerActivity.this, 
+                               "Warning: " + finalSuspiciousReason + " (Basic check only)", 
+                               Toast.LENGTH_LONG).show();
+            } else {
+                // Update UI for potentially safe URL
+                warningText.setText("Potentially Safe URL");
+                warningText.setTextColor(ContextCompat.getColor(this, R.color.power_button_green));
+                warningIcon.setImageResource(R.drawable.ic_shield_logo);
+                browserContent.setBackgroundColor(ContextCompat.getColor(this, R.color.power_button_green));
+                browserContent.setImageResource(R.drawable.ic_shield_logo);
+                
+                Toast.makeText(URLCheckerActivity.this, 
+                               "No obvious threats detected (Basic check only)", 
+                               Toast.LENGTH_LONG).show();
+            }
+            
+            // Add a note that this was a basic check
+            TextView scanStatsText = findViewById(R.id.scan_stats_text);
+            if (scanStatsText != null) {
+                scanStatsText.setText("VirusTotal API unavailable. Basic check performed instead.");
+                scanStatsText.setVisibility(View.VISIBLE);
+            }
+            
+            // Save to history
+            saveUrlToHistory(url, !finalIsSuspicious);
+        });
+    }
+    
+    private boolean isKnownSafeDomain(String host) {
+        String[] knownSafeDomains = {
+            "google.com", "microsoft.com", "apple.com", "amazon.com", "facebook.com",
+            "twitter.com", "instagram.com", "youtube.com", "linkedin.com", "github.com",
+            "stackoverflow.com", "reddit.com", "wikipedia.org", "yahoo.com", "netflix.com"
+        };
+        
+        for (String domain : knownSafeDomains) {
+            if (host.endsWith(domain)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     private void showError(String message) {

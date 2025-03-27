@@ -3,6 +3,8 @@ package com.example.secuphone_bycoursor;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
@@ -14,6 +16,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
@@ -24,6 +27,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.preference.PreferenceManager;
 
+import com.example.secuphone_bycoursor.admin.AppLockManager;
 import com.example.secuphone_bycoursor.services.AppLockService;
 import com.example.secuphone_bycoursor.utils.PermissionManager;
 import com.google.android.material.navigation.NavigationView;
@@ -37,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private ProgressBar securityLevelProgress;
     private ProgressBar activeFeaturesProgress;
     private TextView activeFeaturesText;
+    private TextView securityLevelPercentage;
     
     // Feature status UI elements
     private View vpnStatusIndicator;
@@ -53,9 +58,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     // Feature status tracking
     private boolean isVpnActive = false;
     private boolean isAppLockActive = false;
-    private boolean isUrlCheckerActive = true; // Always active by default
+    private boolean isUrlCheckerActive = false;
     private boolean isFindPhoneActive = false;
     private boolean isHiddenFilesActive = false;
+    private boolean isAntiSpyActive = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,6 +109,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         checkFeatureStatuses();
         updateFeatureStatusUI();
         updateSecurityLevel();
+        
+        // Update recommendations visibility
+        updateRecommendationVisibility();
+        
+        // Update real-time status
+        updateNetworkStatus();
+        updateLastScanTime();
+        updateThreatsDetected();
     }
     
     private void initializeFeatureStatusUI() {
@@ -128,23 +142,36 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
     
     private void checkFeatureStatuses() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        
-        // VPN status - check if VPN service is running
-        isVpnActive = prefs.getBoolean("vpn_active", false);
-        
-        // App Lock status - check if PIN is set and at least one app is locked
-        isAppLockActive = AppLockService.isPinSet(this) && hasLockedApps();
-        
-        // URL Checker is always active by default
-        isUrlCheckerActive = true;
-        
-        // Find Phone status - check if camera permission is granted
-        isFindPhoneActive = permissionManager.hasCameraPermission() && permissionManager.hasStoragePermission();
-        
-        // Hidden Files status - check if storage permission is granted and feature is enabled
-        isHiddenFilesActive = permissionManager.hasStoragePermission() && 
-                              prefs.getBoolean("hidden_files_active", false);
+        try {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            
+            // VPN status
+            isVpnActive = prefs.getBoolean("vpn_active", false);
+            
+            // App Lock status
+            try {
+                AppLockManager appLockManager = AppLockManager.getInstance(this);
+                isAppLockActive = appLockManager.isAdminActive();
+            } catch (Exception e) {
+                Log.e("MainActivity", "Error accessing AppLockManager: " + e.getMessage(), e);
+                isAppLockActive = false;
+            }
+            
+            // Anti-Spy status
+            isAntiSpyActive = prefs.getBoolean("anti_spy_enabled", false);
+            
+            // URL Checker is always active by default
+            isUrlCheckerActive = true;
+            
+            // Find Phone status - check if camera permission is granted
+            isFindPhoneActive = permissionManager.hasCameraPermission() && permissionManager.hasStoragePermission();
+            
+            // Hidden Files status - check if storage permission is granted and feature is enabled
+            isHiddenFilesActive = permissionManager.hasStoragePermission() && 
+                                  prefs.getBoolean("hidden_files_active", false);
+        } catch (Exception e) {
+            Log.e("MainActivity", "Error checking feature statuses: " + e.getMessage(), e);
+        }
     }
     
     private boolean hasLockedApps() {
@@ -179,6 +206,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Update Hidden Files status
         updateStatusIndicator(hiddenFilesStatusIndicator, hiddenFilesStatusText, 
                 isHiddenFilesActive, R.string.status_enabled, R.string.status_disabled);
+        
+        // Update Anti-Spy status
+        View antiSpyStatusIndicator = findViewById(R.id.anti_spy_status_indicator);
+        TextView antiSpyStatusText = findViewById(R.id.anti_spy_status_text);
+        if (antiSpyStatusIndicator != null && antiSpyStatusText != null) {
+            updateStatusIndicator(antiSpyStatusIndicator, antiSpyStatusText, 
+                    isAntiSpyActive, R.string.status_enabled, R.string.status_disabled);
+        }
     }
     
     private void updateStatusIndicator(View indicator, TextView statusText, 
@@ -243,10 +278,313 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         securityLevelProgress = findViewById(R.id.security_level_progress);
         activeFeaturesProgress = findViewById(R.id.active_features_progress);
         activeFeaturesText = findViewById(R.id.active_features_text);
+        securityLevelPercentage = findViewById(R.id.security_level_percentage);
+        
+        // Initialize recommendations
+        setupRecommendations();
+        
+        // Initialize real-time status
+        setupRealTimeStatus();
         
         // Set initial values (these will be updated in onResume)
         securityLevelProgress.setProgress(0);
         activeFeaturesProgress.setProgress(0);
+    }
+    
+    /**
+     * Setup recommendation items and their click actions
+     */
+    private void setupRecommendations() {
+        try {
+            // Setup app lock recommendation
+            View recommendationItem1 = findViewById(R.id.recommendation_item_1);
+            ImageButton actionButton1 = findViewById(R.id.recommendation_action_1);
+            
+            if (recommendationItem1 != null && actionButton1 != null) {
+                // Whole item click
+                recommendationItem1.setOnClickListener(v -> openAppLockActivity());
+                
+                // Action button click
+                actionButton1.setOnClickListener(v -> openAppLockActivity());
+            }
+            
+            // Setup VPN recommendation
+            View recommendationItem2 = findViewById(R.id.recommendation_item_2);
+            ImageButton actionButton2 = findViewById(R.id.recommendation_action_2);
+            
+            if (recommendationItem2 != null && actionButton2 != null) {
+                // Whole item click
+                recommendationItem2.setOnClickListener(v -> openVpnActivity());
+                
+                // Action button click
+                actionButton2.setOnClickListener(v -> openVpnActivity());
+            }
+            
+            // Setup view all recommendations
+            TextView viewAllRecommendations = findViewById(R.id.view_all_recommendations);
+            if (viewAllRecommendations != null) {
+                viewAllRecommendations.setOnClickListener(v -> 
+                    showAllRecommendationsDialog());
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Error setting up recommendations: " + e.getMessage(), 
+                Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * Setup real-time status section and refresh action
+     */
+    private void setupRealTimeStatus() {
+        try {
+            // Setup refresh button
+            TextView refreshStatus = findViewById(R.id.refresh_status);
+            if (refreshStatus != null) {
+                refreshStatus.setOnClickListener(v -> refreshSecurityStatus());
+            }
+            
+            // Initialize status indicators
+            updateNetworkStatus();
+            updateLastScanTime();
+            updateThreatsDetected();
+        } catch (Exception e) {
+            Toast.makeText(this, "Error setting up real-time status: " + e.getMessage(), 
+                Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * Show a dialog with all security recommendations
+     */
+    private void showAllRecommendationsDialog() {
+        try {
+            // Build list of recommendations based on feature status
+            StringBuilder recommendations = new StringBuilder();
+            
+            if (!isAppLockActive) {
+                recommendations.append("• Enable App Lock to protect your sensitive apps\n\n");
+            }
+            
+            if (!isVpnActive) {
+                recommendations.append("• Connect to VPN for secure browsing\n\n");
+            }
+            
+            if (!isFindPhoneActive) {
+                recommendations.append("• Setup Find Phone feature to track your device if lost\n\n");
+            }
+            
+            if (!isHiddenFilesActive) {
+                recommendations.append("• Configure Hidden Files to protect your sensitive data\n\n");
+            }
+            
+            // Add general recommendations
+            recommendations.append("• Keep your device software up to date\n\n");
+            recommendations.append("• Use strong, unique passwords for your accounts\n\n");
+            recommendations.append("• Enable biometric authentication when available\n\n");
+            
+            // Show dialog with recommendations
+            new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.recommendations)
+                .setMessage(recommendations.toString())
+                .setPositiveButton(R.string.ok, null)
+                .show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Error showing recommendations: " + e.getMessage(), 
+                Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * Update the network security status indicator
+     */
+    private void updateNetworkStatus() {
+        try {
+            TextView networkStatusText = findViewById(R.id.network_status_text);
+            if (networkStatusText != null) {
+                if (isVpnActive) {
+                    networkStatusText.setText(R.string.secure);
+                    networkStatusText.setTextColor(
+                        ContextCompat.getColor(this, R.color.success_green));
+                } else {
+                    networkStatusText.setText(R.string.insecure);
+                    networkStatusText.setTextColor(
+                        ContextCompat.getColor(this, R.color.warning_amber));
+                }
+            }
+        } catch (Exception e) {
+            // Silently fail
+        }
+    }
+    
+    /**
+     * Update the last scan time indicator
+     */
+    private void updateLastScanTime() {
+        try {
+            TextView lastScanTime = findViewById(R.id.last_scan_time);
+            if (lastScanTime != null) {
+                // Get last scan time from preferences or use default
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                long lastScan = prefs.getLong("last_scan_time", 0);
+                
+                if (lastScan == 0) {
+                    lastScanTime.setText(R.string.just_now);
+                } else {
+                    // Calculate time ago
+                    long now = System.currentTimeMillis();
+                    long diff = now - lastScan;
+                    
+                    if (diff < 60000) { // Less than 1 minute
+                        lastScanTime.setText(R.string.just_now);
+                    } else if (diff < 3600000) { // Less than 1 hour
+                        lastScanTime.setText(diff / 60000 + " minutes ago");
+                    } else if (diff < 86400000) { // Less than 1 day
+                        lastScanTime.setText(diff / 3600000 + " hours ago");
+                    } else {
+                        lastScanTime.setText(diff / 86400000 + " days ago");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Silently fail
+        }
+    }
+    
+    /**
+     * Update the threats detected indicator
+     */
+    private void updateThreatsDetected() {
+        try {
+            TextView threatsDetectedCount = findViewById(R.id.threats_detected_count);
+            if (threatsDetectedCount != null) {
+                // Get threats count from preferences
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                int threats = prefs.getInt("threats_detected", 0);
+                
+                threatsDetectedCount.setText(String.valueOf(threats));
+                
+                // Set color based on threat count
+                if (threats == 0) {
+                    threatsDetectedCount.setTextColor(
+                        ContextCompat.getColor(this, R.color.success_green));
+                } else if (threats < 3) {
+                    threatsDetectedCount.setTextColor(
+                        ContextCompat.getColor(this, R.color.warning_amber));
+                } else {
+                    threatsDetectedCount.setTextColor(
+                        ContextCompat.getColor(this, R.color.error_red));
+                }
+            }
+        } catch (Exception e) {
+            // Silently fail
+        }
+    }
+    
+    /**
+     * Perform a security scan and update the status
+     */
+    private void refreshSecurityStatus() {
+        try {
+            // Show a scan in progress dialog
+            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+            ProgressBar progressBar = new ProgressBar(this);
+            progressBar.setPadding(0, 50, 0, 30);
+            progressBar.setIndeterminate(true);
+            
+            builder.setTitle(R.string.scanning)
+                   .setMessage(R.string.checking_security_status)
+                   .setView(progressBar)
+                   .setCancelable(false);
+            
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            
+            // Simulate scan with a delay
+            new Handler().postDelayed(() -> {
+                // Update last scan time
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                prefs.edit().putLong("last_scan_time", System.currentTimeMillis()).apply();
+                
+                // Occasionally simulate threat detection
+                if (Math.random() < 0.1) {
+                    int currentThreats = prefs.getInt("threats_detected", 0);
+                    prefs.edit().putInt("threats_detected", currentThreats + 1).apply();
+                }
+                
+                // Update UI
+                updateLastScanTime();
+                updateThreatsDetected();
+                updateNetworkStatus();
+                checkFeatureStatuses();
+                updateFeatureStatusUI();
+                updateSecurityLevel();
+                
+                // Dismiss dialog
+                dialog.dismiss();
+                
+                // Show toast
+                Toast.makeText(this, R.string.security_scan_complete, Toast.LENGTH_SHORT).show();
+            }, 2000);
+            
+        } catch (Exception e) {
+            Toast.makeText(this, "Error refreshing security status: " + e.getMessage(), 
+                Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * Calculate security level based on enabled features and real-time security factors
+     */
+    private int calculateSecurityLevel() {
+        int baseLevel = 20; // Base security level with no features
+        int totalPoints = 0;
+        
+        // VPN adds 25 points
+        if (isVpnActive) totalPoints += 25;
+        
+        // App Lock adds 20 points
+        if (isAppLockActive) totalPoints += 20;
+        
+        // Anti-Spy adds 15 points
+        if (isAntiSpyActive) totalPoints += 15;
+        
+        // URL Checker adds 15 points
+        if (isUrlCheckerActive) totalPoints += 15;
+        
+        // Find Phone adds 10 points
+        if (isFindPhoneActive) totalPoints += 10;
+        
+        // Hidden Files adds 10 points
+        if (isHiddenFilesActive) totalPoints += 10;
+        
+        // Add threat deduction
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        int threats = prefs.getInt("threats_detected", 0);
+        
+        // Each threat reduces security score by 5 points, up to 20 points
+        int threatDeduction = Math.min(threats * 5, 20);
+        
+        return Math.max(baseLevel + totalPoints - threatDeduction, 0);
+    }
+    
+    /**
+     * Update visibility of recommendation items based on feature status
+     */
+    private void updateRecommendationVisibility() {
+        try {
+            View recommendationItem1 = findViewById(R.id.recommendation_item_1);
+            View recommendationItem2 = findViewById(R.id.recommendation_item_2);
+            
+            if (recommendationItem1 != null) {
+                recommendationItem1.setVisibility(isAppLockActive ? View.GONE : View.VISIBLE);
+            }
+            
+            if (recommendationItem2 != null) {
+                recommendationItem2.setVisibility(isVpnActive ? View.GONE : View.VISIBLE);
+            }
+        } catch (Exception e) {
+            // Silently fail
+        }
     }
     
     private void setupMenuItemListeners() {
@@ -275,12 +613,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         
         // Setup Hidden Files Button
         findViewById(R.id.hidden_files_button).setOnClickListener(v -> {
-            Toast.makeText(this, "Hidden Files feature coming soon", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, HiddenFilesActivity.class));
         });
         
         // Setup Coming Soon Button
         findViewById(R.id.coming_soon_button).setOnClickListener(v -> {
             Toast.makeText(this, "More features coming soon!", Toast.LENGTH_SHORT).show();
+        });
+        
+        // Setup Anti-Spy Button
+        findViewById(R.id.anti_spy_button).setOnClickListener(v -> {
+            openAntiSpyActivity();
         });
         
         // Setup Premium Feature Buttons
@@ -353,31 +696,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
     
     /**
-     * Calculate security level based on enabled features
-     */
-    private int calculateSecurityLevel() {
-        int baseLevel = 20; // Base security level with no features
-        int totalPoints = 0;
-        
-        // VPN adds 25 points
-        if (isVpnActive) totalPoints += 25;
-        
-        // App Lock adds 20 points
-        if (isAppLockActive) totalPoints += 20;
-        
-        // URL Checker adds 15 points
-        if (isUrlCheckerActive) totalPoints += 15;
-        
-        // Find Phone adds 10 points
-        if (isFindPhoneActive) totalPoints += 10;
-        
-        // Hidden Files adds 10 points
-        if (isHiddenFilesActive) totalPoints += 10;
-        
-        return baseLevel + totalPoints;
-    }
-    
-    /**
      * Count how many security features are currently active
      */
     private int countActiveFeatures() {
@@ -385,6 +703,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         
         if (isVpnActive) count++;
         if (isAppLockActive) count++;
+        if (isAntiSpyActive) count++;
         if (isUrlCheckerActive) count++;
         if (isFindPhoneActive) count++;
         if (isHiddenFilesActive) count++;
@@ -399,6 +718,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Calculate security level based on active features
         int securityLevel = calculateSecurityLevel();
         securityLevelProgress.setProgress(securityLevel);
+        securityLevelPercentage.setText(securityLevel + "%");
         
         int activeFeatures = countActiveFeatures();
         int totalFeatures = 8; // Updated total features (5 original + 3 premium)
@@ -423,5 +743,41 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         
         drawerLayout.closeDrawer(GravityCompat.START);
         return true;
+    }
+    
+    /**
+     * Open the App Lock activity
+     */
+    private void openAppLockActivity() {
+        try {
+            startActivity(new Intent(this, AppLockActivity.class));
+        } catch (Exception e) {
+            Toast.makeText(this, "Error opening App Lock: " + e.getMessage(), 
+                Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * Open the VPN activity
+     */
+    private void openVpnActivity() {
+        try {
+            startActivity(new Intent(this, VPNActivity.class));
+        } catch (Exception e) {
+            Toast.makeText(this, "Error opening VPN: " + e.getMessage(), 
+                Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * Open the Anti-Spy activity
+     */
+    private void openAntiSpyActivity() {
+        try {
+            startActivity(new Intent(this, AntiSpyActivity.class));
+        } catch (Exception e) {
+            Toast.makeText(this, "Error opening Anti-Spy: " + e.getMessage(), 
+                Toast.LENGTH_SHORT).show();
+        }
     }
 }

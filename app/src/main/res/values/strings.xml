@@ -4,7 +4,7 @@
     <string name="vpn">VPN</string>
     <string name="app_lock">App Lock</string>
     <string name="url_checker">URL Checker</string>
-    <string name="hidden_files">Hidden files</string>
+    <string name="hidden_files">Hidden Files</string>
     <string name="find_phone">Find Phone</string>
     <string name="security_level">Security Level</string>
     <string name="info">Info</string>
@@ -30,7 +30,7 @@
     <string name="vpn_disconnecting">Disconnecting…</string>
     
     <!-- App Lock Activity Strings -->
-    <string name="choose_apps_to_lock">Choose apps to lock</string>
+    <string name="choose_apps_to_lock">Select apps to lock</string>
     <string name="locked_apps">Locked Apps</string>
     <string name="snapchat">Snapchat</string>
     <string name="facebook">Facebook</string>
@@ -38,8 +38,6 @@
     <string name="whatsapp">WhatsApp</string>
     <string name="locked">locked</string>
     <string name="unlocked">unlocked</string>
-    <string name="app_locked">App Locked</string>
-    <string name="locked_app">Locked Application</string>
     <string name="app_icon">App Icon</string>
     <string name="enter_pin">Enter PIN</string>
     <string name="pin_hint">Enter your PIN</string>
@@ -50,12 +48,14 @@
     <string name="setup_pin_first">Please set up a PIN first</string>
     <string name="confirm_pin">Confirm PIN</string>
     <string name="pins_dont_match">PINs don\'t match</string>
-    <string name="pin_set_success">PIN set successfully</string>
+    <string name="pin_set_success">PIN successfully set</string>
     <string name="usage_access_required">Usage Access Required</string>
     <string name="overlay_permission_required">Overlay Permission Required</string>
     <string name="grant_usage_access">Grant Usage Access</string>
     <string name="grant_overlay_permission">Grant Overlay Permission</string>
-    <string name="app_lock_active">App lock protection active</string>
+    <string name="app_lock_active">App Lock is active and monitoring</string>
+    <string name="app_lock_info">App Lock Information</string>
+    <string name="app_lock_explanation">App Lock helps you protect your private apps with a PIN. When enabled, locked apps will require your PIN before they can be accessed.</string>
     
     <!-- Find Phone Activity Strings -->
     <string name="enter_password">Enter Password</string>
@@ -144,19 +144,17 @@
     <string name="usage_access">Usage Access</string>
     <string name="overlay_permission">Screen Overlay</string>
     <string name="grant">Grant</string>
-    <string name="app_lock_info">App Lock Information</string>
-    <string name="app_lock_explanation">App Lock protects your private apps with a PIN code. When you open a locked app, you\'ll need to enter your PIN to access it.</string>
     <string name="usage_access_explanation">This permission allows SecuPhone to detect when you open a locked app.</string>
     <string name="overlay_permission_explanation">This permission allows SecuPhone to display the PIN entry screen over other apps.</string>
     <string name="ok">OK</string>
     
     <!-- Feature Status strings -->
     <string name="feature_status">Feature Status</string>
-    <string name="feature_active">Active</string>
+    <string name="feature_active">Feature Active</string>
     <string name="feature_inactive">Inactive</string>
-    <string name="feature_active_detail">Your apps are protected. Anyone attempting to open a locked app will need to enter your PIN.</string>
+    <string name="feature_active_detail">Your selected apps are now protected</string>
     <string name="feature_permission_needed">Permission needed</string>
-    <string name="feature_pin_needed">PIN setup needed</string>
+    <string name="feature_pin_needed">Set a PIN to use this feature</string>
     
     <!-- Feature Status for Main Activity -->
     <string name="status_enabled">Enabled</string>
@@ -188,7 +186,7 @@
     <string name="password_manager_description">Securely store and manage your passwords</string>
     <string name="secure_notes">Secure Notes</string>
     <string name="secure_notes_description">Store encrypted notes with sensitive information</string>
-    <string name="secure_cloud">Secure Cloud Storage</string>
+    <string name="secure_cloud">Secure Cloud</string>
     <string name="secure_cloud_description">Encrypted cloud storage for sensitive files</string>
     <string name="network_scanner">Network Scanner</string>
     <string name="network_scanner_description">Scan your network for security vulnerabilities</string>
@@ -214,6 +212,74 @@
     <string name="secure_file_sharing_description">Share files securely with end-to-end encryption</string>
     <string name="ad_blocker">Ad Blocker</string>
     <string name="ad_blocker_description">Block unwanted ads and trackers</string>
-    <string name="qr_scanner">QR Code Scanner</string>
+    <string name="qr_scanner">QR Scanner</string>
     <string name="qr_scanner_description">Scan and verify QR codes securely</string>
+    
+    <!-- New string for App Lock real apps -->
+    <string name="installed_apps">Installed Apps</string>
+    
+    <!-- Device Admin strings -->
+    <string name="device_admin_label">SecuPhone App Lock</string>
+    <string name="device_admin_description">Enables app locking and security features</string>
+    <string name="admin_request_title">App Lock Permissions</string>
+    <string name="admin_request_message">App Lock needs device administrator permissions to protect your apps</string>
+    <string name="admin_disabled_message">App Lock functions disabled</string>
+    <string name="enable_admin">Enable Admin</string>
+    <string name="admin_enabled_success">App Lock enabled successfully</string>
+    <string name="setup_app_lock">Set up App Lock</string>
+    <string name="app_locked_message">This app is locked</string>
+    <string name="unlock_app">Unlock App</string>
+    
+    <!-- New image viewer strings -->
+    <string name="hidden_file_image">Hidden file image</string>
+    <string name="close">Close</string>
+    
+    <!-- New string resource for access granted message -->
+    <string name="access_granted">Access granted</string>
+    <string name="locked_app">Locked App</string>
+    <string name="app_locked">App Locked</string>
+    
+    <!-- Security Dashboard Improvements -->
+    <string name="recommendations">Recommendations</string>
+    <string name="view_all">View All</string>
+    <string name="recommendation_icon">Recommendation icon</string>
+    <string name="enable_app_lock_recommendation">Enable App Lock to protect your sensitive apps</string>
+    <string name="enable_vpn_recommendation">Connect to VPN for secure browsing</string>
+    <string name="fix_now">Fix Now</string>
+    <string name="real_time_status">Real-time Status</string>
+    <string name="refresh">Refresh</string>
+    <string name="last_scan">Last Scan:</string>
+    <string name="just_now">Just now</string>
+    <string name="threats_detected">Threats Detected:</string>
+    <string name="network_status">Network Status:</string>
+    <string name="secure">Secure</string>
+    <string name="insecure">Insecure</string>
+    <string name="detailed_report">Detailed Report</string>
+    <string name="security_score">Security Score</string>
+    <string name="scanning">Scanning...</string>
+    <string name="checking_security_status">Checking security status...</string>
+    <string name="security_scan_complete">Security scan complete</string>
+    
+    <!-- Anti-Spy Feature -->
+    <string name="anti_spy">Anti-Spy</string>
+    <string name="anti_spy_description">Protect against spyware, surveillance and unauthorized tracking</string>
+    <string name="anti_spy_enabled">Spy protection active</string>
+    <string name="anti_spy_disabled">Spy protection inactive</string>
+    <string name="start_spy_scan">Start Scan</string>
+    <string name="stop_spy_scan">Stop Scan</string>
+    <string name="spy_scan_in_progress">Scan in progress...</string>
+    <string name="spy_free">Your device is clean</string>
+    <string name="spy_threats_found">Possible spyware detected</string>
+    <string name="scan_complete">Scan Complete</string>
+    <string name="no_spyware_found">No spyware found</string>
+    <string name="spyware_detected">Spyware Detected</string>
+    <string name="remove_threats">Remove Threats</string>
+    <string name="last_spy_scan">Last scan: %1$s</string>
+    <string name="never">Never</string>
+    <string name="enable_microphone_protection">Enable microphone protection</string>
+    <string name="enable_camera_protection">Enable camera protection</string>
+    <string name="enable_location_protection">Enable location protection</string>
+    <string name="microphone_monitored">Microphone usage monitored</string>
+    <string name="camera_monitored">Camera usage monitored</string>
+    <string name="location_monitored">Location usage monitored</string>
 </resources>
