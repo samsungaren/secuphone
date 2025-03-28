@@ -48,4 +48,7 @@
     <color name="button_primary">#00BFB2</color>
     <color name="button_secondary">#4A6FA5</color>
     <color name="button_purple">#00BFB2</color>
+    
+    <!-- Input fields background -->
+    <color name="input_background">#11213F</color>
 </resources>

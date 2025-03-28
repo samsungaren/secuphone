@@ -45,6 +45,24 @@
             android:exported="false">
         </activity>
         
+        <!-- Authentication Activities -->
+        <activity
+            android:name=".authentication.SignInActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize">
+        </activity>
+        
+        <activity
+            android:name=".authentication.SignUpActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize">
+        </activity>
+        
+        <activity
+            android:name=".authentication.EmailVerificationActivity"
+            android:exported="false">
+        </activity>
+        
         <activity
             android:name=".VPNActivity"
             android:parentActivityName=".MainActivity"

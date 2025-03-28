@@ -255,7 +255,7 @@ public class HiddenFilesActivity extends AppCompatActivity {
                 dialog.dismiss(); // Properly dismiss the dialog
                 
                 // Load files
-                loadHiddenFilesWithPermissionCheck();
+        loadHiddenFilesWithPermissionCheck();
             } else {
                 passwordInput.setError("Incorrect password");
             }
@@ -776,7 +776,7 @@ public class HiddenFilesActivity extends AppCompatActivity {
             
             if (files != null && files.length > 0) {
                 for (File file : files) {
-                    hiddenFiles.add(file);
+                        hiddenFiles.add(file);
                 }
             }
         }
@@ -935,22 +935,22 @@ public class HiddenFilesActivity extends AppCompatActivity {
                     File destinationFile = new File(downloadsDir, originalFileName);
                     
                     // Handle name collision
-                    if (destinationFile.exists()) {
+            if (destinationFile.exists()) {
                         String baseName = originalFileName;
-                        String extension = "";
-                        int dotIndex = baseName.lastIndexOf('.');
-                        if (dotIndex > 0) {
-                            extension = baseName.substring(dotIndex);
-                            baseName = baseName.substring(0, dotIndex);
-                        }
-                        
-                        int counter = 1;
-                        while (destinationFile.exists()) {
-                            destinationFile = new File(downloadsDir, baseName + "_" + counter + extension);
-                            counter++;
-                        }
-                    }
-                    
+                String extension = "";
+                int dotIndex = baseName.lastIndexOf('.');
+                if (dotIndex > 0) {
+                    extension = baseName.substring(dotIndex);
+                    baseName = baseName.substring(0, dotIndex);
+                }
+                
+                int counter = 1;
+                while (destinationFile.exists()) {
+                    destinationFile = new File(downloadsDir, baseName + "_" + counter + extension);
+                    counter++;
+                }
+            }
+            
                     // Ensure parent directory exists
                     if (!downloadsDir.exists()) {
                         downloadsDir.mkdirs();
@@ -988,7 +988,7 @@ public class HiddenFilesActivity extends AppCompatActivity {
                                 "File unhidden to Downloads folder", Toast.LENGTH_LONG).show();
                         
                         // Reload hidden files list
-                        loadHiddenFiles();
+                loadHiddenFiles();
                     });
                     
                 } catch (Exception e) {

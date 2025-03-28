@@ -149,7 +149,7 @@
         
                     <!-- Username -->
                     <TextView
-                        android:id="@+id/username_text"
+                        android:id="@+id/user_name"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="John Doe"
@@ -159,7 +159,7 @@
         
                     <!-- Email -->
                     <TextView
-                        android:id="@+id/email_text"
+                        android:id="@+id/user_email"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="john.doe@example.com"

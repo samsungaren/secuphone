@@ -192,7 +192,7 @@ public class AppLockActivity extends AppCompatActivity {
         }
         
         if (pinSetSuccess) {
-            Toast.makeText(this, R.string.pin_set_success, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.pin_set_success, Toast.LENGTH_SHORT).show();
         
         // Hide PIN setup card
         pinSetupCard.setVisibility(View.GONE);

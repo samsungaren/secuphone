@@ -21,6 +21,9 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.secuphone_bycoursor.authentication.SignInActivity;
+import com.example.secuphone_bycoursor.authentication.UserSessionManager;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class SplashActivity extends AppCompatActivity {
 
@@ -31,6 +34,8 @@ public class SplashActivity extends AppCompatActivity {
     private TextView taglineText;
     private LinearLayout securityDots;
     private View[] dots;
+    private UserSessionManager sessionManager;
+    private FirebaseAuth firebaseAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +49,10 @@ public class SplashActivity extends AppCompatActivity {
             return insets;
         });
 
+        // Initialize session manager
+        sessionManager = UserSessionManager.getInstance(this);
+        firebaseAuth = FirebaseAuth.getInstance();
+        
         logoImage = findViewById(R.id.splash_logo);
         appNameText = findViewById(R.id.splash_app_name);
         taglineText = findViewById(R.id.splash_tagline);
@@ -58,7 +67,7 @@ public class SplashActivity extends AppCompatActivity {
 
         startAnimations();
         
-        new Handler(Looper.getMainLooper()).postDelayed(this::navigateToMainActivity, SPLASH_DURATION);
+        new Handler(Looper.getMainLooper()).postDelayed(this::checkUserAndNavigate, SPLASH_DURATION);
     }
 
     private void startAnimations() {
@@ -121,8 +130,25 @@ public class SplashActivity extends AppCompatActivity {
         scaleY.start();
     }
 
+    /**
+     * Check if user is logged in and navigate to the appropriate screen
+     */
+    private void checkUserAndNavigate() {
+        // Always navigate to MainActivity, regardless of authentication status
+        navigateToMainActivity();
+    }
+
     private void navigateToMainActivity() {
         Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+        startActivity(intent);
+        
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+        
+        finish();
+    }
+    
+    private void navigateToSignInActivity() {
+        Intent intent = new Intent(SplashActivity.this, SignInActivity.class);
         startActivity(intent);
         
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);

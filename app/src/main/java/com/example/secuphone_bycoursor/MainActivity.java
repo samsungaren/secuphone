@@ -28,11 +28,16 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.preference.PreferenceManager;
 
 import com.example.secuphone_bycoursor.admin.AppLockManager;
+import com.example.secuphone_bycoursor.authentication.SignInActivity;
+import com.example.secuphone_bycoursor.authentication.SignUpActivity;
+import com.example.secuphone_bycoursor.authentication.UserSessionManager;
 import com.example.secuphone_bycoursor.services.AppLockService;
 import com.example.secuphone_bycoursor.utils.PermissionManager;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.button.MaterialButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -62,11 +67,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private boolean isFindPhoneActive = false;
     private boolean isHiddenFilesActive = false;
     private boolean isAntiSpyActive = false;
+    
+    // Firebase Authentication
+    private FirebaseAuth firebaseAuth;
+    private UserSessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
+        
+        // Initialize Firebase Auth and User Session Manager
+        firebaseAuth = FirebaseAuth.getInstance();
+        sessionManager = UserSessionManager.getInstance(this);
+        
         setContentView(R.layout.activity_main);
         
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -117,6 +131,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         updateNetworkStatus();
         updateLastScanTime();
         updateThreatsDetected();
+        
+        // Update navigation drawer to reflect current authentication state
+        setupNavigationDrawer();
     }
     
     private void initializeFeatureStatusUI() {
@@ -238,30 +255,62 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         LinearLayout guestUI = headerView.findViewById(R.id.guest_ui);
         LinearLayout userUI = headerView.findViewById(R.id.user_ui);
         
-        // For demo, show guest UI by default
-        guestUI.setVisibility(View.VISIBLE);
-        userUI.setVisibility(View.GONE);
-        
-        // Set up sign in button
-        MaterialButton signInButton = headerView.findViewById(R.id.sign_in_button);
-        signInButton.setOnClickListener(v -> {
-            Toast.makeText(this, "Sign In feature coming soon", Toast.LENGTH_SHORT).show();
-            // For demo, toggle UI when clicked
+        // Check if user is logged in
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        if (sessionManager.isLoggedIn() && user != null && user.isEmailVerified()) {
+            // User is properly logged in and verified - show user UI
             guestUI.setVisibility(View.GONE);
             userUI.setVisibility(View.VISIBLE);
-        });
-        
-        // Set up sign up button
-        MaterialButton signUpButton = headerView.findViewById(R.id.sign_up_button);
-        signUpButton.setOnClickListener(v -> {
-            Toast.makeText(this, "Sign Up feature coming soon", Toast.LENGTH_SHORT).show();
-        });
-        
-        // Set up upgrade text click listener
-        TextView upgradeText = headerView.findViewById(R.id.upgrade_text);
-        upgradeText.setOnClickListener(v -> {
-            Toast.makeText(this, "Upgrade feature coming soon", Toast.LENGTH_SHORT).show();
-        });
+            
+            // Set user information
+            TextView userNameText = headerView.findViewById(R.id.user_name);
+            TextView userEmailText = headerView.findViewById(R.id.user_email);
+            
+            if (userNameText != null && userEmailText != null) {
+                String displayName = user.getDisplayName();
+                userNameText.setText(displayName != null && !displayName.isEmpty() ? 
+                                    displayName : getString(R.string.user));
+                userEmailText.setText(user.getEmail());
+            }
+            
+            // Update current plan status
+            TextView currentPlanText = headerView.findViewById(R.id.current_plan);
+            if (currentPlanText != null) {
+                // Here you could check for premium status
+                // For now, just show free plan
+                currentPlanText.setText(getString(R.string.free_plan));
+            }
+            
+            // Set up upgrade text click listener
+            TextView upgradeText = headerView.findViewById(R.id.upgrade_text);
+            if (upgradeText != null) {
+                upgradeText.setOnClickListener(v -> {
+                    Toast.makeText(this, "Upgrade feature coming soon", Toast.LENGTH_SHORT).show();
+                });
+            }
+        } else {
+            // User is not logged in or not verified - show guest UI
+            guestUI.setVisibility(View.VISIBLE);
+            userUI.setVisibility(View.GONE);
+            
+            // Set up sign in button
+            MaterialButton signInButton = headerView.findViewById(R.id.sign_in_button);
+            if (signInButton != null) {
+                signInButton.setOnClickListener(v -> {
+                    startActivity(new Intent(this, SignInActivity.class));
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                });
+            }
+            
+            // Set up sign up button
+            MaterialButton signUpButton = headerView.findViewById(R.id.sign_up_button);
+            if (signUpButton != null) {
+                signUpButton.setOnClickListener(v -> {
+                    startActivity(new Intent(this, SignUpActivity.class));
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                });
+            }
+        }
         
         // Setup the navigation drawer functionality
         navigationView.setNavigationItemSelectedListener(this);
@@ -590,30 +639,50 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void setupMenuItemListeners() {
         // Setup VPN Button
         findViewById(R.id.vpn_button).setOnClickListener(v -> {
-            startActivity(new Intent(this, VPNActivity.class));
+            if (sessionManager.isLoggedIn()) {
+                startActivity(new Intent(this, VPNActivity.class));
+            } else {
+                showSignInRequiredDialog("VPN");
+            }
         });
         
         // Setup App Lock Button
         findViewById(R.id.app_lock_button).setOnClickListener(v -> {
-            startActivity(new Intent(this, AppLockActivity.class));
+            if (sessionManager.isLoggedIn()) {
+                startActivity(new Intent(this, AppLockActivity.class));
+            } else {
+                showSignInRequiredDialog("App Lock");
+            }
         });
         
         // Setup URL Checker Button
         findViewById(R.id.url_checker_button).setOnClickListener(v -> {
-            startActivity(new Intent(this, URLCheckerActivity.class));
+            if (sessionManager.isLoggedIn()) {
+                startActivity(new Intent(this, URLCheckerActivity.class));
+            } else {
+                showSignInRequiredDialog("URL Checker");
+            }
         });
         
         // Setup Find Phone Button
         findViewById(R.id.find_phone_button).setOnClickListener(v -> {
-            if (checkAppPermissions()) {
-                // Start FindPhoneActivity (to be implemented)
-                Toast.makeText(this, "Find Phone feature activated", Toast.LENGTH_SHORT).show();
+            if (sessionManager.isLoggedIn()) {
+                if (checkAppPermissions()) {
+                    // Start FindPhoneActivity (to be implemented)
+                    Toast.makeText(this, "Find Phone feature activated", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                showSignInRequiredDialog("Find Phone");
             }
         });
         
         // Setup Hidden Files Button
         findViewById(R.id.hidden_files_button).setOnClickListener(v -> {
-            startActivity(new Intent(this, HiddenFilesActivity.class));
+            if (sessionManager.isLoggedIn()) {
+                startActivity(new Intent(this, HiddenFilesActivity.class));
+            } else {
+                showSignInRequiredDialog("Hidden Files");
+            }
         });
         
         // Setup Coming Soon Button
@@ -623,7 +692,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         
         // Setup Anti-Spy Button
         findViewById(R.id.anti_spy_button).setOnClickListener(v -> {
-            openAntiSpyActivity();
+            if (sessionManager.isLoggedIn()) {
+                openAntiSpyActivity();
+            } else {
+                showSignInRequiredDialog("Anti-Spy");
+            }
         });
         
         // Setup Premium Feature Buttons
@@ -640,13 +713,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     
     /**
      * Sets up a premium feature button with a click listener that shows a premium upgrade dialog
+     * or redirects to sign in if user is not logged in
      * @param buttonId The ID of the button to set up
      * @param featureName The name of the feature for the toast message
      */
     private void setupPremiumFeatureButton(int buttonId, String featureName) {
         findViewById(buttonId).setOnClickListener(v -> {
-            showPremiumFeatureDialog(featureName);
+            if (sessionManager.isLoggedIn()) {
+                showPremiumFeatureDialog(featureName);
+            } else {
+                showSignInRequiredDialog(featureName);
+            }
         });
+    }
+    
+    /**
+     * Shows a dialog for features that require sign in first
+     * @param featureName The name of the feature
+     */
+    private void showSignInRequiredDialog(String featureName) {
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.sign_in_required))
+            .setMessage(getString(R.string.sign_in_to_use_feature, featureName))
+            .setPositiveButton(getString(R.string.sign_in), (dialog, which) -> {
+                startActivity(new Intent(this, SignInActivity.class));
+            })
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show();
     }
     
     /**
@@ -738,7 +831,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.nav_help) {
             Toast.makeText(this, "Help center coming soon!", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_logout) {
-            Toast.makeText(this, "Logout coming soon!", Toast.LENGTH_SHORT).show();
+            logoutUser();
         }
         
         drawerLayout.closeDrawer(GravityCompat.START);
@@ -779,5 +872,34 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             Toast.makeText(this, "Error opening Anti-Spy: " + e.getMessage(), 
                 Toast.LENGTH_SHORT).show();
         }
+    }
+    
+    /**
+     * Redirects the user to the sign in screen
+     */
+    private void redirectToSignIn() {
+        Intent intent = new Intent(this, SignInActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+    
+    /**
+     * Logs the user out and redirects to sign in screen
+     */
+    private void logoutUser() {
+        // Show confirmation dialog
+        new MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.logout)
+            .setMessage(R.string.logout_confirmation)
+            .setPositiveButton(R.string.yes, (dialog, which) -> {
+                // Clear user session
+                sessionManager.logoutUser();
+                
+                // Redirect to sign in
+                redirectToSignIn();
+            })
+            .setNegativeButton(R.string.no, null)
+            .show();
     }
 }
