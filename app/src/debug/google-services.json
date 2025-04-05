@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "503364924114",
+    "project_id": "secuphone-f2660",
+    "storage_bucket": "secuphone-f2660.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:503364924114:android:a8e1a495f52ed648b8b30b",
+        "android_client_info": {
+          "package_name": "com.example.secuphone_bycoursor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBWKmLMJTNW2TcZgqDoQok0d06kroh1YF4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -30,10 +30,21 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    
+    // Add this packagingOptions to prevent duplicate file errors
+    packaging {
+        resources {
+            excludes += listOf(
+                "META-INF/LICENSE",
+                "META-INF/NOTICE",
+                "META-INF/ASL2.0",
+                "META-INF/DEPENDENCIES"
+            )
+        }
+    }
 }
 
 dependencies {
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

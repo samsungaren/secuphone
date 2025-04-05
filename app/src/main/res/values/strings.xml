@@ -8,27 +8,31 @@
     <string name="find_phone">Find Phone</string>
     <string name="security_level">Security Level</string>
     <string name="info">Info</string>
-    
+
     <!-- VPN Activity Strings -->
     <string name="connection_time">Connection Time</string>
     <string name="vpn_power_button">VPN Power Button</string>
-    <string name="country_flag">Country Flag</string>
-    <string name="united_states">United States</string>
-    <string name="united_kingdom">United Kingdom</string>
-    <string name="germany">Germany</string>
-    <string name="japan">Japan</string>
-    <string name="netherlands">Netherlands</string>
-    <string name="singapore">Singapore</string>
-    <string name="select_server">Select Server</string>
-    <string name="server_selection">Server Selection</string>
+    <string name="country_flag">Server Flag</string>
+    <string name="united_states">MainServer</string>
+    <string name="select_server">Server Information</string>
+    <string name="server_selection">Server Information</string>
     <string name="download">Download</string>
     <string name="upload">Upload</string>
     <string name="vpn_on">VPN is ON</string>
-    <string name="vpn_off">VPN is Off</string>
-    <string name="vpn_connecting">Connecting…</string>
+    <string name="vpn_off">Disconnected</string>
+    <string name="vpn_connecting">Connecting</string>
     <string name="vpn_connected">Connected</string>
-    <string name="vpn_disconnecting">Disconnecting…</string>
-    
+    <string name="vpn_disconnecting">Disconnecting</string>
+    <string name="connection_stats">Connection Statistics</string>
+    <string name="public_ip">Public IP Address</string>
+    <string name="connected">Connected</string>
+    <string name="connecting">Connecting...</string>
+    <string name="disconnecting">Disconnecting...</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="no_vpn_config_found">No VPN Configuration Found</string>
+    <string name="import_config_description">Please import an OpenVPN configuration file (.ovpn) to connect to this server.</string>
+    <string name="import_config">Import Config</string>
+
     <!-- App Lock Activity Strings -->
     <string name="choose_apps_to_lock">Select apps to lock</string>
     <string name="locked_apps">Locked Apps</string>
@@ -56,7 +60,7 @@
     <string name="app_lock_active">App Lock is active and monitoring</string>
     <string name="app_lock_info">App Lock Information</string>
     <string name="app_lock_explanation">App Lock helps you protect your private apps with a PIN. When enabled, locked apps will require your PIN before they can be accessed.</string>
-    
+
     <!-- Find Phone Activity Strings -->
     <string name="enter_password">Enter Password</string>
     <string name="confirm_password">Confirm Password</string>
@@ -71,7 +75,7 @@
     <string name="attempts_remaining">Attempts remaining: %1$d</string>
     <string name="camera_permission_required">Camera permission is required for this feature</string>
     <string name="storage_permission_required">Storage permission is required to save photos</string>
-    
+
     <!-- Hidden Files Activity Strings -->
     <string name="hidden_files_description">Hide your sensitive photos, documents and other files to keep them private and secure.</string>
     <string name="hide_file">Hide a New File</string>
@@ -81,7 +85,7 @@
     <string name="file_hidden_success">File hidden successfully</string>
     <string name="file_unhidden_success">File unhidden successfully and moved to Downloads</string>
     <string name="storage_access_required">Storage access is required for this feature</string>
-    
+
     <!-- Navigation Drawer Strings -->
     <string name="profile">Profile</string>
     <string name="subscription">Subscription</string>
@@ -93,7 +97,7 @@
     <string name="logout">Logout</string>
     <string name="close_drawer">Close navigation drawer</string>
     <string name="open_drawer">Open navigation drawer</string>
-    
+
     <!-- Storage Permission Strings -->
     <string name="storage_permission">Storage Access</string>
     <string name="storage_permission_explanation">SecuPhone needs access to your storage to protect your files and provide security features.</string>
@@ -107,32 +111,30 @@
     <string name="permission_denied">Features requiring storage access will be limited</string>
     <string name="permission_denied_explanation">You can grant this permission later in app settings</string>
     <string name="open_settings">Open Settings</string>
-    
+
     <!-- Splash Screen Strings -->
     <string name="splash_tagline">Advanced Protection for Your Device</string>
     <string name="securing_your_device">Securing your device</string>
-    
+
     <!-- VPN Status -->
     <string name="vpn_is_on">VPN is ON</string>
     <string name="vpn_is_off">VPN is OFF</string>
-    
+
     <!-- Color names for screen readers -->
     <string name="success">Success</string>
     <string name="error">Error</string>
-    
+
     <!-- New string resource for "coming_soon" -->
     <string name="coming_soon">Coming Soon</string>
-    
+
     <!-- VPN Activity -->
     <string name="back">Back</string>
     <string name="server_location">Server Location</string>
     <string name="change">Change</string>
-    <string name="connection_stats">Connection Statistics</string>
     <string name="connection_details">Connection Details</string>
     <string name="encryption">Encryption</string>
     <string name="protocol">Protocol</string>
-    <string name="public_ip">Public IP</string>
-    
+
     <!-- New App Lock strings -->
     <string name="popular_apps">Popular Apps</string>
     <string name="security_settings">Security Settings</string>
@@ -147,7 +149,7 @@
     <string name="usage_access_explanation">This permission allows SecuPhone to detect when you open a locked app.</string>
     <string name="overlay_permission_explanation">This permission allows SecuPhone to display the PIN entry screen over other apps.</string>
     <string name="ok">OK</string>
-    
+
     <!-- Feature Status strings -->
     <string name="feature_status">Feature Status</string>
     <string name="feature_active">Feature Active</string>
@@ -155,13 +157,13 @@
     <string name="feature_active_detail">Your selected apps are now protected</string>
     <string name="feature_permission_needed">Permission needed</string>
     <string name="feature_pin_needed">Set a PIN to use this feature</string>
-    
+
     <!-- Feature Status for Main Activity -->
     <string name="status_enabled">Enabled</string>
     <string name="status_disabled">Disabled</string>
     <string name="status_setup_needed">Setup Needed</string>
     <string name="status_coming_soon">Coming Soon</string>
-    
+
     <!-- URL Checker Strings -->
     <string name="secure_browsing">Secure Browsing</string>
     <string name="url_checker_description">Check if a URL is safe before visiting it</string>
@@ -180,7 +182,7 @@
     <string name="url_preview">URL Preview</string>
     <string name="open_in_browser">Open in browser</string>
     <string name="recent_urls">Recent URLs</string>
-    
+
     <!-- New Security Features -->
     <string name="password_manager">Password Manager</string>
     <string name="password_manager_description">Securely store and manage your passwords</string>
@@ -192,21 +194,21 @@
     <string name="network_scanner_description">Scan your network for security vulnerabilities</string>
     <string name="secret_feature">Hidden Feature</string>
     <string name="secret_feature_locked">This feature requires premium access</string>
-    <string name="premium_required">Premium Required</string>
+    <string name="premium_required">Coming Soon</string>
     <string name="upgrade_now">Upgrade Now</string>
-    
+
     <!-- Hidden Files Extra Strings -->
     <string name="file_type">File type</string>
     <string name="hide_folder">Hide Entire Folder</string>
     <string name="select_files">Select Files</string>
-    
+
     <!-- Navigation Drawer New Strings -->
     <string name="app_tagline">Your All-in-One Security Solution</string>
     <string name="sign_in">Sign In</string>
     <string name="sign_up">Sign Up</string>
     <string name="sign_in_message">Sign in to unlock all security features and sync your data across devices</string>
     <string name="upgrade">Upgrade</string>
-    
+
     <!-- New Premium Feature Strings -->
     <string name="secure_file_sharing">Secure File Sharing</string>
     <string name="secure_file_sharing_description">Share files securely with end-to-end encryption</string>
@@ -214,10 +216,10 @@
     <string name="ad_blocker_description">Block unwanted ads and trackers</string>
     <string name="qr_scanner">QR Scanner</string>
     <string name="qr_scanner_description">Scan and verify QR codes securely</string>
-    
+
     <!-- New string for App Lock real apps -->
     <string name="installed_apps">Installed Apps</string>
-    
+
     <!-- Device Admin strings -->
     <string name="device_admin_label">SecuPhone App Lock</string>
     <string name="device_admin_description">Enables app locking and security features</string>
@@ -229,16 +231,16 @@
     <string name="setup_app_lock">Set up App Lock</string>
     <string name="app_locked_message">This app is locked</string>
     <string name="unlock_app">Unlock App</string>
-    
+
     <!-- New image viewer strings -->
     <string name="hidden_file_image">Hidden file image</string>
     <string name="close">Close</string>
-    
+
     <!-- New string resource for access granted message -->
     <string name="access_granted">Access granted</string>
     <string name="locked_app">Locked App</string>
     <string name="app_locked">App Locked</string>
-    
+
     <!-- Security Dashboard Improvements -->
     <string name="recommendations">Recommendations</string>
     <string name="view_all">View All</string>
@@ -259,7 +261,7 @@
     <string name="scanning">Scanning...</string>
     <string name="checking_security_status">Checking security status...</string>
     <string name="security_scan_complete">Security scan complete</string>
-    
+
     <!-- Anti-Spy Feature -->
     <string name="anti_spy">Anti-Spy</string>
     <string name="anti_spy_description">Protect against spyware, surveillance and unauthorized tracking</string>
@@ -282,7 +284,7 @@
     <string name="microphone_monitored">Microphone usage monitored</string>
     <string name="camera_monitored">Camera usage monitored</string>
     <string name="location_monitored">Location usage monitored</string>
-    
+
     <!-- Authentication -->
     <string name="email">Email</string>
     <string name="password">Password</string>
@@ -340,7 +342,7 @@
     <string name="error_reset_email">Failed to send password reset email</string>
     <string name="error_password_too_short">Password must be at least 6 characters</string>
     <string name="error_passwords_do_not_match">Passwords don\'t match</string>
-    
+
     <!-- Dialog Strings -->
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -348,4 +350,9 @@
     <string name="user">User</string>
     <string name="sign_in_required">Sign In Required</string>
     <string name="sign_in_to_use_feature">You need to sign in to use %1$s</string>
+    <string name="united_kingdom">United Kingdom</string>
+    <string name="germany">Germany</string>
+    <string name="japan">Japan</string>
+    <string name="netherlands">Netherlands</string>
+    <string name="singapore">Singapore</string>
 </resources>

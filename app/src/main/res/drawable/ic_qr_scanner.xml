@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    
+    <!-- Shield background -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,2L4,5v6c0,5.55 3.84,10.74 9,12c5.16,-1.26 9,-6.45 9,-12V5L12,2z" />
+    
+    <!-- QR Code -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M9.5,6.5h-3v3h3V6.5zM9.5,14.5h-3v3h3V14.5zM17.5,6.5h-3v3h3V6.5z" />
+    
+    <!-- QR Code squares -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M11,9.5h1.5v1.5h-1.5zM14,9.5h1.5V11h-1.5zM11,11h1.5v1.5h-1.5zM14,11h3.5v1.5h-3.5zM11,14.5h1.5V16h-1.5zM14,14.5h1.5V16h-1.5zM12.5,16h1.5v1.5h-1.5zM16,14.5h1.5V16h-1.5z" />
+    
+    <!-- Scanner lines -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M6.5,12h11v0.5h-11z" />
+</vector> 
