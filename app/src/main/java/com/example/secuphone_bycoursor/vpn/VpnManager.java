@@ -151,6 +151,7 @@ public class VpnManager implements VpnStatus.StateListener, VpnStatus.ByteCountL
     public boolean startVpn(VpnProfile profile) {
         if (profile == null) {
             Log.e(TAG, "Cannot start VPN with null profile");
+            lastError = "VPN profile is null";
             return false;
         }
         
@@ -159,15 +160,22 @@ public class VpnManager implements VpnStatus.StateListener, VpnStatus.ByteCountL
         if (vpnIntent != null) {
             // VPN permission not yet granted
             Log.d(TAG, "VPN permission not yet granted");
+            lastError = "VPN permission not granted";
             return false;
         }
         
         activeProfile = profile;
         
         try {
-            // Start the VPN service
+            // Save the profile in ProfileManager
             ProfileManager.getInstance(context).saveProfile(context, profile);
-            VPNLaunchHelper.startOpenVpn(profile, context);
+            
+            // Start the VPN service with the profile UUID
+            Intent intent = new Intent(context, OpenVPNService.class);
+            intent.putExtra("profileUUID", profile.getUUID());
+            context.startService(intent);
+            
+            Log.d(TAG, "Started VPN service with profile: " + profile.getName());
             return true;
         } catch (Exception e) {
             Log.e(TAG, "Error starting VPN: " + e.getMessage(), e);

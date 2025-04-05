@@ -15,8 +15,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 import de.blinkt.openvpn.VpnProfile;
+import de.blinkt.openvpn.core.ProfileManager;
 
 /**
  * Handles default OpenVPN configuration for SecuPhone
@@ -24,28 +26,29 @@ import de.blinkt.openvpn.VpnProfile;
 public class OpenVPNConfig {
     private static final String TAG = "OpenVPNConfig";
     
-    // Server configuration
+    // Server configuration - updated with real server info
     public static final String SERVER_HOSTNAME = "13.60.95.237";
-    public static final String SERVER_PROFILE_NAME = "openvpn@13.60.95.237 [bundled]";
+    public static final String SERVER_PROFILE_NAME = "secuphone@13.60.95.237";
     public static final int TCP_PORT = 443;
     public static final int UDP_PORT = 1194;
+    public static final String ADMIN_PANEL_PORT = "943";
     
-    // Authentication credentials 
+    // Authentication credentials - updated with real credentials
     public static final String VPN_USERNAME = "secuphone";
     public static final String VPN_PASSWORD = "Aren_100$$";
     
     // Server locations
     private static final List<ServerLocation> SERVER_LOCATIONS = new ArrayList<>();
     static {
-        // Инициализация списка доступных серверов - оставляем только реальный сервер
+        // Initialize servers list with just the real server
         SERVER_LOCATIONS.add(new ServerLocation(
-            VpnServerConfig.SERVER_US, "MainServer", "13.60.95.237", "13.60.95.237", 
+            VpnServerConfig.SERVER_US, "Amazon AWS", SERVER_HOSTNAME, SERVER_HOSTNAME, 
             95, 75, "AES-256-CBC"
         ));
     }
     
-    // Текущий выбранный протокол (по умолчанию TCP)
-    private static boolean useTCP = true;
+    // Default protocol is UDP
+    private static boolean useTCP = false;
     
     /**
      * Create default VPN profile from bundled configuration
@@ -54,17 +57,41 @@ public class OpenVPNConfig {
      */
     public static VpnProfile createDefaultProfile(Context context) {
         try {
-            // Get OpenVPN config from raw resource
-            VpnManager vpnManager = VpnManager.getInstance(context);
-            VpnProfile profile = vpnManager.importProfileFromResource(R.raw.default_vpn_config, SERVER_PROFILE_NAME);
+            // Get OpenVPN config from assets
+            InputStream inputStream = context.getAssets().open("profile-5260234578356361246.ovpn");
+            StringBuilder builder = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             
-            if (profile != null) {
-                // Set authentication credentials
-                vpnManager.setCredentials(profile, VPN_USERNAME, VPN_PASSWORD);
-                Log.d(TAG, "Default VPN profile created successfully");
+            String line;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line).append("\n");
             }
             
+            String configContent = builder.toString();
+            
+            // Create profile with UUID
+            String uuid = UUID.randomUUID().toString();
+            VpnProfile profile = new VpnProfile(uuid);
+            
+            // Set basic profile properties
+            profile.setName(SERVER_PROFILE_NAME);
+            profile.setConfigData(configContent);
+            profile.mUsername = VPN_USERNAME;
+            profile.mPassword = VPN_PASSWORD;
+            
+            // Get protocol and port info from server config
+            boolean useTcp = OpenVPNConfig.useTCP;
+            int port = useTcp ? TCP_PORT : UDP_PORT;
+            
+            // Set server info
+            profile.setServerInfo(SERVER_HOSTNAME, port);
+            
+            // Save the profile
+            ProfileManager.getInstance(context).saveProfile(context, profile);
+            
+            Log.d(TAG, "Created VPN profile: " + profile);
             return profile;
+            
         } catch (Exception e) {
             Log.e(TAG, "Error creating default profile: " + e.getMessage(), e);
             return null;

@@ -1,15 +1,21 @@
 package de.blinkt.openvpn.core;
 
-import java.util.ArrayList;
-import java.util.List;
+import android.content.Context;
+import android.util.Log;
+
+import java.util.LinkedList;
+import java.util.Locale;
 
 /**
- * Stub implementation of VpnStatus from OpenVPN library
+ * Status handler class for OpenVPN connection events
  */
 public class VpnStatus {
+    private static final String TAG = "VpnStatus";
     
-    private static final List<StateListener> stateListeners = new ArrayList<>();
-    private static final List<ByteCountListener> byteCountListeners = new ArrayList<>();
+    private static final LinkedList<StateListener> stateListeners = new LinkedList<>();
+    private static final LinkedList<ByteCountListener> byteCountListeners = new LinkedList<>();
+    
+    private static ConnectionStatus connectionStatus = ConnectionStatus.LEVEL_NOTCONNECTED;
     
     /**
      * Interface for state change listeners
@@ -26,7 +32,9 @@ public class VpnStatus {
     }
     
     public static void addStateListener(StateListener listener) {
-        stateListeners.add(listener);
+        if (!stateListeners.contains(listener)) {
+            stateListeners.add(listener);
+        }
     }
     
     public static void removeStateListener(StateListener listener) {
@@ -34,22 +42,64 @@ public class VpnStatus {
     }
     
     public static void addByteCountListener(ByteCountListener listener) {
-        byteCountListeners.add(listener);
+        if (!byteCountListeners.contains(listener)) {
+            byteCountListeners.add(listener);
+        }
     }
     
     public static void removeByteCountListener(ByteCountListener listener) {
         byteCountListeners.remove(listener);
     }
     
-    public static void updateState(String state, String message, int resId, ConnectionStatus level) {
+    /**
+     * Update connection state and notify listeners
+     */
+    public static void updateState(String state, String logmessage, int resId, ConnectionStatus status) {
+        connectionStatus = status;
+        Log.d(TAG, "VPN status updated: " + status + " - " + logmessage);
+        
         for (StateListener listener : stateListeners) {
-            listener.updateState(state, message, resId, level);
+            listener.updateState(state, logmessage, resId, status);
         }
     }
     
+    /**
+     * Update state string for the VPN connection
+     */
+    public static void updateStateString(String prefix, String state, int localizedResId, ConnectionStatus level) {
+        connectionStatus = level;
+        Log.d(TAG, prefix + ": " + state + " - Status: " + level);
+        
+        // Forward update to normal updateState
+        updateState(state, state, localizedResId, level);
+    }
+    
+    /**
+     * Update connection byte counts and notify listeners
+     */
     public static void updateByteCount(long in, long out, long diffIn, long diffOut) {
         for (ByteCountListener listener : byteCountListeners) {
             listener.updateByteCount(in, out, diffIn, diffOut);
         }
+    }
+    
+    /**
+     * Get current connection status
+     * @return Current VPN connection status
+     */
+    public static ConnectionStatus getConnectionStatus() {
+        return connectionStatus;
+    }
+    
+    /**
+     * Format bytes as human readable string
+     */
+    public static String humanReadableByteCount(long bytes, boolean si) {
+        int unit = si ? 1000 : 1024;
+        if (bytes < unit) return bytes + " B";
+        
+        int exp = (int)(Math.log(bytes) / Math.log(unit));
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i");
+        return String.format(Locale.US, "%.1f %sB", bytes / Math.pow(unit, exp), pre);
     }
 } 

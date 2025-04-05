@@ -14,8 +14,10 @@ import android.util.Log;
 import androidx.preference.PreferenceManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -26,6 +28,18 @@ public class AppLockManager {
     private static final String PREF_LOCKED_APPS = "locked_apps";
     private static final String PREF_PIN_SET = "pin_set";
     private static final String PREF_PIN_CODE = "pin_code";
+    private static final String PREF_LAST_ACTIVE_APP = "last_active_app";
+    private static final String PREF_APPS_BY_CATEGORY_PREFIX = "apps_category_";
+    
+    // Предпочтения для категорий приложений
+    private static final String PREF_APP_CATEGORIES = "app_categories";
+    
+    // Предопределенные категории приложений
+    public static final String CATEGORY_SOCIAL = "social";
+    public static final String CATEGORY_FINANCE = "finance";
+    public static final String CATEGORY_GAMES = "games";
+    public static final String CATEGORY_SHOPPING = "shopping";
+    public static final String CATEGORY_MESSAGING = "messaging";
     
     private static AppLockManager instance;
     
@@ -68,12 +82,12 @@ public class AppLockManager {
     }
     
     /**
-     * Set PIN for app lock
+     * Установить PIN-код для блокировки
      */
     public boolean setPin(String pin) {
         try {
-            if (pin == null || pin.isEmpty()) {
-                Log.e(TAG, "Cannot set empty PIN");
+            if (pin == null || pin.trim().isEmpty()) {
+                Log.e(TAG, "Attempted to set empty PIN");
                 return false;
             }
             
@@ -82,9 +96,9 @@ public class AppLockManager {
             
             // First store the PIN
             prefs.edit()
-                 .putString(PREF_PIN_CODE, pin)
-                 .putBoolean(PREF_PIN_SET, true)
-                 .apply();
+                .putString(PREF_PIN_CODE, pin)
+                .putBoolean(PREF_PIN_SET, true)
+                .apply();
             
             // Now verify it was stored properly
             boolean pinStored = prefs.contains(PREF_PIN_CODE);
@@ -92,7 +106,7 @@ public class AppLockManager {
             boolean pinSet = prefs.getBoolean(PREF_PIN_SET, false);
             
             Log.d(TAG, "PIN set successfully: " + pinSet + ", PIN stored: " + pinStored + 
-                  ", PIN value matches: " + pin.equals(storedPin));
+                ", PIN value matches: " + pin.equals(storedPin));
             
             return pinSet && pinStored && pin.equals(storedPin);
         } catch (Exception e) {
@@ -102,7 +116,7 @@ public class AppLockManager {
     }
     
     /**
-     * Check if PIN is set
+     * Проверить, установлен ли PIN-код
      */
     public boolean isPinSet() {
         try {
@@ -122,12 +136,11 @@ public class AppLockManager {
     }
     
     /**
-     * Verify entered PIN
+     * Проверить PIN-код
      */
     public boolean verifyPin(String enteredPin) {
         try {
-            if (enteredPin == null || enteredPin.isEmpty()) {
-                Log.e(TAG, "Attempted to verify empty PIN");
+            if (enteredPin == null || enteredPin.trim().isEmpty()) {
                 return false;
             }
             
@@ -135,14 +148,11 @@ public class AppLockManager {
             String savedPin = prefs.getString(PREF_PIN_CODE, "");
             
             if (savedPin == null || savedPin.isEmpty()) {
-                Log.e(TAG, "No PIN found in preferences");
+                Log.e(TAG, "No PIN is saved, can't verify");
                 return false;
             }
             
-            Log.d(TAG, "Verifying PIN, entered: " + enteredPin.length() + " chars, saved: " + savedPin.length() + " chars");
-            boolean matches = savedPin.equals(enteredPin);
-            Log.d(TAG, "PIN verification " + (matches ? "succeeded" : "failed"));
-            return matches;
+            return savedPin.equals(enteredPin);
         } catch (Exception e) {
             Log.e(TAG, "Error verifying PIN", e);
             return false;
@@ -169,10 +179,8 @@ public class AppLockManager {
             editor.apply();
             
             Log.d(TAG, "Added " + packageName + " to locked apps list. Total locked apps: " + lockedApps.size());
-            return; // Success
         } catch (Exception e) {
             Log.e(TAG, "Error adding app to locked apps", e);
-            // Don't throw the exception - just log it and return
         }
     }
     
@@ -248,26 +256,231 @@ public class AppLockManager {
                     userApps.add(app);
                 }
             }
+            
+            Log.d(TAG, "Found " + userApps.size() + " user installed apps");
+            return userApps;
         } catch (Exception e) {
-            Log.e(TAG, "Error getting installed apps", e);
+            Log.e(TAG, "Error getting user installed apps", e);
+            return userApps;
         }
-        
-        return userApps;
     }
     
     /**
-     * Lock the device (requires admin permissions)
+     * Lock device immediately
      */
     public void lockDevice() {
-        if (isAdminActive()) {
-            // Add a small delay to make sure any UI interactions complete
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                try {
-                    dpm.lockNow();
-                } catch (SecurityException e) {
-                    Log.e(TAG, "Failed to lock device", e);
+        try {
+            if (dpm != null && isAdminActive()) {
+                dpm.lockNow();
+                Log.d(TAG, "Device locked");
+            } else {
+                Log.e(TAG, "Cannot lock device - not an active admin");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error locking device", e);
+        }
+    }
+    
+    /**
+     * Добавить приложение в категорию
+     */
+    public void addAppToCategory(String packageName, String category) {
+        try {
+            if (packageName == null || category == null) {
+                Log.e(TAG, "Package name or category is null");
+                return;
+            }
+            
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            
+            // Получаем текущие категории приложений (формат: "категория:пакет1,пакет2,...")
+            Set<String> appCategories = prefs.getStringSet(PREF_APP_CATEGORIES, new HashSet<>());
+            Set<String> updatedCategories = new HashSet<>(appCategories != null ? appCategories : new HashSet<>());
+            
+            // Ищем нужную категорию
+            String categoryEntry = null;
+            for (String entry : updatedCategories) {
+                if (entry.startsWith(category + ":")) {
+                    categoryEntry = entry;
+                    break;
                 }
-            }, 100);
+            }
+            
+            // Если категория уже существует, обновляем ее
+            if (categoryEntry != null) {
+                updatedCategories.remove(categoryEntry);
+                
+                // Добавляем приложение, если его еще нет
+                if (!categoryEntry.contains(packageName)) {
+                    categoryEntry = categoryEntry + "," + packageName;
+                }
+                
+                updatedCategories.add(categoryEntry);
+            } else {
+                // Если категории нет, создаем новую
+                updatedCategories.add(category + ":" + packageName);
+            }
+            
+            // Сохраняем обновленные данные
+            prefs.edit()
+                 .putStringSet(PREF_APP_CATEGORIES, updatedCategories)
+                 .apply();
+            
+            Log.d(TAG, "Added " + packageName + " to category " + category);
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding app to category", e);
+        }
+    }
+    
+    /**
+     * Удалить приложение из категории
+     */
+    public void removeAppFromCategory(String packageName, String category) {
+        try {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            
+            // Получаем текущие категории приложений
+            Set<String> appCategories = prefs.getStringSet(PREF_APP_CATEGORIES, new HashSet<>());
+            Set<String> updatedCategories = new HashSet<>(appCategories != null ? appCategories : new HashSet<>());
+            
+            // Ищем нужную категорию
+            String categoryEntry = null;
+            for (String entry : updatedCategories) {
+                if (entry.startsWith(category + ":")) {
+                    categoryEntry = entry;
+                    break;
+                }
+            }
+            
+            // Если категория найдена, обновляем ее
+            if (categoryEntry != null) {
+                updatedCategories.remove(categoryEntry);
+                
+                // Разбиваем строку категории и удаляем приложение
+                String[] parts = categoryEntry.split(":");
+                if (parts.length == 2) {
+                    String[] apps = parts[1].split(",");
+                    StringBuilder newAppList = new StringBuilder();
+                    
+                    for (String app : apps) {
+                        if (!app.equals(packageName) && !app.isEmpty()) {
+                            if (newAppList.length() > 0) {
+                                newAppList.append(",");
+                            }
+                            newAppList.append(app);
+                        }
+                    }
+                    
+                    // Если остались приложения, добавляем категорию обратно
+                    if (newAppList.length() > 0) {
+                        updatedCategories.add(category + ":" + newAppList.toString());
+                    }
+                }
+                
+                // Сохраняем обновленные данные
+                prefs.edit()
+                     .putStringSet(PREF_APP_CATEGORIES, updatedCategories)
+                     .apply();
+                
+                Log.d(TAG, "Removed " + packageName + " from category " + category);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error removing app from category", e);
+        }
+    }
+    
+    /**
+     * Получить все приложения в категории
+     */
+    public Set<String> getAppsInCategory(String category) {
+        try {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            Set<String> appCategories = prefs.getStringSet(PREF_APP_CATEGORIES, new HashSet<>());
+            Set<String> appsInCategory = new HashSet<>();
+            
+            // Ищем нужную категорию
+            for (String entry : appCategories) {
+                if (entry.startsWith(category + ":")) {
+                    String[] parts = entry.split(":");
+                    if (parts.length == 2 && !parts[1].isEmpty()) {
+                        String[] apps = parts[1].split(",");
+                        for (String app : apps) {
+                            if (!app.isEmpty()) {
+                                appsInCategory.add(app);
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+            
+            return appsInCategory;
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting apps in category", e);
+            return new HashSet<>();
+        }
+    }
+    
+    /**
+     * Получить все категории приложений
+     */
+    public Set<String> getAllCategories() {
+        try {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            Set<String> appCategories = prefs.getStringSet(PREF_APP_CATEGORIES, new HashSet<>());
+            Set<String> categories = new HashSet<>();
+            
+            for (String entry : appCategories) {
+                String[] parts = entry.split(":");
+                if (parts.length > 0) {
+                    categories.add(parts[0]);
+                }
+            }
+            
+            return categories;
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting all categories", e);
+            return new HashSet<>();
+        }
+    }
+    
+    /**
+     * Сбрасывает все настройки блокировки приложений.
+     */
+    public void resetAllSettings() {
+        try {
+            Log.d(TAG, "Resetting all app lock settings");
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove(PREF_PIN_SET)
+                    .remove(PREF_PIN_CODE)
+                    .remove(PREF_LOCKED_APPS)
+                    .remove(PREF_LAST_ACTIVE_APP)
+                    .remove(PREF_APP_CATEGORIES);
+            
+            // Удаляем все категории приложений
+            String[] categories = {
+                CATEGORY_SOCIAL,
+                CATEGORY_FINANCE,
+                CATEGORY_GAMES,
+                CATEGORY_SHOPPING,
+                CATEGORY_MESSAGING
+            };
+            
+            for (String category : categories) {
+                editor.remove(PREF_APPS_BY_CATEGORY_PREFIX + category);
+            }
+            
+            editor.apply();
+            
+            // Также удаляем права администратора, если они были предоставлены
+            if (dpm != null && adminComponent != null && isAdminActive()) {
+                dpm.removeActiveAdmin(adminComponent);
+            }
+            
+            Log.d(TAG, "All app lock settings have been reset");
+        } catch (Exception e) {
+            Log.e(TAG, "Error resetting app lock settings", e);
         }
     }
 } 

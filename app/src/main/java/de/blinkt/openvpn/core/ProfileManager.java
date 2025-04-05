@@ -9,7 +9,7 @@ import java.util.Map;
 import de.blinkt.openvpn.VpnProfile;
 
 /**
- * Stub implementation of ProfileManager from OpenVPN library
+ * Implementation of ProfileManager for OpenVPN profiles
  */
 public class ProfileManager {
     
@@ -42,6 +42,10 @@ public class ProfileManager {
             }
         }
         return null;
+    }
+    
+    public VpnProfile getProfileByUUID(String uuid) {
+        return profiles.get(uuid);
     }
     
     public List<VpnProfile> getProfiles() {

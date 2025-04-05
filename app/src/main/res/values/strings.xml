@@ -4,7 +4,7 @@
     <string name="vpn">VPN</string>
     <string name="app_lock">App Lock</string>
     <string name="url_checker">URL Checker</string>
-    <string name="hidden_files">Hidden Files</string>
+    <string name="hidden_files">Encrypted Files</string>
     <string name="find_phone">Find Phone</string>
     <string name="security_level">Security Level</string>
     <string name="info">Info</string>
@@ -240,6 +240,7 @@
     <string name="access_granted">Access granted</string>
     <string name="locked_app">Locked App</string>
     <string name="app_locked">App Locked</string>
+    <string name="too_many_attempts">Too many failed attempts. Please try again later.</string>
 
     <!-- Security Dashboard Improvements -->
     <string name="recommendations">Recommendations</string>
@@ -284,6 +285,7 @@
     <string name="microphone_monitored">Microphone usage monitored</string>
     <string name="camera_monitored">Camera usage monitored</string>
     <string name="location_monitored">Location usage monitored</string>
+    <string name="anti_spy_explanation">Anti-Spy actively monitors and blocks apps that attempt to access your microphone, camera, or location without permission. When enabled, this feature runs in the background and will alert you immediately if any suspicious activity is detected.</string>
 
     <!-- Authentication -->
     <string name="email">Email</string>

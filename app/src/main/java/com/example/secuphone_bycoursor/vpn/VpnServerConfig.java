@@ -25,14 +25,15 @@ public class VpnServerConfig {
     private static final String TAG = "VpnServerConfig";
     private static final String CONFIG_FOLDER = "vpn_configs";
     private static final String PREF_SELECTED_SERVER = "selected_vpn_server";
+    private static final String PREF_PROTOCOL_TYPE = "vpn_protocol_type";
     
-    // Server identifier constants - keep only one real server
+    // Server identifier constants
     public static final String SERVER_US = "main_server";
     
     // Maps server identifiers to display names
     private static final Map<String, String> SERVER_NAMES = new HashMap<>();
     static {
-        SERVER_NAMES.put(SERVER_US, "MainServer (13.60.95.237)");
+        SERVER_NAMES.put(SERVER_US, "Amazon AWS (13.60.95.237)");
     }
     
     private static VpnServerConfig instance;
@@ -42,6 +43,8 @@ public class VpnServerConfig {
     
     // Current selected server
     private String selectedServer = SERVER_US;
+    // Current protocol (TCP/UDP)
+    private boolean useTcp = false;
     
     private VpnServerConfig(Context context) {
         this.context = context.getApplicationContext();
@@ -55,6 +58,11 @@ public class VpnServerConfig {
         
         // Load previously selected server
         selectedServer = preferences.getString(PREF_SELECTED_SERVER, SERVER_US);
+        // Load protocol preference
+        useTcp = preferences.getBoolean(PREF_PROTOCOL_TYPE, false);
+        
+        // Set the protocol in OpenVPNConfig
+        OpenVPNConfig.setProtocol(useTcp);
     }
     
     public static synchronized VpnServerConfig getInstance(Context context) {
@@ -93,6 +101,24 @@ public class VpnServerConfig {
      */
     public String getSelectedServer() {
         return selectedServer;
+    }
+    
+    /**
+     * Set VPN protocol (TCP/UDP)
+     * @param useTcpProtocol true for TCP, false for UDP
+     */
+    public void setProtocol(boolean useTcpProtocol) {
+        this.useTcp = useTcpProtocol;
+        preferences.edit().putBoolean(PREF_PROTOCOL_TYPE, useTcpProtocol).apply();
+        OpenVPNConfig.setProtocol(useTcpProtocol);
+    }
+    
+    /**
+     * Check if using TCP protocol
+     * @return true if using TCP, false if using UDP
+     */
+    public boolean isUsingTcp() {
+        return useTcp;
     }
     
     /**
@@ -204,6 +230,14 @@ public class VpnServerConfig {
      * Get the IP address for this server
      */
     public String getServerIpPattern(String serverIdentifier) {
-        return "13.60.95.237";
+        // All servers use the same IP address for now
+        return OpenVPNConfig.SERVER_HOSTNAME;
+    }
+    
+    /**
+     * Get the current port based on protocol
+     */
+    public int getCurrentPort() {
+        return useTcp ? OpenVPNConfig.TCP_PORT : OpenVPNConfig.UDP_PORT;
     }
 } 

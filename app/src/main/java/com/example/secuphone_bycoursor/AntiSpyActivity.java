@@ -5,7 +5,9 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 
 import android.animation.ValueAnimator;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -18,6 +20,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.secuphone_bycoursor.services.AntiSpyService;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -45,6 +48,7 @@ public class AntiSpyActivity extends AppCompatActivity {
     private ImageView statusIcon;
     private SwitchMaterial micSwitch, cameraSwitch, locationSwitch;
     private MaterialCardView resultCard;
+    private TextView explanationText;
 
     // State
     private boolean isScanning = false;
@@ -88,6 +92,10 @@ public class AntiSpyActivity extends AppCompatActivity {
         cameraSwitch = findViewById(R.id.camera_switch);
         locationSwitch = findViewById(R.id.location_switch);
         resultCard = findViewById(R.id.result_card);
+        explanationText = findViewById(R.id.explanation_text);
+        
+        // Update explanation text
+        explanationText.setText(R.string.anti_spy_explanation);
     }
     
     private void loadSavedState() {
@@ -159,6 +167,7 @@ public class AntiSpyActivity extends AppCompatActivity {
             }
             
             updateEnabledState();
+            updateAntiSpyService();
         });
         
         cameraSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -171,6 +180,7 @@ public class AntiSpyActivity extends AppCompatActivity {
             }
             
             updateEnabledState();
+            updateAntiSpyService();
         });
         
         locationSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -183,7 +193,26 @@ public class AntiSpyActivity extends AppCompatActivity {
             }
             
             updateEnabledState();
+            updateAntiSpyService();
         });
+    }
+    
+    private void updateAntiSpyService() {
+        Intent serviceIntent = new Intent(this, AntiSpyService.class);
+        
+        if (isEnabled) {
+            // Start the service
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(serviceIntent);
+            } else {
+                startService(serviceIntent);
+            }
+            Toast.makeText(this, "Anti-Spy protection activated", Toast.LENGTH_SHORT).show();
+        } else {
+            // Stop the service
+            stopService(serviceIntent);
+            Toast.makeText(this, "Anti-Spy protection deactivated", Toast.LENGTH_SHORT).show();
+        }
     }
     
     private void updateEnabledState() {
@@ -199,6 +228,9 @@ public class AntiSpyActivity extends AppCompatActivity {
             
             // Update UI
             updateUI();
+            
+            // Update service
+            updateAntiSpyService();
         }
     }
     
@@ -274,6 +306,14 @@ public class AntiSpyActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, R.string.spyware_detected, Toast.LENGTH_LONG).show();
         }
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh UI state
+        updateUI();
+        updateLastScanText();
     }
     
     @Override

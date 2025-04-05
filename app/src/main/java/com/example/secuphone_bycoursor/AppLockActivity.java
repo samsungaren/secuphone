@@ -37,6 +37,8 @@ import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 public class AppLockActivity extends AppCompatActivity {
 
@@ -250,29 +252,94 @@ public class AppLockActivity extends AppCompatActivity {
                 appListContainer.removeAllViews();
             }
             
-            // Hide no apps text
+            // Get installed apps
+            List<ApplicationInfo> userApps = appLockManager.getUserInstalledApps();
+            
+            if (userApps.isEmpty()) {
+                if (noAppsText != null) {
+                    noAppsText.setVisibility(View.VISIBLE);
+                }
+                return;
+            }
+            
             if (noAppsText != null) {
                 noAppsText.setVisibility(View.GONE);
             }
             
-            // Get user installed apps
-            List<ApplicationInfo> userApps = appLockManager.getUserInstalledApps();
+            // Получаем категории приложений
+            Set<String> socialApps = appLockManager.getAppsInCategory(AppLockManager.CATEGORY_SOCIAL);
+            Set<String> financeApps = appLockManager.getAppsInCategory(AppLockManager.CATEGORY_FINANCE);
+            Set<String> gameApps = appLockManager.getAppsInCategory(AppLockManager.CATEGORY_GAMES);
+            Set<String> shoppingApps = appLockManager.getAppsInCategory(AppLockManager.CATEGORY_SHOPPING);
+            Set<String> messagingApps = appLockManager.getAppsInCategory(AppLockManager.CATEGORY_MESSAGING);
             
-            // Sort apps by name
-            PackageManager pm = getPackageManager();
-            Collections.sort(userApps, (app1, app2) -> {
-                String name1 = pm.getApplicationLabel(app1).toString();
-                String name2 = pm.getApplicationLabel(app2).toString();
-                return name1.compareToIgnoreCase(name2);
-            });
+            // Создаем разделы по категориям
+            if (!socialApps.isEmpty()) {
+                addCategoryHeader("Social Media Apps");
+                for (ApplicationInfo app : userApps) {
+                    if (socialApps.contains(app.packageName)) {
+                        addAppToList(app);
+                    }
+                }
+            }
             
-            // Add apps to UI
-            for (ApplicationInfo appInfo : userApps) {
-                addAppToList(appInfo);
+            if (!financeApps.isEmpty()) {
+                addCategoryHeader("Financial Apps");
+                for (ApplicationInfo app : userApps) {
+                    if (financeApps.contains(app.packageName)) {
+                        addAppToList(app);
+                    }
+                }
+            }
+            
+            if (!gameApps.isEmpty()) {
+                addCategoryHeader("Games");
+                for (ApplicationInfo app : userApps) {
+                    if (gameApps.contains(app.packageName)) {
+                        addAppToList(app);
+                    }
+                }
+            }
+            
+            if (!shoppingApps.isEmpty()) {
+                addCategoryHeader("Shopping Apps");
+                for (ApplicationInfo app : userApps) {
+                    if (shoppingApps.contains(app.packageName)) {
+                        addAppToList(app);
+                    }
+                }
+            }
+            
+            if (!messagingApps.isEmpty()) {
+                addCategoryHeader("Messaging Apps");
+                for (ApplicationInfo app : userApps) {
+                    if (messagingApps.contains(app.packageName)) {
+                        addAppToList(app);
+                    }
+                }
+            }
+            
+            // Добавляем остальные приложения в раздел "Other Apps"
+            Set<String> categorizedApps = new HashSet<>();
+            categorizedApps.addAll(socialApps);
+            categorizedApps.addAll(financeApps);
+            categorizedApps.addAll(gameApps);
+            categorizedApps.addAll(shoppingApps);
+            categorizedApps.addAll(messagingApps);
+            
+            boolean hasOtherApps = false;
+            for (ApplicationInfo app : userApps) {
+                if (!categorizedApps.contains(app.packageName)) {
+                    if (!hasOtherApps) {
+                        addCategoryHeader("Other Apps");
+                        hasOtherApps = true;
+                    }
+                    addAppToList(app);
+                }
             }
             
         } catch (Exception e) {
-            Log.e(TAG, "Error loading apps", e);
+            Log.e(TAG, "Error loading installed apps", e);
             Toast.makeText(this, "Error loading apps: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
@@ -427,5 +494,23 @@ public class AppLockActivity extends AppCompatActivity {
             .setMessage(R.string.app_lock_explanation)
             .setPositiveButton(R.string.ok, null)
             .show();
+    }
+    
+    /**
+     * Добавляет заголовок категории в список приложений
+     */
+    private void addCategoryHeader(String categoryName) {
+        try {
+            View header = getLayoutInflater().inflate(R.layout.item_category_header, appListContainer, false);
+            TextView headerText = header.findViewById(R.id.category_header_text);
+            
+            if (headerText != null) {
+                headerText.setText(categoryName);
+            }
+            
+            appListContainer.addView(header);
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding category header", e);
+        }
     }
 } 

@@ -22,7 +22,11 @@ import com.example.secuphone_bycoursor.AppLockActivity;
 import com.example.secuphone_bycoursor.LockScreenActivity;
 import com.example.secuphone_bycoursor.R;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Executors;
@@ -35,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 public class LockScreenService extends Service {
 
     private static final String TAG = "LockScreenService";
-    private static final int CHECK_INTERVAL_MS = 500;
+    private static final int CHECK_INTERVAL_MS = 1000;
     private static final int NOTIFICATION_ID = 1002;
     private static final String NOTIFICATION_CHANNEL_ID = "lock_screen_service";
     
@@ -45,12 +49,28 @@ public class LockScreenService extends Service {
     private ScheduledExecutorService executor;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     
+    // Кэш для состояния блокировки приложений
+    private Map<String, Boolean> appLockStateCache = new HashMap<>();
+    
+    // Список приложений, для которых недавно показан LockScreen
+    private Set<String> recentlyLockedApps = new HashSet<>();
+    // Таймаут перед повторным показом экрана блокировки (5 секунд)
+    private static final long RELOCK_TIMEOUT_MS = 5000;
+    
+    // Время последнего обновления кэша
+    private long lastCacheUpdateTime = 0;
+    // Интервал обновления кэша (30 секунд)
+    private static final long CACHE_UPDATE_INTERVAL_MS = 30000;
+    
     @Override
     public void onCreate() {
         try {
             super.onCreate();
             appLockManager = new AppLockManager(this);
             executor = Executors.newSingleThreadScheduledExecutor();
+            
+            // Инициализируем кэш при запуске
+            updateLockStateCache();
             
             Log.d(TAG, "Lock Screen Service created");
         } catch (Exception e) {
@@ -146,6 +166,25 @@ public class LockScreenService extends Service {
     }
     
     /**
+     * Обновляет кэш состояния блокировки приложений
+     */
+    private void updateLockStateCache() {
+        try {
+            Set<String> lockedApps = appLockManager.getLockedApps();
+            appLockStateCache.clear();
+            
+            for (String packageName : lockedApps) {
+                appLockStateCache.put(packageName, true);
+            }
+            
+            lastCacheUpdateTime = System.currentTimeMillis();
+            Log.d(TAG, "Updated lock state cache with " + appLockStateCache.size() + " locked apps");
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating lock state cache", e);
+        }
+    }
+    
+    /**
      * Start monitoring for app changes
      */
     private void startMonitoring() {
@@ -160,31 +199,64 @@ public class LockScreenService extends Service {
                         return;
                     }
                     
+                    // Периодически обновляем кэш состояния блокировки
+                    long currentTime = System.currentTimeMillis();
+                    if (currentTime - lastCacheUpdateTime > CACHE_UPDATE_INTERVAL_MS) {
+                        updateLockStateCache();
+                    }
+                    
                     // Get current foreground app
                     currentForegroundApp = getForegroundApp();
                     
-                    // Skip if no app detected or same as last check
-                    if (currentForegroundApp == null || currentForegroundApp.equals(lastForegroundApp)) {
+                    // Skip if no app detected
+                    if (currentForegroundApp == null) {
                         return;
                     }
                     
-                    Log.d(TAG, "Detected foreground app change: " + currentForegroundApp);
-                    
-                    // Update last app
-                    lastForegroundApp = currentForegroundApp;
-                    
-                    // Check if this app is locked
-                    boolean isLocked = appLockManager.isAppLocked(currentForegroundApp);
-                    Log.d(TAG, "App " + currentForegroundApp + " is " + (isLocked ? "locked" : "not locked"));
-                    
-                    if (isLocked) {
-                        Log.d(TAG, "Detected locked app: " + currentForegroundApp);
-                        showLockScreen(currentForegroundApp);
+                    // Только если сменилось приложение
+                    if (!currentForegroundApp.equals(lastForegroundApp)) {
+                        Log.d(TAG, "Detected foreground app change to: " + currentForegroundApp);
+                        
+                        // Update last app
+                        lastForegroundApp = currentForegroundApp;
+                        
+                        // Очищаем метку о недавно показанном экране блокировки для нового приложения
+                        boolean recentlyLocked = recentlyLockedApps.contains(currentForegroundApp);
+                        
+                        // Если приложение недавно блокировалось, пропускаем повторную проверку
+                        if (recentlyLocked) {
+                            Log.d(TAG, "App " + currentForegroundApp + " was recently locked, skipping check");
+                            return;
+                        }
+                        
+                        // Проверяем состояние блокировки сначала из кэша
+                        Boolean isLocked = appLockStateCache.get(currentForegroundApp);
+                        
+                        // Если нет в кэше, проверяем напрямую и добавляем в кэш
+                        if (isLocked == null) {
+                            isLocked = appLockManager.isAppLocked(currentForegroundApp);
+                            appLockStateCache.put(currentForegroundApp, isLocked);
+                        }
+                        
+                        if (isLocked) {
+                            Log.d(TAG, "Detected locked app: " + currentForegroundApp);
+                            // Добавляем в список недавно заблокированных
+                            recentlyLockedApps.add(currentForegroundApp);
+                            
+                            // Показываем экран блокировки
+                            showLockScreen(currentForegroundApp);
+                            
+                            // Через RELOCK_TIMEOUT_MS удаляем из списка недавно заблокированных
+                            mainHandler.postDelayed(() -> {
+                                recentlyLockedApps.remove(currentForegroundApp);
+                                Log.d(TAG, "Removed " + currentForegroundApp + " from recently locked list");
+                            }, RELOCK_TIMEOUT_MS);
+                        }
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Error during app monitoring", e);
                 }
-            }, 0, CHECK_INTERVAL_MS, TimeUnit.MILLISECONDS);
+            }, 1000, CHECK_INTERVAL_MS, TimeUnit.MILLISECONDS); // Небольшая задержка при старте
             
         } catch (Exception e) {
             Log.e(TAG, "Error starting monitoring", e);
@@ -199,9 +271,9 @@ public class LockScreenService extends Service {
             // Get usage stats
             UsageStatsManager usageStatsManager = (UsageStatsManager) getSystemService(Context.USAGE_STATS_SERVICE);
             long endTime = System.currentTimeMillis();
-            long beginTime = endTime - 10000; // Last 10 seconds
+            long beginTime = endTime - 5000; // Последние 5 секунд (было 10)
             
-            // Query apps used in last 10 seconds
+            // Query apps used in last 5 seconds
             List<UsageStats> stats = usageStatsManager.queryUsageStats(
                     UsageStatsManager.INTERVAL_DAILY, beginTime, endTime);
             
@@ -212,7 +284,10 @@ public class LockScreenService extends Service {
             // Find most recently used app
             SortedMap<Long, UsageStats> sortedMap = new TreeMap<>();
             for (UsageStats usageStats : stats) {
-                sortedMap.put(usageStats.getLastTimeUsed(), usageStats);
+                // Добавляем только приложения с временем использования > 0
+                if (usageStats.getLastTimeUsed() > 0) {
+                    sortedMap.put(usageStats.getLastTimeUsed(), usageStats);
+                }
             }
             
             if (sortedMap.isEmpty()) {
@@ -221,11 +296,13 @@ public class LockScreenService extends Service {
             
             String packageName = sortedMap.get(sortedMap.lastKey()).getPackageName();
             
-            // Skip our own app and system UI
+            // Фильтрация системных приложений и самого SecuPhone
             if (packageName.equals(getPackageName()) ||
                     packageName.contains("launcher") ||
                     packageName.contains("systemui") ||
-                    packageName.contains("android")) {
+                    packageName.contains("android") ||
+                    packageName.contains("inputmethod") ||
+                    packageName.equals("com.example.secuphone_bycoursor.LockScreenActivity")) {
                 return null;
             }
             
@@ -248,16 +325,15 @@ public class LockScreenService extends Service {
                 try {
                     Intent lockIntent = new Intent(this, LockScreenActivity.class);
                     lockIntent.putExtra("package_name", packageName);
-                    lockIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    lockIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    lockIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                     startActivity(lockIntent);
-                    Log.d(TAG, "Launched lock screen for " + packageName);
+                    Log.d(TAG, "Lock screen activity started for: " + packageName);
                 } catch (Exception e) {
-                    Log.e(TAG, "Error showing lock screen", e);
+                    Log.e(TAG, "Error showing lock screen: " + e.getMessage());
                 }
             });
         } catch (Exception e) {
-            Log.e(TAG, "Error in showLockScreen", e);
+            Log.e(TAG, "Error preparing lock screen", e);
         }
     }
 } 

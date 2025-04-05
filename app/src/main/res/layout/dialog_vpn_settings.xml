@@ -4,63 +4,135 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="@drawable/card_background">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp">
+        
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="VPN Settings"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text" />
+            
+        <ImageButton
+            android:id="@+id/btn_close"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentEnd="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_close"
+            android:contentDescription="Close dialog" />
+    </RelativeLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Протокол подключения"
+        android:text="Connection Protocol"
         android:textSize="16sp"
         android:textStyle="bold"
+        android:textColor="@color/text"
         android:layout_marginBottom="8dp" />
 
-    <RadioGroup
-        android:id="@+id/protocol_radio_group"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginBottom="16dp">
 
-        <RadioButton
-            android:id="@+id/radio_tcp"
+        <LinearLayout
+            android:id="@+id/option_tcp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="TCP (порт 443)"
-            android:checked="true" />
-
-        <RadioButton
-            android:id="@+id/radio_udp"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:background="@drawable/protocol_selector_background"
+            android:layout_marginEnd="8dp">
+            
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="TCP"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text"
+                android:gravity="center" />
+                
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Port 443"
+                android:textSize="14sp"
+                android:textColor="@color/secondary_text"
+                android:gravity="center" />
+                
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="More stable"
+                android:textSize="12sp"
+                android:textColor="@color/secondary_text"
+                android:gravity="center" />
+        </LinearLayout>
+        
+        <LinearLayout
+            android:id="@+id/option_udp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="UDP (порт 1194)" />
-    </RadioGroup>
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:background="@drawable/protocol_selector_background"
+            android:layout_marginStart="8dp">
+            
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="UDP"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text"
+                android:gravity="center" />
+                
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Port 1194"
+                android:textSize="14sp"
+                android:textColor="@color/secondary_text"
+                android:gravity="center" />
+                
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Faster speeds"
+                android:textSize="12sp"
+                android:textColor="@color/secondary_text"
+                android:gravity="center" />
+        </LinearLayout>
+    </LinearLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/import_config_btn"
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Импорт OpenVPN конфигурации"
-        app:icon="@drawable/ic_upload"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/update_credentials_btn"
+        android:text="Server Information"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/text"
+        android:layout_marginBottom="8dp" />
+        
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Обновить учетные данные"
-        app:icon="@drawable/ic_lock"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/view_logs_btn"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Просмотр журнала соединения"
-        app:icon="@drawable/ic_list"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+        android:text="Host: 13.60.95.237\nAdmin Panel: Port 943\nOpenVPN: TCP 443, UDP 1194\nUsername: secuphone"
+        android:textSize="14sp"
+        android:textColor="@color/secondary_text"
+        android:layout_marginBottom="16dp" />
 
 </LinearLayout> 

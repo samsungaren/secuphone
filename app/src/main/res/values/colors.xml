@@ -15,6 +15,12 @@
     <color name="text">#FFFFFF</color>
     <color name="text_secondary">#B4C6E4</color>
     <color name="text_disabled">#6A819F</color>
+    
+    <!-- Added missing colors -->
+    <color name="primary">#00BFB2</color>
+    <color name="primary_light">#33DAD2</color>
+    <color name="secondary_text">#B4C6E4</color>
+    <color name="divider">#2A3F6A</color>
 
     <color name="accent_primary">#00BFB2</color>
     <color name="accent_secondary">#4A6FA5</color>

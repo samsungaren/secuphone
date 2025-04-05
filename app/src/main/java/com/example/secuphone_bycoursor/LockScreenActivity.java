@@ -5,6 +5,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -15,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -32,6 +35,19 @@ public class LockScreenActivity extends AppCompatActivity {
     private ImageView appIconView;
     private AppLockManager appLockManager;
     
+    // Счетчик неудачных попыток
+    private int failedAttempts = 0;
+    // Максимальное количество попыток перед временной блокировкой
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+    // Задержка в мс после превышения количества попыток
+    private static final long LOCKOUT_DELAY_MS = 30000; // 30 секунд
+    // Флаг блокировки при превышении попыток
+    private boolean isTemporarilyLocked = false;
+    
+    private Button unlockButton;
+    private TextView errorMsgView;
+    private Handler handler = new Handler(Looper.getMainLooper());
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         try {
@@ -41,12 +57,27 @@ public class LockScreenActivity extends AppCompatActivity {
             
             Log.d(TAG, "LockScreenActivity onCreate");
             
-            // Prevent screenshots
+            // Prevent screenshots and display over other apps
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, 
                     WindowManager.LayoutParams.FLAG_SECURE);
             
-            // Keep screen on top
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+            // Комбинация флагов для надежного удержания поверх других окон
+            getWindow().addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | 
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD | 
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | 
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            );
+            
+            // Блокируем закрытие активити кнопкой назад
+            getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+                @Override
+                public void handleOnBackPressed() {
+                    // Не позволяем закрыть экран блокировки кнопкой назад
+                    // Вместо этого идем на домашний экран, не открывая приложение
+                    goToHomeScreen();
+                }
+            });
             
             ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.lock_screen_layout), (v, insets) -> {
                 Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -85,8 +116,9 @@ public class LockScreenActivity extends AppCompatActivity {
             pinInput = findViewById(R.id.pin_input);
             appNameText = findViewById(R.id.app_name_text);
             appIconView = findViewById(R.id.app_icon);
-            Button unlockButton = findViewById(R.id.unlock_button);
+            unlockButton = findViewById(R.id.unlock_button);
             Button cancelButton = findViewById(R.id.cancel_button);
+            errorMsgView = findViewById(R.id.error_message);
             
             if (pinInput == null || appNameText == null || appIconView == null || 
                 unlockButton == null || cancelButton == null) {
@@ -94,9 +126,14 @@ public class LockScreenActivity extends AppCompatActivity {
                 throw new IllegalStateException("Required views not found");
             }
             
+            // Устанавливаем начальное состояние сообщения об ошибке
+            if (errorMsgView != null) {
+                errorMsgView.setVisibility(View.GONE);
+            }
+            
             // Set listeners
             unlockButton.setOnClickListener(this::onUnlockClicked);
-            cancelButton.setOnClickListener(v -> finish());
+            cancelButton.setOnClickListener(v -> goToHomeScreen());
             
             // Set focus on PIN input
             pinInput.requestFocus();
@@ -129,19 +166,25 @@ public class LockScreenActivity extends AppCompatActivity {
     
     private void onUnlockClicked(View view) {
         try {
+            // Проверяем временную блокировку
+            if (isTemporarilyLocked) {
+                showError(getString(R.string.too_many_attempts));
+                return;
+            }
+            
             String enteredPin = pinInput.getText().toString().trim();
             
             Log.d(TAG, "Attempting to unlock with PIN of length: " + enteredPin.length());
             
             if (enteredPin.isEmpty()) {
-                Toast.makeText(this, R.string.enter_pin, Toast.LENGTH_SHORT).show();
+                showError(getString(R.string.enter_pin));
                 return;
             }
             
             // Validate that we have a PIN set
             if (!appLockManager.isPinSet()) {
                 Log.e(TAG, "No PIN is set in preferences, can't verify");
-                Toast.makeText(this, "Security error: No PIN is set", Toast.LENGTH_SHORT).show();
+                showError("Security error: No PIN is set");
                 // Exit to home screen for security
                 goToHomeScreen();
                 return;
@@ -154,34 +197,86 @@ public class LockScreenActivity extends AppCompatActivity {
                 Log.d(TAG, "PIN verification result: " + pinValid);
             } catch (Exception e) {
                 Log.e(TAG, "Exception during PIN verification", e);
-                Toast.makeText(this, "Error verifying PIN", Toast.LENGTH_SHORT).show();
+                showError("Error verifying PIN");
                 pinInput.setText("");
                 pinInput.requestFocus();
                 return;
             }
             
             if (pinValid) {
+                // Сбрасываем счетчик при правильном пароле
+                failedAttempts = 0;
+                hideError();
+                
                 // Pin is correct, close this activity to allow app access
                 Log.d(TAG, "PIN correct, allowing access to: " + packageName);
                 Toast.makeText(this, R.string.access_granted, Toast.LENGTH_SHORT).show();
                 finish();
             } else {
-                // Pin is incorrect, show error
-                Log.d(TAG, "PIN incorrect, access denied");
-                Toast.makeText(this, R.string.incorrect_pin, Toast.LENGTH_SHORT).show();
-                pinInput.setText("");
-                pinInput.requestFocus();
+                // Pin is incorrect, increment counter
+                failedAttempts++;
+                
+                // Check if we exceeded maximum attempts
+                if (failedAttempts >= MAX_FAILED_ATTEMPTS) {
+                    Log.d(TAG, "Maximum failed attempts reached: " + failedAttempts);
+                    handleMaxAttemptsExceeded();
+                } else {
+                    // Show appropriate message
+                    int remainingAttempts = MAX_FAILED_ATTEMPTS - failedAttempts;
+                    String errorMsg = getString(R.string.incorrect_pin) + 
+                            " (" + remainingAttempts + " attempts left)";
+                    showError(errorMsg);
+                    pinInput.setText("");
+                    pinInput.requestFocus();
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "Error verifying PIN", e);
-            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            showError("Error: " + e.getMessage());
         }
     }
     
-    @Override
-    public void onBackPressed() {
-        // Return to home screen instead of allowing app access
-        goToHomeScreen();
+    /**
+     * Обрабатывает ситуацию превышения максимального количества попыток
+     */
+    private void handleMaxAttemptsExceeded() {
+        isTemporarilyLocked = true;
+        unlockButton.setEnabled(false);
+        
+        String lockMsg = getString(R.string.too_many_attempts) + 
+                " Please wait " + (LOCKOUT_DELAY_MS / 1000) + " seconds";
+        showError(lockMsg);
+        
+        // Устанавливаем таймер на снятие блокировки
+        handler.postDelayed(() -> {
+            isTemporarilyLocked = false;
+            failedAttempts = 0;
+            unlockButton.setEnabled(true);
+            hideError();
+            pinInput.setText("");
+            pinInput.requestFocus();
+        }, LOCKOUT_DELAY_MS);
+    }
+    
+    /**
+     * Показать сообщение об ошибке
+     */
+    private void showError(String message) {
+        if (errorMsgView != null) {
+            errorMsgView.setText(message);
+            errorMsgView.setVisibility(View.VISIBLE);
+        } else {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * Скрыть сообщение об ошибке
+     */
+    private void hideError() {
+        if (errorMsgView != null) {
+            errorMsgView.setVisibility(View.GONE);
+        }
     }
 
     private void goToHomeScreen() {
@@ -194,6 +289,23 @@ public class LockScreenActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e(TAG, "Error going to home screen", e);
             finish(); // Just finish the activity if we can't launch home
+        }
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Сбрасываем PIN-код при каждом возврате на экран блокировки
+        pinInput.setText("");
+    }
+    
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Если активити уходит в фон, а мы не разблокировали приложение,
+        // то это может означать, что пользователь пытается обойти блокировку
+        if (!isFinishing()) {
+            goToHomeScreen();
         }
     }
 } 

@@ -26,23 +26,23 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <ImageButton
                     android:id="@+id/back_button"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/back"
                     android:src="@drawable/ic_arrow_back"
-                    android:tint="@color/text"
-                    android:contentDescription="@string/back" />
+                    app:tint="@color/text" />
 
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginStart="16dp"
+                    android:layout_weight="1"
                     android:text="@string/vpn"
                     android:textColor="@color/text"
                     android:textSize="22sp"
@@ -53,9 +53,9 @@
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/settings"
                     android:src="@drawable/ic_settings"
-                    android:tint="@color/text"
-                    android:contentDescription="@string/settings" />
+                    app:tint="@color/text" />
             </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
@@ -94,9 +94,9 @@
                     <!-- Status and Connection Time -->
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:gravity="center">
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:orientation="vertical">
 
                         <!-- Connection Status Label -->
                         <TextView
@@ -105,31 +105,20 @@
                             android:layout_height="wrap_content"
                             android:text="@string/vpn_off"
                             android:textColor="@color/text_secondary"
-                            android:textSize="16sp" />
+                            android:textSize="16sp">
 
-                        <!-- Indicator for connection status -->
-                        <FrameLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp">
-                            
-                            <View
-                                android:id="@+id/connection_indicator"
-                                android:layout_width="12dp"
-                                android:layout_height="12dp"
-                                android:background="@drawable/status_disconnected"
-                                android:layout_gravity="center"/>
-                        </FrameLayout>
+                        </TextView>
+
 
                         <!-- Additional connection info -->
                         <TextView
                             android:id="@+id/connecting_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
                             android:text=""
                             android:textColor="@color/accent_primary"
                             android:textSize="14sp"
-                            android:layout_marginTop="4dp"
                             android:visibility="gone" />
 
                         <!-- Connection Time Value -->
@@ -153,8 +142,8 @@
                             <!-- Using bg instead of image for better customization -->
                             <View
                                 android:id="@+id/power_button_bg"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
                                 android:background="@drawable/vpn_toggle_background_off" />
 
                             <ImageView
@@ -162,9 +151,9 @@
                                 android:layout_width="56dp"
                                 android:layout_height="56dp"
                                 android:layout_gravity="center"
+                                android:contentDescription="@string/vpn_power_button"
                                 android:src="@drawable/ic_power_vpn"
-                                android:tint="@color/text"
-                                android:contentDescription="@string/vpn_power_button" />
+                                app:tint="@color/text" />
                         </FrameLayout>
                     </LinearLayout>
                 </FrameLayout>
@@ -186,7 +175,7 @@
                     android:id="@+id/server_location_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/server_card_ripple"
+                    android:background="@drawable/vpn_connection_card_background"
                     android:padding="16dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
@@ -196,7 +185,6 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:gravity="center"
-                        android:background="@drawable/circle_background"
                         android:padding="12dp">
 
                         <ImageView

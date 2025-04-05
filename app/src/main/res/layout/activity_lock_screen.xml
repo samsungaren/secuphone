@@ -74,6 +74,17 @@
                 android:textColor="@color/text"
                 android:layout_marginBottom="8dp" />
 
+            <!-- Сообщение об ошибке -->
+            <TextView
+                android:id="@+id/error_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Error message"
+                android:textColor="@color/error_red"
+                android:gravity="center"
+                android:visibility="gone"
+                android:layout_marginBottom="8dp" />
+
             <EditText
                 android:id="@+id/pin_input"
                 android:layout_width="match_parent"
