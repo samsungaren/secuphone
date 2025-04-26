@@ -182,7 +182,7 @@
         <!-- FileProvider for sharing files -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.example.secuphone_bycoursor.fileprovider"
+            android:authorities="com.example.secuphone.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

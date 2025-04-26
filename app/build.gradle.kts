@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.secuphone_bycoursor"
+    namespace = "com.example.secuphone"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.secuphone_bycoursor"
+        applicationId = "com.example.secuphone"
         minSdk = 28
         targetSdk = 35
         versionCode = 1
