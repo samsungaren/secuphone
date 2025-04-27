@@ -56,7 +56,14 @@ dependencies {
     // Add OkHttp for API calls
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     
+    // Add GridLayout for feature cards
     implementation("androidx.gridlayout:gridlayout:1.0.0")
+    
+    // Add Security Crypto for secure storage
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    
+    // Add Gson for JSON parsing
+    implementation("com.google.code.gson:gson:2.10.1")
     
     // Firebase dependencies
     implementation(platform("com.google.firebase:firebase-bom:33.11.0"))
@@ -65,7 +72,8 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
-    
+    implementation(libs.gridlayout)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

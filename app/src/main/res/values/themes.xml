@@ -6,4 +6,11 @@
     </style>
 
     <style name="Theme.SecuPhoneByCoursor" parent="Base.Theme.SecuPhoneByCoursor" />
+    
+    <!-- Theme for the encrypted files activity -->
+    <style name="Theme.SecuPhone.NoActionBar" parent="Theme.SecuPhoneByCoursor">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+    </style>
 </resources>

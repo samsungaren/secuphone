@@ -136,6 +136,20 @@
                 android:value=".MainActivity" />
         </activity>
         
+        <activity
+            android:name=".PasswordManagerActivity"
+            android:parentActivityName=".MainActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        
+        <activity
+            android:name=".EncryptedFilesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SecuPhone.NoActionBar" />
+        
         <service
             android:name=".services.AppLockService"
             android:enabled="true"
@@ -179,10 +193,10 @@
                 android:value="vpn" />
         </service>
         
-        <!-- FileProvider for sharing files -->
+        <!-- Configure FileProvider for sharing decrypted files -->
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.example.secuphone.fileprovider"
+            android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

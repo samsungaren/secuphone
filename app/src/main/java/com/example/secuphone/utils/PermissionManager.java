@@ -348,4 +348,24 @@ public class PermissionManager {
     public static boolean hasStoragePermission(AppCompatActivity activity) {
         return StoragePermissionActivity.hasStoragePermission(activity);
     }
+
+    /**
+     * Request storage permission
+     * This is a convenience method that uses a default listener and requests permissions directly
+     */
+    public void requestStoragePermission() {
+        this.listener = new OnPermissionResultListener() {
+            @Override
+            public void onPermissionGranted() {
+                // Permission granted, do nothing as the calling activity will handle it
+            }
+
+            @Override
+            public void onPermissionDenied() {
+                // Permission denied, do nothing as the calling activity will handle it
+            }
+        };
+        
+        requestDirectStoragePermission();
+    }
 } 

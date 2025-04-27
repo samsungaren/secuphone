@@ -3,13 +3,16 @@ package com.example.secuphone;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
+import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.view.MenuItem;
 import android.view.View;
@@ -20,41 +23,43 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.secuphone.services.AntiSpyService;
+import com.example.secuphone.adapters.AppPermissionAdapter;
+import com.example.secuphone.utils.AppPermissionScanner;
 import com.google.android.material.card.MaterialCardView;
-import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
-import java.util.Random;
+import java.util.Map;
 
-public class AntiSpyActivity extends AppCompatActivity {
+public class AntiSpyActivity extends AppCompatActivity implements AppPermissionAdapter.AppPermissionListener {
 
-    private static final String PREF_ANTI_SPY_ENABLED = "anti_spy_enabled";
     private static final String PREF_LAST_SCAN_TIME = "last_spy_scan_time";
-    private static final String PREF_SCAN_RESULT = "spy_scan_result";
-    private static final String PREF_MIC_PROTECTION = "mic_protection_enabled";
-    private static final String PREF_CAMERA_PROTECTION = "camera_protection_enabled";
-    private static final String PREF_LOCATION_PROTECTION = "location_protection_enabled";
 
     // UI Components
     private TextView statusText;
     private Button scanButton;
     private ProgressBar scanProgress;
-    private LinearLayout scanResultLayout;
-    private TextView scanResultText;
     private TextView lastScanText;
     private ImageView statusIcon;
-    private SwitchMaterial micSwitch, cameraSwitch, locationSwitch;
-    private MaterialCardView resultCard;
     private TextView explanationText;
+    private RecyclerView appListRecyclerView;
+    private View appListCard;
+    private TextView appCountText;
+
+    // App Scanner Components
+    private List<ApplicationInfo> appsWithPermissions = new ArrayList<>();
+    private Map<String, Boolean> hasCameraPermission = new HashMap<>();
+    private Map<String, Boolean> hasMicrophonePermission = new HashMap<>();
+    private Map<String, Boolean> hasLocationPermission = new HashMap<>();
+    private AppPermissionAdapter appAdapter;
 
     // State
     private boolean isScanning = false;
-    private boolean isEnabled = false;
-    private Handler scanHandler = new Handler();
-    private Random random = new Random();
+    private Handler mainHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,49 +75,41 @@ public class AntiSpyActivity extends AppCompatActivity {
         // Initialize UI components
         initializeViews();
         
-        // Load saved state
-        loadSavedState();
+        // Update last scan time
+        updateLastScanText();
         
         // Set initial UI state
         updateUI();
         
         // Set up button listeners
         setupListeners();
+        
+        // Set up RecyclerView
+        setupRecyclerView();
     }
     
     private void initializeViews() {
         statusText = findViewById(R.id.anti_spy_status);
         scanButton = findViewById(R.id.scan_button);
         scanProgress = findViewById(R.id.scan_progress);
-        scanResultLayout = findViewById(R.id.scan_result_layout);
-        scanResultText = findViewById(R.id.scan_result_text);
         lastScanText = findViewById(R.id.last_scan_text);
         statusIcon = findViewById(R.id.status_icon);
-        micSwitch = findViewById(R.id.mic_switch);
-        cameraSwitch = findViewById(R.id.camera_switch);
-        locationSwitch = findViewById(R.id.location_switch);
-        resultCard = findViewById(R.id.result_card);
         explanationText = findViewById(R.id.explanation_text);
+        appListRecyclerView = findViewById(R.id.app_list_recycler_view);
+        appListCard = findViewById(R.id.app_list_card);
+        appCountText = findViewById(R.id.app_count_text);
         
         // Update explanation text
         explanationText.setText(R.string.anti_spy_explanation);
     }
     
-    private void loadSavedState() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        isEnabled = prefs.getBoolean(PREF_ANTI_SPY_ENABLED, false);
-        
-        // Load protection settings
-        boolean micEnabled = prefs.getBoolean(PREF_MIC_PROTECTION, false);
-        boolean cameraEnabled = prefs.getBoolean(PREF_CAMERA_PROTECTION, false);
-        boolean locationEnabled = prefs.getBoolean(PREF_LOCATION_PROTECTION, false);
-        
-        micSwitch.setChecked(micEnabled);
-        cameraSwitch.setChecked(cameraEnabled);
-        locationSwitch.setChecked(locationEnabled);
-        
-        // Update last scan text
-        updateLastScanText();
+    private void setupRecyclerView() {
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        appListRecyclerView.setLayoutManager(layoutManager);
+        appListRecyclerView.setHasFixedSize(true);
+        appAdapter = new AppPermissionAdapter(this, appsWithPermissions, 
+                hasCameraPermission, hasMicrophonePermission, hasLocationPermission, this);
+        appListRecyclerView.setAdapter(appAdapter);
     }
     
     private void updateLastScanText() {
@@ -126,24 +123,6 @@ public class AntiSpyActivity extends AppCompatActivity {
             String formattedDate = sdf.format(new Date(lastScanTime));
             lastScanText.setText(getString(R.string.last_spy_scan, formattedDate));
         }
-        
-        // Update scan result if available
-        boolean scanResult = prefs.getBoolean(PREF_SCAN_RESULT, true);
-        if (lastScanTime > 0) {
-            scanResultLayout.setVisibility(View.VISIBLE);
-            resultCard.setVisibility(View.VISIBLE);
-            
-            if (scanResult) {
-                scanResultText.setText(R.string.spy_free);
-                scanResultText.setTextColor(ContextCompat.getColor(this, R.color.success_green));
-            } else {
-                scanResultText.setText(R.string.spy_threats_found);
-                scanResultText.setTextColor(ContextCompat.getColor(this, R.color.error_red));
-            }
-        } else {
-            scanResultLayout.setVisibility(View.GONE);
-            resultCard.setVisibility(View.GONE);
-        }
     }
     
     private void setupListeners() {
@@ -155,87 +134,11 @@ public class AntiSpyActivity extends AppCompatActivity {
                 startScan();
             }
         });
-        
-        // Protection toggles
-        micSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            prefs.edit().putBoolean(PREF_MIC_PROTECTION, isChecked).apply();
-            
-            // Show feedback
-            if (isChecked) {
-                Toast.makeText(this, R.string.microphone_monitored, Toast.LENGTH_SHORT).show();
-            }
-            
-            updateEnabledState();
-            updateAntiSpyService();
-        });
-        
-        cameraSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            prefs.edit().putBoolean(PREF_CAMERA_PROTECTION, isChecked).apply();
-            
-            // Show feedback
-            if (isChecked) {
-                Toast.makeText(this, R.string.camera_monitored, Toast.LENGTH_SHORT).show();
-            }
-            
-            updateEnabledState();
-            updateAntiSpyService();
-        });
-        
-        locationSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            prefs.edit().putBoolean(PREF_LOCATION_PROTECTION, isChecked).apply();
-            
-            // Show feedback
-            if (isChecked) {
-                Toast.makeText(this, R.string.location_monitored, Toast.LENGTH_SHORT).show();
-            }
-            
-            updateEnabledState();
-            updateAntiSpyService();
-        });
-    }
-    
-    private void updateAntiSpyService() {
-        Intent serviceIntent = new Intent(this, AntiSpyService.class);
-        
-        if (isEnabled) {
-            // Start the service
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent);
-            } else {
-                startService(serviceIntent);
-            }
-            Toast.makeText(this, "Anti-Spy protection activated", Toast.LENGTH_SHORT).show();
-        } else {
-            // Stop the service
-            stopService(serviceIntent);
-            Toast.makeText(this, "Anti-Spy protection deactivated", Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private void updateEnabledState() {
-        // Feature is enabled if at least one protection is active
-        boolean anyEnabled = micSwitch.isChecked() || cameraSwitch.isChecked() || locationSwitch.isChecked();
-        
-        if (anyEnabled != isEnabled) {
-            isEnabled = anyEnabled;
-            
-            // Save the state
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            prefs.edit().putBoolean(PREF_ANTI_SPY_ENABLED, isEnabled).apply();
-            
-            // Update UI
-            updateUI();
-            
-            // Update service
-            updateAntiSpyService();
-        }
     }
     
     private void updateUI() {
-        if (isEnabled) {
+        // Update Anti-Spy status based on whether there are apps with sensitive permissions
+        if (!appsWithPermissions.isEmpty()) {
             statusText.setText(R.string.anti_spy_enabled);
             statusText.setTextColor(ContextCompat.getColor(this, R.color.success_green));
             statusIcon.setImageResource(R.drawable.ic_shield_check);
@@ -249,85 +152,169 @@ public class AntiSpyActivity extends AppCompatActivity {
         
         // Set scan button state
         if (isScanning) {
-            scanButton.setText(R.string.stop_spy_scan);
+            scanButton.setText(R.string.stop_scan);
             scanProgress.setVisibility(View.VISIBLE);
         } else {
-            scanButton.setText(R.string.start_spy_scan);
+            scanButton.setText(R.string.scan_app_permissions);
             scanProgress.setVisibility(View.GONE);
         }
     }
     
     private void startScan() {
-        isScanning = true;
-        updateUI();
-        
-        // Show toast
-        Toast.makeText(this, R.string.spy_scan_in_progress, Toast.LENGTH_SHORT).show();
-        
-        // Animate progress
-        ValueAnimator animator = ValueAnimator.ofInt(0, 100);
-        animator.setDuration(5000); // 5 seconds scan
-        animator.addUpdateListener(animation -> {
-            int value = (int) animation.getAnimatedValue();
-            scanProgress.setProgress(value);
-        });
-        animator.start();
-        
-        // Complete scan after delay
-        scanHandler.postDelayed(this::completeScan, 5000);
+        try {
+            isScanning = true;
+            updateUI();
+            
+            // Show scanning feedback
+            scanProgress.setProgress(0);
+            ValueAnimator animator = ValueAnimator.ofInt(0, 100);
+            animator.setDuration(2000);
+            animator.addUpdateListener(animation -> {
+                int value = (int) animation.getAnimatedValue();
+                scanProgress.setProgress(value);
+            });
+            animator.start();
+            
+            // Temporarily hide results while scanning
+            appListCard.setVisibility(View.GONE);
+            
+            // Show status
+            Toast.makeText(this, R.string.scanning_apps, Toast.LENGTH_SHORT).show();
+            
+            // Start the actual scan in a background thread
+            new Thread(() -> {
+                final AppPermissionScanner.AppScanResult result;
+                try {
+                    result = AppPermissionScanner.scanInstalledApps(AntiSpyActivity.this);
+                    
+                    // Update UI on main thread
+                    mainHandler.post(() -> completeScan(result));
+                } catch (Exception e) {
+                    mainHandler.post(() -> {
+                        Toast.makeText(AntiSpyActivity.this, 
+                            "Ошибка при сканировании: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        isScanning = false;
+                        updateUI();
+                    });
+                }
+            }).start();
+        } catch (Exception e) {
+            Toast.makeText(this, "Ошибка при запуске сканирования: " + e.getMessage(), 
+                Toast.LENGTH_LONG).show();
+            isScanning = false;
+            updateUI();
+        }
     }
     
     private void stopScan() {
         isScanning = false;
-        scanHandler.removeCallbacksAndMessages(null);
         updateUI();
     }
     
-    private void completeScan() {
-        isScanning = false;
-        
-        // 90% chance of clean scan, 10% chance of threat detection
-        boolean isClean = random.nextInt(10) < 9;
-        
-        // Save scan result
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        prefs.edit()
-            .putLong(PREF_LAST_SCAN_TIME, System.currentTimeMillis())
-            .putBoolean(PREF_SCAN_RESULT, isClean)
-            .apply();
-        
-        // Update UI
-        updateUI();
-        updateLastScanText();
-        
-        // Show result toast
-        if (isClean) {
-            Toast.makeText(this, R.string.no_spyware_found, Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this, R.string.spyware_detected, Toast.LENGTH_LONG).show();
+    private void completeScan(AppPermissionScanner.AppScanResult result) {
+        try {
+            // Save scan time
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            long currentTime = System.currentTimeMillis();
+            prefs.edit().putLong(PREF_LAST_SCAN_TIME, currentTime).apply();
+            
+            // Update UI
+            isScanning = false;
+            updateUI();
+            updateLastScanText();
+            
+            // Show scan complete toast
+            Toast.makeText(this, R.string.app_permission_scan_complete, Toast.LENGTH_SHORT).show();
+            
+            // Update app list
+            appsWithPermissions = result.appList;
+            hasCameraPermission = result.hasCameraPermission;
+            hasMicrophonePermission = result.hasMicrophonePermission;
+            hasLocationPermission = result.hasLocationPermission;
+            
+            // Show app count
+            if (result.totalAppsWithSensitivePermissions > 0) {
+                appCountText.setText(getString(R.string.apps_with_permissions, 
+                        result.totalAppsWithSensitivePermissions));
+                appListCard.setVisibility(View.VISIBLE);
+                
+                // Update adapter with new data
+                appAdapter = new AppPermissionAdapter(this, appsWithPermissions, 
+                        hasCameraPermission, hasMicrophonePermission, hasLocationPermission, this);
+                appListRecyclerView.setAdapter(appAdapter);
+                
+                // Force RecyclerView to update its layout
+                appListRecyclerView.getLayoutManager().requestLayout();
+                appListRecyclerView.invalidate();
+            } else {
+                appCountText.setText(R.string.no_apps_with_permissions);
+                appListCard.setVisibility(View.VISIBLE);
+            }
+            
+            // Update status based on scan results
+            updateUI();
+        } catch (Exception e) {
+            Toast.makeText(this, "Ошибка при обработке результатов: " + e.getMessage(), 
+                Toast.LENGTH_LONG).show();
+        }
+    }
+    
+    @Override
+    public void onPermissionSettingsChanged(String packageName, int position) {
+        try {
+            // Wait for user to return from settings
+            mainHandler.postDelayed(() -> {
+                try {
+                    // Check if the app still has sensitive permissions
+                    boolean hasPermissions = AppPermissionScanner.refreshAppPermissions(
+                        this, packageName, hasCameraPermission, hasMicrophonePermission, hasLocationPermission);
+                    
+                    if (!hasPermissions) {
+                        // If no sensitive permissions remain, remove the app from the list
+                        if (position < appsWithPermissions.size()) {
+                            appsWithPermissions.remove(position);
+                            appAdapter.notifyItemRemoved(position);
+                            
+                            // Update count
+                            int remainingCount = appsWithPermissions.size();
+                            if (remainingCount > 0) {
+                                appCountText.setText(getString(R.string.apps_with_permissions, remainingCount));
+                            } else {
+                                appCountText.setText(R.string.no_apps_with_permissions);
+                            }
+                            
+                            // Update UI
+                            updateUI();
+                        }
+                    } else {
+                        // Just refresh the item to update permission icons
+                        appAdapter.notifyItemChanged(position);
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(this, "Ошибка при обновлении разрешений: " + e.getMessage(), 
+                        Toast.LENGTH_SHORT).show();
+                }
+            }, 500); // Short delay to ensure settings have taken effect
+        } catch (Exception e) {
+            Toast.makeText(this, "Ошибка: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh UI state
-        updateUI();
+        
+        // Refresh UI when returning to this activity
         updateLastScanText();
+        updateUI();
     }
     
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            finish();
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-    
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        scanHandler.removeCallbacksAndMessages(null);
     }
 } 

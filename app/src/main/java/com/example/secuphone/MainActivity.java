@@ -25,6 +25,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.preference.PreferenceManager;
+import androidx.gridlayout.widget.GridLayout;
 
 import com.example.secuphone.admin.AppLockManager;
 import com.example.secuphone.authentication.SignInActivity;
@@ -719,7 +720,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private void setupPremiumFeatureButton(int buttonId, String featureName) {
         findViewById(buttonId).setOnClickListener(v -> {
             if (sessionManager.isLoggedIn()) {
-                showPremiumFeatureDialog(featureName);
+                // If it's the password manager feature, open the activity directly
+                if (featureName.equals("Password Manager")) {
+                    openPasswordManagerActivity();
+                } else {
+                    showPremiumFeatureDialog(featureName);
+                }
             } else {
                 showSignInRequiredDialog(featureName);
             }
@@ -869,6 +875,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             startActivity(new Intent(this, AntiSpyActivity.class));
         } catch (Exception e) {
             Toast.makeText(this, "Error opening Anti-Spy: " + e.getMessage(), 
+                Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * Opens the PasswordManagerActivity
+     */
+    private void openPasswordManagerActivity() {
+        try {
+            startActivity(new Intent(this, PasswordManagerActivity.class));
+        } catch (Exception e) {
+            Toast.makeText(this, "Error opening Password Manager: " + e.getMessage(), 
                 Toast.LENGTH_SHORT).show();
         }
     }

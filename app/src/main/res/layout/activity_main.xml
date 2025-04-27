@@ -743,14 +743,14 @@
                                 android:id="@+id/find_phone_status_indicator"
                                 android:layout_width="8dp"
                                 android:layout_height="8dp"
-                                android:background="@drawable/feature_status_badge_active"
+                                android:background="@drawable/feature_status_badge_inactive"
                                 android:layout_marginEnd="4dp" />
 
                             <TextView
                                 android:id="@+id/find_phone_status_text"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/status_enabled"
+                                android:text="@string/status_disabled"
                                 android:textColor="@color/text_secondary"
                                 android:textSize="12sp" />
                         </LinearLayout>
@@ -858,14 +858,14 @@
                                 android:id="@+id/password_manager_status_indicator"
                                 android:layout_width="8dp"
                                 android:layout_height="8dp"
-                                android:background="@drawable/status_premium_indicator"
+                                android:background="@drawable/feature_status_badge_inactive"
                                 android:layout_marginEnd="4dp" />
 
                             <TextView
                                 android:id="@+id/password_manager_status_text"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/premium_required"
+                                android:text="@string/status_disabled"
                                 android:textColor="@color/text_secondary"
                                 android:textSize="12sp" />
                         </LinearLayout>

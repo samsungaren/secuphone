@@ -42,11 +42,11 @@
     <string name="whatsapp">WhatsApp</string>
     <string name="locked">locked</string>
     <string name="unlocked">unlocked</string>
-    <string name="app_icon">App Icon</string>
+    <string name="app_icon">Application Icon</string>
     <string name="enter_pin">Enter PIN</string>
     <string name="pin_hint">Enter your PIN</string>
     <string name="unlock">Unlock</string>
-    <string name="cancel">Cancel</string>
+
     <string name="incorrect_pin">Incorrect PIN, please try again</string>
     <string name="setup_pin">Set up PIN</string>
     <string name="setup_pin_first">Please set up a PIN first</string>
@@ -234,7 +234,6 @@
 
     <!-- New image viewer strings -->
     <string name="hidden_file_image">Hidden file image</string>
-    <string name="close">Close</string>
 
     <!-- New string resource for access granted message -->
     <string name="access_granted">Access granted</string>
@@ -285,11 +284,10 @@
     <string name="microphone_monitored">Microphone usage monitored</string>
     <string name="camera_monitored">Camera usage monitored</string>
     <string name="location_monitored">Location usage monitored</string>
-    <string name="anti_spy_explanation">Anti-Spy actively monitors and blocks apps that attempt to access your microphone, camera, or location without permission. When enabled, this feature runs in the background and will alert you immediately if any suspicious activity is detected.</string>
+    <string name="anti_spy_explanation">The Anti-Spy feature helps you identify and manage apps that have access to sensitive permissions like camera, microphone, and location. It scans your installed apps and shows you which ones have these permissions, allowing you to review and control their access through your device\'s hardware. This helps protect your privacy by making you aware of which apps can potentially spy on you through your device\'s hardware.</string>
 
     <!-- Authentication -->
     <string name="email">Email</string>
-    <string name="password">Password</string>
     <string name="forgot_password">Forgot Password?</string>
     <string name="welcome_back">Welcome Back</string>
     <string name="sign_in_to_continue">Sign in to continue to SecuPhone</string>
@@ -357,4 +355,103 @@
     <string name="japan">Japan</string>
     <string name="netherlands">Netherlands</string>
     <string name="singapore">Singapore</string>
+
+    <!-- New permissions scanner strings -->
+    <string name="scan_app_permissions">Scan App Permissions</string>
+    <string name="camera_permission">Camera Permission</string>
+    <string name="microphone_permission">Microphone Permission</string>
+    <string name="location_permission">Location Permission</string>
+    <string name="apps_with_permissions">%1$d apps with sensitive permissions</string>
+    <string name="no_apps_with_permissions">No apps found with sensitive permissions</string>
+    <string name="scanning_apps">Scanning installed applications…</string>
+    <string name="app_permission_scan_complete">App permission scan complete</string>
+    <string name="microphone_protection">Microphone Protection</string>
+    <string name="camera_protection">Camera Protection</string>
+    <string name="location_protection">Location Protection</string>
+    <string name="microphone_protection_description">Monitor apps using microphone in background</string>
+    <string name="camera_protection_description">Monitor apps using camera in background</string>
+    <string name="location_protection_description">Monitor apps tracking your location in background</string>
+    <string name="stop_scan">Stop Scan</string>
+
+    <!-- Password Manager Strings -->
+    <string name="password_manager_title">Password Manager</string>
+    <string name="add_password">Add Password</string>
+    <string name="no_passwords">No passwords saved yet</string>
+    <string name="website_or_app">Website or App</string>
+    <string name="username_or_email">Username or Email</string>
+    <string name="generate_password">Generate Password</string>
+    <string name="edit_password">Edit Password</string>
+    <string name="delete_password">Delete Password</string>
+    <string name="delete_password_confirmation">Are you sure you want to delete this password?</string>
+    <string name="password_deleted">Password deleted successfully</string>
+    <string name="password_not_saved">Error saving password</string>
+    <string name="password_not_deleted">Error deleting password</string>
+    <string name="password_copied">Password copied to clipboard</string>
+    <string name="username_copied">Username copied to clipboard</string>
+    <string name="password_length">Password Length</string>
+    <string name="include_uppercase">Include Uppercase Letters</string>
+    <string name="include_lowercase">Include Lowercase Letters</string>
+    <string name="include_numbers">Include Numbers</string>
+    <string name="include_symbols">Include Symbols</string>
+    <string name="generate">Generate</string>
+    <string name="use_password">Use This Password</string>
+
+    <!-- Master Password Strings -->
+    <string name="master_password">Master Password</string>
+    <string name="confirm_master_password">Confirm Master Password</string>
+    <string name="create_master_password">Create Master Password</string>
+    <string name="enter_master_password">Enter Master Password</string>
+    <string name="master_password_description">Enter your master password to access your saved passwords.</string>
+    <string name="create_master_password_description">Create a master password to protect your saved passwords. Make sure to use a strong password that you won\'t forget.</string>
+    <string name="master_password_set">Master password set successfully</string>
+    <string name="master_password_incorrect">Incorrect master password</string>
+    <string name="passwords_not_match">Passwords do not match</string>
+    <string name="master_password_required">Master password is required</string>
+    <string name="submit">Submit</string>
+    <string name="save">Save</string>
+
+    <!-- Encrypted Files -->
+    <string name="encrypted_files_title">Encrypted Files</string>
+    <string name="no_encrypted_files">No encrypted files yet</string>
+    <string name="add_encrypted_file">Add Encrypted File</string>
+    <string name="add_file">Add File</string>
+    <string name="empty_state_icon">Empty state icon</string>
+    <string name="delete_file">Delete File</string>
+    <string name="delete_file_confirmation">Are you sure you want to delete this file? This action cannot be undone.</string>
+    <string name="file_deleted">File deleted</string>
+    <string name="error_deleting_file">Error deleting file</string>
+    <string name="enter_encryption_password">Enter Encryption Password</string>
+    <string name="enter_decryption_password">Enter Decryption Password</string>
+    <string name="enter_password_to_encrypt">Enter a password to encrypt this file. Remember this password as it will be required to view the file later.</string>
+    <string name="enter_password_to_view">Enter the password to view this encrypted file.</string>
+    <string name="password">Password</string>
+    <string name="password_required">Password is required</string>
+    <string name="encrypt">Encrypt</string>
+    <string name="view">View</string>
+    <string name="cancel">Cancel</string>
+    <string name="encrypting_file">Encrypting File</string>
+    <string name="decrypting_file">Decrypting File</string>
+    <string name="please_wait">Please wait...</string>
+    <string name="file_encrypted_successfully">File encrypted successfully</string>
+    <string name="encryption_error">Encryption error: %1$s</string>
+    <string name="decryption_error">Decryption error: %1$s</string>
+    <string name="no_app_to_open_file">No app found to open this type of file</string>
+    <string name="error_opening_file">Error opening file</string>
+    <string name="encrypted_image">Encrypted image</string>
+    <string name="error_displaying_image">Error displaying image</string>
+    <string name="close">Close</string>
+    
+    <!-- File type icons -->
+    <string name="icon_file">📄</string>
+    <string name="icon_image">🖼️</string>
+    <string name="icon_pdf">📑</string>
+    <string name="icon_document">📝</string>
+    <string name="icon_spreadsheet">📊</string>
+    <string name="icon_presentation">📊</string>
+    <string name="icon_text">📝</string>
+    <string name="icon_audio">🎵</string>
+    <string name="icon_video">🎬</string>
+
+    <!-- Common Actions -->
+    <string name="delete">Delete</string>
 </resources>
