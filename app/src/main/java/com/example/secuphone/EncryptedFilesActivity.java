@@ -29,9 +29,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 
 /**
  * Activity for managing encrypted files.
@@ -257,34 +259,132 @@ public class EncryptedFilesActivity extends AppCompatActivity implements Encrypt
      * Open a decrypted file using appropriate handler
      */
     private void openDecryptedFile(File file) {
+        if (file == null || !file.exists() || file.length() == 0) {
+            Log.e(TAG, "Invalid decrypted file: " + (file == null ? "null" : file.getAbsolutePath()));
+            Toast.makeText(this, R.string.error_opening_file, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Ensure file has read permission
+        boolean readPermissionGranted = file.setReadable(true, false);
+        if (!readPermissionGranted) {
+            Log.w(TAG, "Could not set file as readable: " + file.getAbsolutePath());
+        }
+        
+        Log.d(TAG, "Opening decrypted file: " + file.getAbsolutePath() + 
+              ", size: " + file.length() + " bytes, readable: " + file.canRead());
+
         try {
             String fileName = file.getName().toLowerCase();
             String mimeType = getMimeType(fileName);
+            Log.d(TAG, "File mime type determined as: " + mimeType);
             
             // For images, show in a dialog
             if (isImageFile(fileName)) {
+                Log.d(TAG, "Opening as image in internal viewer");
                 showImageInDialog(file);
                 return;
             }
             
-            // For other files, use system handler
-            Uri fileUri = androidx.core.content.FileProvider.getUriForFile(
-                    this,
-                    getPackageName() + ".fileprovider",
-                    file);
-            
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(fileUri, mimeType);
-            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                startActivity(intent);
-            } else {
-                Toast.makeText(this, R.string.no_app_to_open_file, Toast.LENGTH_SHORT).show();
+            // For other files, try multiple approaches
+            // First, try using FileProvider
+            try {
+                Uri fileUri = androidx.core.content.FileProvider.getUriForFile(
+                        this,
+                        getApplicationContext().getPackageName() + ".fileprovider",
+                        file);
+                
+                Log.d(TAG, "Created content URI via FileProvider: " + fileUri);
+                
+                // Try to open with explicit MIME type first
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setDataAndType(fileUri, mimeType);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                
+                try {
+                    Log.d(TAG, "Attempting to open with specific MIME type: " + mimeType);
+                    startActivity(intent);
+                    return;
+                } catch (android.content.ActivityNotFoundException e) {
+                    Log.w(TAG, "No specific handler for mime type: " + mimeType, e);
+                    // Continue to try generic viewer
+                }
+                
+                // If no specific handler, try a generic file viewer
+                Intent genericIntent = new Intent(Intent.ACTION_VIEW);
+                genericIntent.setDataAndType(fileUri, "*/*");
+                genericIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                genericIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                
+                try {
+                    Log.d(TAG, "Attempting to open with generic mime type */*");
+                    startActivity(genericIntent);
+                    return;
+                } catch (android.content.ActivityNotFoundException e) {
+                    Log.e(TAG, "No generic handler available", e);
+                    Toast.makeText(this, R.string.no_app_to_open_file, Toast.LENGTH_SHORT).show();
+                }
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "Error creating FileProvider URI", e);
             }
+            
+            // If FileProvider approach failed, try creating a temporary copy in external storage
+            // which might be more accessible to other apps
+            try {
+                File externalDir = new File(getExternalCacheDir(), "shared_files");
+                if (!externalDir.exists()) {
+                    externalDir.mkdirs();
+                }
+                
+                File externalCopy = new File(externalDir, file.getName());
+                copyFile(file, externalCopy);
+                
+                Uri externalUri = androidx.core.content.FileProvider.getUriForFile(
+                        this,
+                        getApplicationContext().getPackageName() + ".fileprovider",
+                        externalCopy);
+                
+                Intent externalIntent = new Intent(Intent.ACTION_VIEW);
+                externalIntent.setDataAndType(externalUri, mimeType);
+                externalIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                externalIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                
+                try {
+                    Log.d(TAG, "Attempting to open with external copy");
+                    startActivity(externalIntent);
+                    return;
+                } catch (android.content.ActivityNotFoundException e) {
+                    Log.e(TAG, "Failed to open with external copy", e);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error creating external copy", e);
+            }
+            
+            // If all else fails
+            Toast.makeText(this, R.string.no_app_to_open_file, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Log.e(TAG, "Error opening decrypted file", e);
-            Toast.makeText(this, R.string.error_opening_file, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.error_opening_file) + ": " + e.getMessage(), 
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Copy file from source to destination
+     */
+    private void copyFile(File src, File dst) throws IOException {
+        try (java.io.FileInputStream in = new java.io.FileInputStream(src);
+             java.io.FileOutputStream out = new java.io.FileOutputStream(dst)) {
+            
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            
+            // Ensure the new file is readable
+            dst.setReadable(true, false);
         }
     }
 
@@ -293,18 +393,50 @@ public class EncryptedFilesActivity extends AppCompatActivity implements Encrypt
      */
     private void showImageInDialog(File imageFile) {
         try {
+            Log.d(TAG, "Showing image in dialog: " + imageFile.getAbsolutePath());
+            
             Dialog imageDialog = new Dialog(this, android.R.style.Theme_Material_Light_NoActionBar_Fullscreen);
             imageDialog.setContentView(R.layout.dialog_image_viewer);
             
             ImageView imageView = imageDialog.findViewById(R.id.image_view);
             ImageButton closeButton = imageDialog.findViewById(R.id.close_button);
             
-            // Load image
-            android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(imageFile.getAbsolutePath());
-            imageView.setImageBitmap(bitmap);
+            // Load image using safer method
+            try {
+                android.graphics.BitmapFactory.Options options = new android.graphics.BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                android.graphics.BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
+                
+                // Calculate optimal sample size to avoid OOM
+                int maxDimension = Math.max(options.outWidth, options.outHeight);
+                int sampleSize = 1;
+                while (maxDimension / sampleSize > 2048) {
+                    sampleSize *= 2;
+                }
+                
+                options.inJustDecodeBounds = false;
+                options.inSampleSize = sampleSize;
+                
+                Log.d(TAG, "Loading image with sample size: " + sampleSize);
+                android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(imageFile.getAbsolutePath(), options);
+                
+                if (bitmap != null) {
+                    Log.d(TAG, "Image loaded successfully, dimensions: " + bitmap.getWidth() + "x" + bitmap.getHeight());
+                    imageView.setImageBitmap(bitmap);
+                } else {
+                    Log.e(TAG, "Failed to decode bitmap");
+                    Toast.makeText(this, R.string.error_displaying_image, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            } catch (OutOfMemoryError e) {
+                Log.e(TAG, "Out of memory error loading image", e);
+                Toast.makeText(this, R.string.error_image_too_large, Toast.LENGTH_SHORT).show();
+                return;
+            }
             
             closeButton.setOnClickListener(v -> imageDialog.dismiss());
             imageDialog.show();
+            Log.d(TAG, "Image dialog shown");
         } catch (Exception e) {
             Log.e(TAG, "Error showing image", e);
             Toast.makeText(this, R.string.error_displaying_image, Toast.LENGTH_SHORT).show();

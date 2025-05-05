@@ -32,6 +32,7 @@ import com.example.secuphone.authentication.SignInActivity;
 import com.example.secuphone.authentication.SignUpActivity;
 import com.example.secuphone.authentication.UserSessionManager;
 import com.example.secuphone.services.AppLockService;
+import com.example.secuphone.utils.AppLockPreferences;
 import com.example.secuphone.utils.PermissionManager;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -167,10 +168,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             
             // App Lock status
             try {
-                AppLockManager appLockManager = AppLockManager.getInstance(this);
-                isAppLockActive = appLockManager.isAdminActive();
+                AppLockPreferences appLockPreferences = new AppLockPreferences(this);
+                // Check if PIN is set and any apps are locked
+                isAppLockActive = appLockPreferences.isPinSet() && !appLockPreferences.getLockedApps().isEmpty();
             } catch (Exception e) {
-                Log.e("MainActivity", "Error accessing AppLockManager: " + e.getMessage(), e);
+                Log.e("MainActivity", "Error accessing AppLockPreferences: " + e.getMessage(), e);
                 isAppLockActive = false;
             }
             
@@ -198,38 +200,43 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
     
     private void updateFeatureStatusUI() {
-        // Update VPN status
-        updateStatusIndicator(vpnStatusIndicator, vpnStatusText, 
-                isVpnActive, R.string.status_enabled, R.string.status_disabled);
-        
-        // Update App Lock status
-        if (AppLockService.isPinSet(this)) {
-            updateStatusIndicator(appLockStatusIndicator, appLockStatusText, 
-                    isAppLockActive, R.string.status_enabled, R.string.status_disabled);
-        } else {
-            // PIN not set
-            appLockStatusIndicator.setBackground(ContextCompat.getDrawable(this, R.drawable.feature_status_badge_inactive));
-            appLockStatusText.setText(R.string.status_setup_needed);
-        }
-        
-        // Update URL Checker status (always enabled)
-        updateStatusIndicator(urlCheckerStatusIndicator, urlCheckerStatusText, 
-                isUrlCheckerActive, R.string.status_enabled, R.string.status_disabled);
-        
-        // Update Find Phone status
-        updateStatusIndicator(findPhoneStatusIndicator, findPhoneStatusText, 
-                isFindPhoneActive, R.string.status_enabled, R.string.status_disabled);
-        
-        // Update Hidden Files status
-        updateStatusIndicator(hiddenFilesStatusIndicator, hiddenFilesStatusText, 
-                isHiddenFilesActive, R.string.status_enabled, R.string.status_disabled);
-        
-        // Update Anti-Spy status
-        View antiSpyStatusIndicator = findViewById(R.id.anti_spy_status_indicator);
-        TextView antiSpyStatusText = findViewById(R.id.anti_spy_status_text);
-        if (antiSpyStatusIndicator != null && antiSpyStatusText != null) {
-            updateStatusIndicator(antiSpyStatusIndicator, antiSpyStatusText, 
-                    isAntiSpyActive, R.string.status_enabled, R.string.status_disabled);
+        try {
+            // Update VPN status
+            updateStatusIndicator(vpnStatusIndicator, vpnStatusText, 
+                    isVpnActive, R.string.status_enabled, R.string.status_disabled);
+            
+            // Update App Lock status
+            AppLockPreferences appLockPreferences = new AppLockPreferences(this);
+            if (appLockPreferences.isPinSet()) {
+                updateStatusIndicator(appLockStatusIndicator, appLockStatusText, 
+                        isAppLockActive, R.string.status_enabled, R.string.status_disabled);
+            } else {
+                // PIN not set
+                appLockStatusIndicator.setBackground(ContextCompat.getDrawable(this, R.drawable.feature_status_badge_inactive));
+                appLockStatusText.setText(R.string.status_setup_needed);
+            }
+            
+            // Update URL Checker status (always enabled)
+            updateStatusIndicator(urlCheckerStatusIndicator, urlCheckerStatusText, 
+                    isUrlCheckerActive, R.string.status_enabled, R.string.status_disabled);
+            
+            // Update Find Phone status
+            updateStatusIndicator(findPhoneStatusIndicator, findPhoneStatusText, 
+                    isFindPhoneActive, R.string.status_enabled, R.string.status_disabled);
+            
+            // Update Hidden Files status
+            updateStatusIndicator(hiddenFilesStatusIndicator, hiddenFilesStatusText, 
+                    isHiddenFilesActive, R.string.status_enabled, R.string.status_disabled);
+            
+            // Update Anti-Spy status
+            View antiSpyStatusIndicator = findViewById(R.id.anti_spy_status_indicator);
+            TextView antiSpyStatusText = findViewById(R.id.anti_spy_status_text);
+            if (antiSpyStatusIndicator != null && antiSpyStatusText != null) {
+                updateStatusIndicator(antiSpyStatusIndicator, antiSpyStatusText, 
+                        isAntiSpyActive, R.string.status_enabled, R.string.status_disabled);
+            }
+        } catch (Exception e) {
+            Log.e("MainActivity", "Error updating feature status UI: " + e.getMessage());
         }
     }
     

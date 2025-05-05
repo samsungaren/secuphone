@@ -144,27 +144,62 @@ public class FileEncryptionManager {
                 // Save metadata about the original file
                 saveFileMetadata(encryptedFile, fileName);
                 
-                // Delete the original file properly
+                // Enhanced file deletion logic
                 boolean deleted = false;
                 
-                // Try direct delete if we have the file path
+                // Try all available deletion methods
+                
+                // 1. Try direct deletion if we have the file path
                 if (originalFile != null && originalFile.exists()) {
                     deleted = originalFile.delete();
                     if (deleted) {
-                        Log.d(TAG, "Original file deleted: " + originalFilePath);
+                        Log.d(TAG, "Original file deleted successfully: " + originalFilePath);
+                    } else {
+                        Log.w(TAG, "Failed to delete original file directly: " + originalFilePath);
                     }
                 }
                 
-                // If direct deletion failed, try via ContentResolver
+                // 2. If direct deletion failed, try via ContentResolver
+                if (!deleted && sourceUri != null) {
+                    try {
+                        int rowsDeleted = context.getContentResolver().delete(sourceUri, null, null);
+                        if (rowsDeleted > 0) {
+                            deleted = true;
+                            Log.d(TAG, "Original file deleted via ContentResolver");
+                        } else {
+                            Log.w(TAG, "ContentResolver returned 0 rows deleted");
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error deleting via ContentResolver", e);
+                    }
+                }
+                
+                // 3. If media URI, try media-specific deletion
                 if (!deleted && ContentUriHelper.isMediaUri(sourceUri)) {
                     deleted = deleteViaContentResolver(sourceUri);
                     if (deleted) {
-                        Log.d(TAG, "Original file deleted via content resolver");
+                        Log.d(TAG, "Original file deleted via media-specific ContentResolver");
+                    } else {
+                        Log.w(TAG, "Failed to delete via media-specific ContentResolver");
                     }
                 }
                 
-                // Force media scanner to refresh
-                notifyMediaScanner(originalFilePath);
+                // Force media scanner to refresh regardless of deletion success
+                // This will remove the file from media databases even if physical deletion failed
+                if (originalFilePath != null) {
+                    notifyMediaScanner(originalFilePath);
+                    
+                    // Additional scan of parent directory
+                    File parent = new File(originalFilePath).getParentFile();
+                    if (parent != null && parent.exists()) {
+                        notifyMediaScanner(parent.getAbsolutePath());
+                    }
+                }
+                
+                // Log final status
+                if (!deleted) {
+                    Log.w(TAG, "Could not delete original file through any method. File URI: " + sourceUri);
+                }
                 
                 Log.d(TAG, "File encrypted successfully: " + encryptedFile.getAbsolutePath());
                 return encryptedFile;
@@ -184,13 +219,25 @@ public class FileEncryptionManager {
      * @return A temporary decrypted file or null if decryption failed
      */
     public File decryptFile(File encryptedFile, String password) throws IOException, GeneralSecurityException {
+        if (encryptedFile == null || !encryptedFile.exists()) {
+            Log.e(TAG, "Encrypted file is null or does not exist");
+            throw new IOException("Encrypted file not found");
+        }
+        
+        Log.d(TAG, "Starting decryption of file: " + encryptedFile.getName());
+        
         // Create a temporary file for the decrypted content
         String fileName = getOriginalFileName(encryptedFile);
+        Log.d(TAG, "Original filename determined as: " + fileName);
         
         // Create a temp directory if it doesn't exist
         File tempDir = new File(context.getCacheDir(), "temp_decrypted");
         if (!tempDir.exists()) {
-            tempDir.mkdirs();
+            boolean created = tempDir.mkdirs();
+            if (!created) {
+                Log.e(TAG, "Failed to create temp directory");
+                throw new IOException("Could not create temp directory");
+            }
         }
         
         // Create the temp file with the original extension if available
@@ -198,53 +245,112 @@ public class FileEncryptionManager {
         
         // Delete if already exists
         if (decryptedFile.exists()) {
-            decryptedFile.delete();
+            boolean deleted = decryptedFile.delete();
+            if (!deleted) {
+                Log.w(TAG, "Could not delete existing temp file: " + decryptedFile.getAbsolutePath());
+            }
         }
         
-        try (FileInputStream fis = new FileInputStream(encryptedFile);
-             FileOutputStream fos = new FileOutputStream(decryptedFile)) {
+        Log.d(TAG, "Decrypting to temp file: " + decryptedFile.getAbsolutePath());
+        
+        FileInputStream fis = null;
+        FileOutputStream fos = null;
+        
+        try {
+            fis = new FileInputStream(encryptedFile);
+            fos = new FileOutputStream(decryptedFile);
              
             // Read the salt and IV from the beginning of the file
             byte[] salt = new byte[SALT_LENGTH];
             byte[] iv = new byte[IV_LENGTH];
             
-            if (fis.read(salt) != SALT_LENGTH || fis.read(iv) != IV_LENGTH) {
-                throw new IOException("Invalid encrypted file format");
+            int saltRead = fis.read(salt);
+            int ivRead = fis.read(iv);
+            
+            if (saltRead != SALT_LENGTH || ivRead != IV_LENGTH) {
+                Log.e(TAG, "Invalid encrypted file format. Salt read: " + saltRead + ", IV read: " + ivRead);
+                throw new IOException("Invalid encrypted file format - incorrect header size");
             }
             
-            // Derive key from password
-            SecretKey key = deriveKeyFromPassword(password, salt);
+            Log.d(TAG, "Successfully read salt and IV");
             
-            // Initialize cipher
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
-            
-            // Read and decrypt the file in chunks
-            byte[] buffer = new byte[8192];
-            int bytesRead;
-            byte[] output;
-            
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                output = cipher.update(buffer, 0, bytesRead);
-                if (output != null) {
-                    fos.write(output);
+            try {
+                // Derive key from password
+                SecretKey key = deriveKeyFromPassword(password, salt);
+                
+                // Initialize cipher
+                Cipher cipher = Cipher.getInstance(ALGORITHM);
+                cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
+                
+                Log.d(TAG, "Cipher initialized for decryption");
+                
+                // Read and decrypt the file in chunks
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                byte[] output;
+                
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    try {
+                        output = cipher.update(buffer, 0, bytesRead);
+                        if (output != null) {
+                            fos.write(output);
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error during cipher update", e);
+                        throw new GeneralSecurityException("Error decrypting data: " + e.getMessage(), e);
+                    }
                 }
-            }
-            
-            // Write the final block
-            output = cipher.doFinal();
-            if (output != null) {
-                fos.write(output);
+                
+                try {
+                    // Write the final block
+                    output = cipher.doFinal();
+                    if (output != null) {
+                        fos.write(output);
+                    }
+                    Log.d(TAG, "Successfully finalized decryption");
+                } catch (Exception e) {
+                    Log.e(TAG, "Error during cipher doFinal - likely incorrect password", e);
+                    throw new GeneralSecurityException("Incorrect password or corrupted file", e);
+                }
+            } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                Log.e(TAG, "Encryption algorithm error", e);
+                throw new GeneralSecurityException("Encryption algorithm error: " + e.getMessage(), e);
             }
             
             Log.d(TAG, "File decrypted successfully: " + decryptedFile.getAbsolutePath());
+            
+            // Ensure the file exists and has content
+            if (!decryptedFile.exists() || decryptedFile.length() == 0) {
+                Log.e(TAG, "Decrypted file doesn't exist or is empty: " + decryptedFile.getAbsolutePath());
+                throw new IOException("Decryption produced empty or missing file");
+            }
+            
             return decryptedFile;
         } catch (Exception e) {
             // If decryption fails, delete the incomplete decrypted file
             if (decryptedFile.exists()) {
                 decryptedFile.delete();
             }
+            
+            Log.e(TAG, "Decryption failed: " + e.getMessage(), e);
             throw e;
+        } finally {
+            // Close streams
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Error closing input stream", e);
+                }
+            }
+            
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Error closing output stream", e);
+                }
+            }
         }
     }
     
@@ -334,32 +440,70 @@ public class FileEncryptionManager {
     }
     
     /**
-     * Gets the file name from a Uri
+     * Gets a file name from a Uri
      * @param uri The Uri
-     * @return The file name or null if it can't be determined
+     * @return The file name or null if it couldn't be determined
      */
     private String getFileNameFromUri(Uri uri) {
-        String result = null;
-        if (uri.getScheme().equals("content")) {
-            try (android.database.Cursor cursor = context.getContentResolver().query(uri, null, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    int nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+        if (uri == null) {
+            Log.e(TAG, "Null URI provided");
+            return "unknown_file";
+        }
+        
+        Log.d(TAG, "Getting filename from URI: " + uri);
+        
+        // Try to get the display name from the ContentResolver
+        try {
+            String[] projection = {MediaStore.MediaColumns.DISPLAY_NAME};
+            try (android.database.Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst() && cursor.getColumnCount() > 0) {
+                    int nameIndex = cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME);
                     if (nameIndex != -1) {
-                        result = cursor.getString(nameIndex);
+                        String displayName = cursor.getString(nameIndex);
+                        if (displayName != null && !displayName.isEmpty()) {
+                            Log.d(TAG, "Found display name from cursor: " + displayName);
+                            return displayName;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting display name", e);
+        }
+        
+        // Try DocumentFile for content URIs (works better on newer Android versions)
+        try {
+            androidx.documentfile.provider.DocumentFile documentFile = 
+                androidx.documentfile.provider.DocumentFile.fromSingleUri(context, uri);
+            if (documentFile != null && documentFile.getName() != null) {
+                Log.d(TAG, "Found name from DocumentFile: " + documentFile.getName());
+                return documentFile.getName();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error using DocumentFile", e);
+        }
+        
+        // Try to parse from the URI path
+        if (uri.getPath() != null) {
+            try {
+                String path = uri.getPath();
+                int cut = path.lastIndexOf('/');
+                if (cut != -1) {
+                    String filename = path.substring(cut + 1);
+                    if (!filename.isEmpty()) {
+                        Log.d(TAG, "Extracted filename from path: " + filename);
+                        return filename;
                     }
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error getting filename from Uri", e);
+                Log.e(TAG, "Error extracting filename from path", e);
             }
         }
-        if (result == null) {
-            result = uri.getPath();
-            int cut = result.lastIndexOf('/');
-            if (cut != -1) {
-                result = result.substring(cut + 1);
-            }
-        }
-        return result;
+        
+        // If all else fails, generate a unique name
+        String fallbackName = "file_" + System.currentTimeMillis();
+        Log.w(TAG, "Could not determine filename, using fallback: " + fallbackName);
+        return fallbackName;
     }
     
     /**
@@ -369,10 +513,32 @@ public class FileEncryptionManager {
      * @throws IOException If saving metadata fails
      */
     private void saveFileMetadata(File encryptedFile, String originalFilename) throws IOException {
+        // Ensure we have a filename with extension
+        if (originalFilename == null || originalFilename.isEmpty()) {
+            Log.w(TAG, "Empty original filename provided for metadata");
+            originalFilename = "unknown_file";
+        }
+        
+        Log.d(TAG, "Saving metadata for file: " + originalFilename);
+        
+        // Create metadata file
         File metadataFile = new File(encryptedFile.getAbsolutePath() + METADATA_SUFFIX);
+        
         try (FileOutputStream fos = new FileOutputStream(metadataFile)) {
             fos.write(originalFilename.getBytes(StandardCharsets.UTF_8));
+            fos.flush();
+        } catch (IOException e) {
+            Log.e(TAG, "Error saving metadata file", e);
+            throw e;
         }
+        
+        // Verify the metadata was written successfully
+        if (!metadataFile.exists() || metadataFile.length() == 0) {
+            Log.e(TAG, "Failed to create metadata file");
+            throw new IOException("Failed to create metadata file");
+        }
+        
+        Log.d(TAG, "Metadata saved successfully: " + metadataFile.getAbsolutePath());
     }
     
     /**
@@ -382,22 +548,38 @@ public class FileEncryptionManager {
      */
     private String getOriginalFileName(File encryptedFile) {
         File metadataFile = new File(encryptedFile.getAbsolutePath() + METADATA_SUFFIX);
+        
+        // Default name (with cleaned extension)
+        String defaultName = encryptedFile.getName();
+        if (defaultName.endsWith(".enc")) {
+            defaultName = defaultName.substring(0, defaultName.length() - 4);
+        }
+        
         if (!metadataFile.exists()) {
-            // Remove the .enc extension if it exists
-            String name = encryptedFile.getName();
-            if (name.endsWith(".enc")) {
-                return name.substring(0, name.length() - 4);
-            }
-            return name;
+            Log.w(TAG, "Metadata file not found for: " + encryptedFile.getName());
+            return defaultName;
         }
         
         try (FileInputStream fis = new FileInputStream(metadataFile)) {
             byte[] data = new byte[(int) metadataFile.length()];
-            fis.read(data);
-            return new String(data, StandardCharsets.UTF_8);
+            int bytesRead = fis.read(data);
+            
+            if (bytesRead <= 0) {
+                Log.e(TAG, "Empty metadata file");
+                return defaultName;
+            }
+            
+            String originalName = new String(data, 0, bytesRead, StandardCharsets.UTF_8);
+            if (originalName.isEmpty()) {
+                Log.e(TAG, "Empty original filename in metadata");
+                return defaultName;
+            }
+            
+            Log.d(TAG, "Restored original filename from metadata: " + originalName);
+            return originalName;
         } catch (IOException e) {
             Log.e(TAG, "Error reading metadata file", e);
-            return encryptedFile.getName();
+            return defaultName;
         }
     }
     
@@ -443,20 +625,32 @@ public class FileEncryptionManager {
     }
     
     /**
-     * Notify the MediaScanner to remove the file from gallery
+     * Notify media scanner about file changes to update galleries
      */
     private void notifyMediaScanner(String filePath) {
-        if (filePath != null) {
-            try {
+        try {
+            if (filePath != null) {
                 MediaScannerConnection.scanFile(
                     context,
                     new String[]{filePath},
                     null,
-                    (path, uri) -> Log.d(TAG, "Media scan completed for: " + path)
+                    (path, uri) -> {
+                        Log.d(TAG, "Media scan completed for: " + path);
+                        
+                        // Additional attempt to remove from gallery if this is a scan after deletion
+                        if (uri != null && new File(path).exists() == false) {
+                            try {
+                                context.getContentResolver().delete(uri, null, null);
+                                Log.d(TAG, "Deleted media URI after scan: " + uri);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error deleting URI after scan", e);
+                            }
+                        }
+                    }
                 );
-            } catch (Exception e) {
-                Log.e(TAG, "Error notifying media scanner", e);
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error notifying media scanner", e);
         }
     }
 

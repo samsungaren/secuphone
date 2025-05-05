@@ -10,6 +10,9 @@
     <external-cache-path
         name="temp_files"
         path="temp_view/" />
+    <external-cache-path
+        name="shared_files"
+        path="shared_files/" />
         
     <!-- External storage paths -->
     <external-path
@@ -27,5 +30,13 @@
         name="files"
         path="." />
 
-    <cache-path name="shared_files" path="temp_decrypted/"/>
+    <!-- Specific paths for encrypted files functionality -->
+    <cache-path 
+        name="temp_decrypted" 
+        path="temp_decrypted/" />
+    
+    <!-- Ensure fallback access to all cache subdirectories -->
+    <cache-path 
+        name="all_cache_dirs" 
+        path="." />
 </paths> 

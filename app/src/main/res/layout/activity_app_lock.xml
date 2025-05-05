@@ -111,7 +111,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/feature_inactive"
+                            android:text="@string/feature_not_active"
                             android:textColor="@color/text"
                             android:textSize="16sp"
                             android:layout_marginStart="12dp" />
@@ -157,49 +157,15 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="16dp" />
                     
-                    <com.google.android.material.textfield.TextInputLayout
+                    <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        app:boxBackgroundColor="@android:color/transparent"
-                        app:boxStrokeColor="@color/accent_primary"
-                        app:hintTextColor="@color/accent_primary"
-                        android:textColorHint="@color/text_secondary"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                        android:text="@string/app_lock_explanation"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="24dp" />
                         
-                        <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/pin_input"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/enter_pin"
-                        android:inputType="numberPassword"
-                        android:maxLength="6"
-                            android:textColor="@color/text"
-                            android:importantForAutofill="no" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                    
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="24dp"
-                        app:boxBackgroundColor="@android:color/transparent"
-                        app:boxStrokeColor="@color/accent_primary"
-                        app:hintTextColor="@color/accent_primary"
-                        android:textColorHint="@color/text_secondary"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-                        
-                        <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/confirm_pin_input"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/confirm_pin"
-                        android:inputType="numberPassword"
-                        android:maxLength="6"
-                            android:textColor="@color/text"
-                            android:importantForAutofill="no" />
-                    </com.google.android.material.textfield.TextInputLayout>
-                        
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/set_pin_button"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -211,14 +177,15 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Admin Permission Card -->
+            <!-- Accessibility Permission Card -->
             <androidx.cardview.widget.CardView
-                android:id="@+id/admin_permission_card"
+                android:id="@+id/permission_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="20dp"
                 android:layout_marginTop="16dp"
+                android:visibility="gone"
                 app:cardBackgroundColor="@android:color/transparent"
                 app:cardElevation="0dp"
                 app:layout_constraintTop_toBottomOf="@id/pin_setup_card">
@@ -228,109 +195,65 @@
                     android:layout_height="wrap_content"
                     android:background="@drawable/server_card_background"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="24dp">
                     
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/required_permissions"
+                        android:text="@string/accessibility_permission_required"
                         android:textColor="@color/text"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:textStyle="bold"
-                        android:layout_marginBottom="8dp" />
+                        android:layout_marginBottom="12dp" />
                     
-                    <!-- Admin Permission Status -->
-                    <LinearLayout
-                        android:id="@+id/admin_permission"
+                    <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:padding="8dp"
-                        android:gravity="center_vertical">
-
-                        <ImageView
-                            android:id="@+id/admin_permission_icon"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:src="@drawable/ic_error"
-                            android:tint="@color/error_red"
-                            android:contentDescription="@string/permission_granted" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/device_admin_label"
-                            android:textColor="@color/text"
-                            android:textSize="14sp"
-                            android:layout_marginStart="8dp" />
-
-                        <Button
-                            android:id="@+id/enable_admin_button"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/enable_admin"
-                            android:textSize="12sp"
-                            android:minHeight="36dp"
-                            android:minWidth="72dp"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                            android:textColor="@color/accent_primary" />
-                    </LinearLayout>
+                        android:text="@string/accessibility_permission_explanation"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="24dp" />
+                        
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/accessibility_permission_button"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/grant_accessibility_permission"
+                        android:backgroundTint="@color/accent_primary"
+                        android:textColor="@color/text"
+                        android:padding="12dp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Apps Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/installed_apps_card"
+            <!-- App List -->
+            <LinearLayout
+                android:id="@+id/app_list_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="16dp"
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="20dp"
-                android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@android:color/transparent"
-                app:cardElevation="0dp"
-                app:layout_constraintTop_toBottomOf="@id/admin_permission_card">
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/permission_card">
+                
+                <!-- App items will be added here programmatically -->
+            </LinearLayout>
+            
+            <TextView
+                android:id="@+id/no_apps_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/complete_setup_first"
+                android:textColor="@color/text_secondary"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:layout_marginTop="48dp"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/permission_card" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/server_card_background"
-                    android:orientation="vertical">
-                    
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/installed_apps"
-                        android:textColor="@color/text"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:padding="16dp" />
-                    
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="@color/card_border" />
-                        
-                    <!-- Container for dynamically added apps -->
-                    <LinearLayout
-                        android:id="@+id/app_list_container"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-                        
-                        <!-- Empty state text -->
-                        <TextView
-                            android:id="@+id/no_apps_text"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:padding="16dp"
-                            android:text="@string/setup_pin_first"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14sp"
-                            android:gravity="center" />
-                    </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 

@@ -1,13 +1,16 @@
 package com.example.secuphone;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -16,30 +19,29 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 
-import com.example.secuphone.R;
-import com.example.secuphone.admin.AppLockManager;
-import com.example.secuphone.admin.LockScreenService;
-import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.example.secuphone.utils.AppLockPreferences;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 public class AppLockActivity extends AppCompatActivity {
 
     private static final String TAG = "AppLockActivity";
+    private static final int PIN_SETUP_REQUEST_CODE = 100;
     
-    private TextInputEditText pinInput;
-    private TextInputEditText confirmPinInput;
-    private Button setPinButton;
-    private Button enableAdminButton;
+    private MaterialButton setPinButton;
+    private MaterialButton accessibilityPermissionButton;
     private CardView pinSetupCard;
+    private CardView permissionCard;
     private LinearLayout appListContainer;
     private TextView noAppsText;
     
@@ -47,28 +49,19 @@ public class AppLockActivity extends AppCompatActivity {
     private ImageView featureStatusIcon;
     private TextView featureStatusText;
     private TextView featureStatusDetail;
-    private ImageView adminPermissionIcon;
     
-    private AppLockManager appLockManager;
-    private ActivityResultLauncher<Intent> adminRequestLauncher;
+    private AppLockPreferences appLockPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app_lock);
         
-        // Initialize AppLockManager
-        appLockManager = new AppLockManager(this);
-        
-        // Register activity launcher for device admin request
-        adminRequestLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> updateAdminStatus()
-        );
+        // Initialize AppLockPreferences
+        appLockPreferences = new AppLockPreferences(this);
         
         initializeViews();
         setupListeners();
-        updateAdminStatus();
         updateFeatureStatus();
     }
     
@@ -76,21 +69,19 @@ public class AppLockActivity extends AppCompatActivity {
         try {
             // Initialize back navigation
             ImageButton backButton = findViewById(R.id.back_button);
-                backButton.setOnClickListener(v -> finish());
+            backButton.setOnClickListener(v -> finish());
             
             // Setup info button
             ImageButton infoButton = findViewById(R.id.info_button);
-                infoButton.setOnClickListener(v -> showInfoDialog());
+            infoButton.setOnClickListener(v -> showInfoDialog());
             
-            // Initialize PIN setup
-        pinSetupCard = findViewById(R.id.pin_setup_card);
-        pinInput = findViewById(R.id.pin_input);
-        confirmPinInput = findViewById(R.id.confirm_pin_input);
-        setPinButton = findViewById(R.id.set_pin_button);
-        
-            // Initialize admin permission button
-            enableAdminButton = findViewById(R.id.enable_admin_button);
-            adminPermissionIcon = findViewById(R.id.admin_permission_icon);
+            // Initialize PIN setup card and button
+            pinSetupCard = findViewById(R.id.pin_setup_card);
+            setPinButton = findViewById(R.id.set_pin_button);
+            
+            // Initialize permission card and button
+            permissionCard = findViewById(R.id.permission_card);
+            accessibilityPermissionButton = findViewById(R.id.accessibility_permission_button);
             
             // Initialize app list container
             appListContainer = findViewById(R.id.app_list_container);
@@ -109,392 +100,257 @@ public class AppLockActivity extends AppCompatActivity {
     
     private void setupListeners() {
         try {
-            // Setup PIN button listener
-                setPinButton.setOnClickListener(this::onSetPinClicked);
-        
-            // Setup admin button listener
-            enableAdminButton.setOnClickListener(v -> requestAdminPermission());
-        
+            // Setup PIN button to launch PinSetupActivity
+            setPinButton.setOnClickListener(v -> openPinSetupScreen());
+            
+            // Setup accessibility permission button listener
+            accessibilityPermissionButton.setOnClickListener(v -> openAccessibilitySettings());
+            
         } catch (Exception e) {
             Log.e(TAG, "Error setting up listeners", e);
             Toast.makeText(this, "Error setting up UI: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
+    private void openPinSetupScreen() {
+        try {
+            Intent intent = new Intent(this, PinSetupActivity.class);
+            startActivityForResult(intent, PIN_SETUP_REQUEST_CODE);
+        } catch (Exception e) {
+            Log.e(TAG, "Error opening PIN setup screen", e);
+            Toast.makeText(this, "Error opening PIN setup", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         
-        try {
-            // Check admin status
-            updateAdminStatus();
-            
-            // Check if PIN is set
-            boolean isPinSet = appLockManager.isPinSet();
-                pinSetupCard.setVisibility(isPinSet ? View.GONE : View.VISIBLE);
-            
-            // Load apps if PIN is set and admin is active
-            if (isPinSet && appLockManager.isAdminActive()) {
-                loadInstalledApps();
-            }
-            
-            // Update feature status
-            updateFeatureStatus();
-            
-        } catch (Exception e) {
-            Log.e(TAG, "Error in onResume", e);
-            Toast.makeText(this, "Error refreshing UI: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-    
-    private void onSetPinClicked(View view) {
-        try {
-            String pin = pinInput.getText().toString().trim();
-            String confirmPin = confirmPinInput.getText().toString().trim();
-            
-            Log.d(TAG, "Setting PIN: pin length " + pin.length() + ", confirm length " + confirmPin.length());
-        
-        if (pin.isEmpty() || confirmPin.isEmpty()) {
-            Toast.makeText(this, R.string.enter_pin, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        if (!pin.equals(confirmPin)) {
-            Toast.makeText(this, R.string.pins_dont_match, Toast.LENGTH_SHORT).show();
-            pinInput.setText("");
-            confirmPinInput.setText("");
-            return;
-        }
-        
-        // Save PIN
-        boolean pinSetSuccess = false;
-        try {
-            appLockManager.setPin(pin);
-            pinSetSuccess = appLockManager.isPinSet();
-            Log.d(TAG, "PIN set successfully: " + pinSetSuccess);
-        } catch (Exception e) {
-            Log.e(TAG, "Error setting PIN in AppLockManager", e);
-            pinSetSuccess = false;
-        }
-        
-        if (pinSetSuccess) {
-        Toast.makeText(this, R.string.pin_set_success, Toast.LENGTH_SHORT).show();
-        
-        // Hide PIN setup card
-        pinSetupCard.setVisibility(View.GONE);
-                
-            // Request admin permissions if not yet granted
-            if (!appLockManager.isAdminActive()) {
-                requestAdminPermission();
+        if (requestCode == PIN_SETUP_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                // PIN setup was successful
+                Log.d(TAG, "PIN setup successful");
+                // Update UI to reflect the new state
+                updateFeatureStatus();
+                // Load apps only if PIN is set and accessibility service is enabled
+                if (appLockPreferences.isPinSet() && isAccessibilityServiceEnabled()) {
+                    loadInstalledApps();
+                }
             } else {
-                // Load apps if admin is already active
-                loadInstalledApps();
+                Log.d(TAG, "PIN setup canceled or failed");
             }
-            
-            // Update feature status
-            updateFeatureStatus();
-        } else {
-            Toast.makeText(this, "Failed to set PIN. Please try again.", Toast.LENGTH_LONG).show();
         }
-        
-    } catch (Exception e) {
-        Log.e(TAG, "Error setting PIN", e);
-        Toast.makeText(this, "Error setting PIN: " + e.getMessage(), Toast.LENGTH_LONG).show();
     }
-}
     
-    private void updateAdminStatus() {
-        boolean isAdminActive = appLockManager.isAdminActive();
+    private void refreshUI() {
+        // Check if PIN is set
+        boolean isPinSet = appLockPreferences.isPinSet();
+        pinSetupCard.setVisibility(isPinSet ? View.GONE : View.VISIBLE);
         
-        // Update admin permission icon
-        adminPermissionIcon.setImageResource(isAdminActive ? 
-            R.drawable.ic_check_circle : R.drawable.ic_error);
-        adminPermissionIcon.setColorFilter(ContextCompat.getColor(this, isAdminActive ? 
-            R.color.success_green : R.color.error_red));
-            
-        // Update admin button visibility
-        enableAdminButton.setVisibility(isAdminActive ? View.GONE : View.VISIBLE);
+        // Check accessibility permission
+        boolean hasAccessibilityPermission = isAccessibilityServiceEnabled();
+        permissionCard.setVisibility(isPinSet && !hasAccessibilityPermission ? View.VISIBLE : View.GONE);
+        
+        // Load apps if PIN is set and accessibility is enabled
+        if (isPinSet && hasAccessibilityPermission) {
+            loadInstalledApps();
+        } else {
+            appListContainer.setVisibility(View.GONE);
+            noAppsText.setVisibility(View.GONE);
+        }
         
         // Update feature status
         updateFeatureStatus();
     }
     
-    private void requestAdminPermission() {
-        try {
-            Intent intent = appLockManager.getAdminRequestIntent();
-            adminRequestLauncher.launch(intent);
-        } catch (Exception e) {
-            Log.e(TAG, "Error requesting device admin", e);
-            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshUI();
+    }
+    
+    private boolean isAccessibilityServiceEnabled() {
+        String serviceName = getPackageName() + "/com.example.secuphone.services.AppLockAccessibilityService";
+        String enabledServices = Settings.Secure.getString(
+                getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        
+        return enabledServices != null && enabledServices.contains(serviceName);
+    }
+    
+    private void openAccessibilitySettings() {
+        Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+        startActivity(intent);
+        
+        // Show a toast explaining what to do
+        Toast.makeText(this, "Please enable SecuPhone App Lock in Accessibility Services", 
+                Toast.LENGTH_LONG).show();
     }
     
     private void loadInstalledApps() {
         try {
             // Clear existing apps
-            if (appListContainer != null) {
-                appListContainer.removeAllViews();
-            }
+            appListContainer.removeAllViews();
             
-            // Get installed apps
-            List<ApplicationInfo> userApps = appLockManager.getUserInstalledApps();
+            // Get user-installed apps
+            List<ApplicationInfo> userApps = getUserInstalledApps();
             
             if (userApps.isEmpty()) {
-                if (noAppsText != null) {
-                    noAppsText.setVisibility(View.VISIBLE);
-                }
+                noAppsText.setVisibility(View.VISIBLE);
+                appListContainer.setVisibility(View.GONE);
                 return;
             }
             
-            if (noAppsText != null) {
-                noAppsText.setVisibility(View.GONE);
-            }
+            noAppsText.setVisibility(View.GONE);
+            appListContainer.setVisibility(View.VISIBLE);
             
-            // Получаем категории приложений
-            Set<String> socialApps = appLockManager.getAppsInCategory(AppLockManager.CATEGORY_SOCIAL);
-            Set<String> financeApps = appLockManager.getAppsInCategory(AppLockManager.CATEGORY_FINANCE);
-            Set<String> gameApps = appLockManager.getAppsInCategory(AppLockManager.CATEGORY_GAMES);
-            Set<String> shoppingApps = appLockManager.getAppsInCategory(AppLockManager.CATEGORY_SHOPPING);
-            Set<String> messagingApps = appLockManager.getAppsInCategory(AppLockManager.CATEGORY_MESSAGING);
+            // Get currently locked apps
+            Set<String> lockedApps = appLockPreferences.getLockedApps();
             
-            // Создаем разделы по категориям
-            if (!socialApps.isEmpty()) {
-                addCategoryHeader("Social Media Apps");
-                for (ApplicationInfo app : userApps) {
-                    if (socialApps.contains(app.packageName)) {
-                        addAppToList(app);
-                    }
-                }
-            }
-            
-            if (!financeApps.isEmpty()) {
-                addCategoryHeader("Financial Apps");
-                for (ApplicationInfo app : userApps) {
-                    if (financeApps.contains(app.packageName)) {
-                        addAppToList(app);
-                    }
-                }
-            }
-            
-            if (!gameApps.isEmpty()) {
-                addCategoryHeader("Games");
-                for (ApplicationInfo app : userApps) {
-                    if (gameApps.contains(app.packageName)) {
-                        addAppToList(app);
-                    }
-                }
-            }
-            
-            if (!shoppingApps.isEmpty()) {
-                addCategoryHeader("Shopping Apps");
-                for (ApplicationInfo app : userApps) {
-                    if (shoppingApps.contains(app.packageName)) {
-                        addAppToList(app);
-                    }
-                }
-            }
-            
-            if (!messagingApps.isEmpty()) {
-                addCategoryHeader("Messaging Apps");
-                for (ApplicationInfo app : userApps) {
-                    if (messagingApps.contains(app.packageName)) {
-                        addAppToList(app);
-                    }
-                }
-            }
-            
-            // Добавляем остальные приложения в раздел "Other Apps"
-            Set<String> categorizedApps = new HashSet<>();
-            categorizedApps.addAll(socialApps);
-            categorizedApps.addAll(financeApps);
-            categorizedApps.addAll(gameApps);
-            categorizedApps.addAll(shoppingApps);
-            categorizedApps.addAll(messagingApps);
-            
-            boolean hasOtherApps = false;
-            for (ApplicationInfo app : userApps) {
-                if (!categorizedApps.contains(app.packageName)) {
-                    if (!hasOtherApps) {
-                        addCategoryHeader("Other Apps");
-                        hasOtherApps = true;
-                    }
-                    addAppToList(app);
-                }
+            // Add each app to the list
+            for (ApplicationInfo appInfo : userApps) {
+                addAppToList(appInfo, lockedApps.contains(appInfo.packageName));
             }
             
         } catch (Exception e) {
-            Log.e(TAG, "Error loading installed apps", e);
+            Log.e(TAG, "Error loading apps", e);
             Toast.makeText(this, "Error loading apps: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
-    private void addAppToList(ApplicationInfo appInfo) {
+    private List<ApplicationInfo> getUserInstalledApps() {
         try {
             PackageManager pm = getPackageManager();
-            View appRow = getLayoutInflater().inflate(R.layout.item_app_lock, appListContainer, false);
+            List<ApplicationInfo> installedApps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+            List<ApplicationInfo> userApps = new ArrayList<>();
             
-            // Set app details
-            ImageView appIcon = appRow.findViewById(R.id.app_icon);
-            TextView appName = appRow.findViewById(R.id.app_name);
-            SwitchMaterial lockSwitch = appRow.findViewById(R.id.app_lock_switch);
-            
-            if (appIcon == null || appName == null || lockSwitch == null) {
-                Log.e(TAG, "One or more views not found in app_lock item layout");
-                return;
+            for (ApplicationInfo appInfo : installedApps) {
+                // Filter out system apps and our own app
+                if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 && 
+                    !appInfo.packageName.equals(getPackageName())) {
+                    userApps.add(appInfo);
+                }
             }
             
-            // Set icon and name
-            appIcon.setImageDrawable(pm.getApplicationIcon(appInfo));
-            appName.setText(pm.getApplicationLabel(appInfo));
-            
-            // Set switch state
-            String packageName = appInfo.packageName;
-            boolean isLocked = appLockManager.isAppLocked(packageName);
-            lockSwitch.setChecked(isLocked);
-            
-            // Set switch listener
-            lockSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                try {
-                    if (buttonView.isPressed()) {
-                        // Update lock status
-                        if (isChecked) {
-                            try {
-                                appLockManager.addLockedApp(packageName);
-                                Log.d(TAG, "Added app to locked list: " + packageName);
-                                
-                                // Start the lock screen service if not running
-                                startLockScreenService();
-        } catch (Exception e) {
-                                Log.e(TAG, "Error locking app", e);
-                                Toast.makeText(AppLockActivity.this, 
-                                    "Error locking app: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                buttonView.setChecked(false);
-                                return;
-                            }
-                        } else {
-                            appLockManager.removeLockedApp(packageName);
-                            Log.d(TAG, "Removed app from locked list: " + packageName);
-                        }
-                        
-                        // Show toast message
-                        String appLabel = pm.getApplicationLabel(appInfo).toString();
-                        String statusMessage = appLabel + " " + 
-                            (isChecked ? getString(R.string.locked) : getString(R.string.unlocked));
-                        Toast.makeText(this, statusMessage, Toast.LENGTH_SHORT).show();
-                        
-                        // Update feature status
-                        updateFeatureStatus();
-                    }
-        } catch (Exception e) {
-                    Log.e(TAG, "Error toggling app lock state for " + packageName, e);
-                    Toast.makeText(AppLockActivity.this, 
-                        "Error locking app: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    // Reset switch to previous state
-                    buttonView.setChecked(!isChecked);
+            // Sort apps by name
+            Collections.sort(userApps, new Comparator<ApplicationInfo>() {
+                @Override
+                public int compare(ApplicationInfo a1, ApplicationInfo a2) {
+                    return pm.getApplicationLabel(a1).toString()
+                            .compareToIgnoreCase(pm.getApplicationLabel(a2).toString());
                 }
             });
             
-            // Add to container
-            appListContainer.addView(appRow);
+            return userApps;
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting installed apps", e);
+            return new ArrayList<>();
+        }
+    }
+    
+    private void addAppToList(ApplicationInfo appInfo, boolean isLocked) {
+        try {
+            LayoutInflater inflater = LayoutInflater.from(this);
+            View appItemView = inflater.inflate(R.layout.item_app_lock, appListContainer, false);
+            
+            // Get views
+            ImageView appIconView = appItemView.findViewById(R.id.app_icon);
+            TextView appNameView = appItemView.findViewById(R.id.app_name);
+            TextView appPackageView = appItemView.findViewById(R.id.app_package);
+            CheckBox lockCheckBox = appItemView.findViewById(R.id.lock_checkbox);
+            
+            // Set app info
+            PackageManager pm = getPackageManager();
+            appIconView.setImageDrawable(pm.getApplicationIcon(appInfo));
+            appNameView.setText(pm.getApplicationLabel(appInfo));
+            appPackageView.setText(appInfo.packageName);
+            
+            // Set checkbox state without triggering listener
+            lockCheckBox.setOnCheckedChangeListener(null);
+            lockCheckBox.setChecked(isLocked);
+            
+            // Create an OnClickListener for the item
+            View.OnClickListener itemClickListener = new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    boolean newState = !lockCheckBox.isChecked();
+                    lockCheckBox.setChecked(newState);
+                    
+                    // Update locked status
+                    updateAppLockStatus(appInfo, newState);
+                }
+            };
+            
+            // Apply the click listener to the entire item view
+            appItemView.setOnClickListener(itemClickListener);
+            
+            // Set OnCheckedChangeListener for the checkbox
+            lockCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (buttonView.isPressed()) {
+                        // User directly interacted with the checkbox
+                        updateAppLockStatus(appInfo, isChecked);
+                    }
+                }
+            });
+            
+            // Add view to container
+            appListContainer.addView(appItemView);
             
         } catch (Exception e) {
-            Log.e(TAG, "Error adding app to list", e);
+            Log.e(TAG, "Error adding app to list: " + appInfo.packageName, e);
+        }
+    }
+    
+    /**
+     * Helper method to update app lock status and show feedback
+     */
+    private void updateAppLockStatus(ApplicationInfo appInfo, boolean isLocked) {
+        try {
+            String appName = getPackageManager().getApplicationLabel(appInfo).toString();
+            
+            if (isLocked) {
+                appLockPreferences.addLockedApp(appInfo.packageName);
+                Toast.makeText(this, appName + " " + getString(R.string.locked), Toast.LENGTH_SHORT).show();
+            } else {
+                appLockPreferences.removeLockedApp(appInfo.packageName);
+                Toast.makeText(this, appName + " " + getString(R.string.unlocked), Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating app lock status", e);
         }
     }
     
     private void updateFeatureStatus() {
-        try {
-            boolean isPinSet = appLockManager.isPinSet();
-            boolean isAdminActive = appLockManager.isAdminActive();
-            boolean hasLockedApps = !appLockManager.getLockedApps().isEmpty();
-            
-            // Update status icon and text
-            if (!isPinSet) {
-                // PIN not set - inactive
-                featureStatusIcon.setImageResource(R.drawable.ic_error);
-                featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.error_red));
-                featureStatusText.setText(R.string.feature_inactive);
-                featureStatusDetail.setText(R.string.feature_pin_needed);
-            } else if (!isAdminActive) {
-                // Admin not active - inactive
-                featureStatusIcon.setImageResource(R.drawable.ic_error);
-                featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.warning_amber));
-                featureStatusText.setText(R.string.feature_inactive);
-                featureStatusDetail.setText(R.string.admin_request_message);
-            } else if (!hasLockedApps) {
-                // No apps locked - ready but not active
-                featureStatusIcon.setImageResource(R.drawable.ic_check_circle);
-                featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.accent_primary));
-                featureStatusText.setText(R.string.feature_inactive);
-                featureStatusDetail.setText(R.string.choose_apps_to_lock);
-            } else {
-                // Active and protecting apps
-                featureStatusIcon.setImageResource(R.drawable.ic_check_circle);
-                featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.success_green));
-                featureStatusText.setText(R.string.feature_active);
-                featureStatusDetail.setText(R.string.feature_active_detail);
-                
-                // Start the lock screen service
-                startLockScreenService();
-            }
-            
-            // Update app list visibility
-            if (noAppsText != null) {
-                noAppsText.setVisibility((isPinSet && isAdminActive) ? View.GONE : View.VISIBLE);
-            }
-            
-        } catch (Exception e) {
-            Log.e(TAG, "Error updating feature status", e);
-        }
-    }
-    
-    private void startLockScreenService() {
-        try {
-            // Create intent for the service
-            Intent serviceIntent = new Intent(this, LockScreenService.class);
-            
-            // Add flags to ensure service starts properly
-            serviceIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-            
-            // Start the service as a foreground service
-            Log.d(TAG, "Starting lock screen service as foreground service");
-            
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent);
-            } else {
-                startService(serviceIntent);
-            }
-            
-            Log.d(TAG, "Lock screen service start command sent");
-        } catch (Exception e) {
-            Log.e(TAG, "Error starting lock screen service", e);
-            Toast.makeText(this, "Error starting lock service: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        boolean isPinSet = appLockPreferences.isPinSet();
+        boolean hasAccessibilityPermission = isAccessibilityServiceEnabled();
+        
+        if (!isPinSet) {
+            // PIN not set
+            featureStatusIcon.setImageResource(R.drawable.ic_error);
+            featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.error_red));
+            featureStatusText.setText(R.string.feature_not_active);
+            featureStatusDetail.setText(R.string.pin_not_set);
+        } else if (!hasAccessibilityPermission) {
+            // PIN set but missing accessibility permission
+            featureStatusIcon.setImageResource(R.drawable.ic_warning);
+            featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.warning_yellow));
+            featureStatusText.setText(R.string.feature_partially_active);
+            featureStatusDetail.setText(R.string.missing_accessibility_permission);
+        } else {
+            // Feature fully active
+            featureStatusIcon.setImageResource(R.drawable.ic_check_circle);
+            featureStatusIcon.setColorFilter(ContextCompat.getColor(this, R.color.success_green));
+            featureStatusText.setText(R.string.feature_active);
+            featureStatusDetail.setText(R.string.app_lock_active);
         }
     }
     
     private void showInfoDialog() {
         new AlertDialog.Builder(this)
-            .setTitle(R.string.app_lock_info)
-            .setMessage(R.string.app_lock_explanation)
-            .setPositiveButton(R.string.ok, null)
-            .show();
-    }
-    
-    /**
-     * Добавляет заголовок категории в список приложений
-     */
-    private void addCategoryHeader(String categoryName) {
-        try {
-            View header = getLayoutInflater().inflate(R.layout.item_category_header, appListContainer, false);
-            TextView headerText = header.findViewById(R.id.category_header_text);
-            
-            if (headerText != null) {
-                headerText.setText(categoryName);
-            }
-            
-            appListContainer.addView(header);
-        } catch (Exception e) {
-            Log.e(TAG, "Error adding category header", e);
-        }
+                .setTitle(R.string.app_lock_info_title)
+                .setMessage(R.string.app_lock_info_message)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 } 

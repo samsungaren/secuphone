@@ -11,6 +11,8 @@ import android.util.Log;
 
 import androidx.preference.PreferenceManager;
 
+import com.example.secuphone.utils.SecurityUtils;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +25,9 @@ public class AppLockManager {
     private static final String TAG = "AppLockManager";
     private static final String PREF_LOCKED_APPS = "locked_apps";
     private static final String PREF_PIN_SET = "pin_set";
-    private static final String PREF_PIN_CODE = "pin_code";
+    private static final String PREF_PIN_HASH = "pin_hash";
+    private static final String PREF_PIN_SALT = "pin_salt";
+    private static final String PREF_PIN_CODE = "pin_code"; // Для обратной совместимости
     private static final String PREF_LAST_ACTIVE_APP = "last_active_app";
     private static final String PREF_APPS_BY_CATEGORY_PREFIX = "apps_category_";
     
@@ -78,7 +82,7 @@ public class AppLockManager {
     }
     
     /**
-     * Установить PIN-код для блокировки
+     * Установить PIN-код для блокировки с использованием безопасного хеширования
      */
     public boolean setPin(String pin) {
         try {
@@ -87,24 +91,32 @@ public class AppLockManager {
                 return false;
             }
             
-            Log.d(TAG, "Setting PIN in SharedPreferences, pin length: " + pin.length());
+            Log.d(TAG, "Setting PIN with secure hashing, pin length: " + pin.length());
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
             
-            // First store the PIN
+            // Генерируем соль для хеширования PIN-кода
+            String salt = SecurityUtils.generateSalt();
+            // Хешируем PIN-код с использованием соли
+            String hashedPin = SecurityUtils.hashPassword(pin, salt);
+            
+            // Сохраняем хеш PIN-кода и соль
             prefs.edit()
-                .putString(PREF_PIN_CODE, pin)
+                .putString(PREF_PIN_HASH, hashedPin)
+                .putString(PREF_PIN_SALT, salt)
                 .putBoolean(PREF_PIN_SET, true)
                 .apply();
             
-            // Now verify it was stored properly
-            boolean pinStored = prefs.contains(PREF_PIN_CODE);
-            String storedPin = prefs.getString(PREF_PIN_CODE, "");
+            // Проверяем, что данные сохранены
             boolean pinSet = prefs.getBoolean(PREF_PIN_SET, false);
+            boolean hashStored = prefs.contains(PREF_PIN_HASH);
+            boolean saltStored = prefs.contains(PREF_PIN_SALT);
             
-            Log.d(TAG, "PIN set successfully: " + pinSet + ", PIN stored: " + pinStored + 
-                ", PIN value matches: " + pin.equals(storedPin));
+            Log.d(TAG, "PIN set successfully: " + pinSet + 
+                  ", Hash stored: " + hashStored + 
+                  ", Salt stored: " + saltStored);
             
-            return pinSet && pinStored && pin.equals(storedPin);
+            // Проверяем, что можем правильно проверить PIN
+            return pinSet && hashStored && saltStored && verifyPin(pin);
         } catch (Exception e) {
             Log.e(TAG, "Error setting PIN", e);
             return false;
@@ -118,13 +130,18 @@ public class AppLockManager {
         try {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
             boolean isPinSet = prefs.getBoolean(PREF_PIN_SET, false);
-            String pin = prefs.getString(PREF_PIN_CODE, "");
-            boolean hasPin = pin != null && !pin.isEmpty();
+            boolean hasHash = prefs.contains(PREF_PIN_HASH) && !prefs.getString(PREF_PIN_HASH, "").isEmpty();
+            boolean hasSalt = prefs.contains(PREF_PIN_SALT) && !prefs.getString(PREF_PIN_SALT, "").isEmpty();
             
-            Log.d(TAG, "PIN is " + (isPinSet ? "set" : "not set") + ", PIN value length: " + 
-                  (pin != null ? pin.length() : 0) + ", hasPin: " + hasPin);
+            // Для обратной совместимости проверяем и старый способ хранения PIN
+            boolean hasLegacyPin = prefs.contains(PREF_PIN_CODE) && !prefs.getString(PREF_PIN_CODE, "").isEmpty();
             
-            return isPinSet && hasPin;
+            Log.d(TAG, "PIN is " + (isPinSet ? "set" : "not set") + 
+                  ", Has hash: " + hasHash + 
+                  ", Has salt: " + hasSalt + 
+                  ", Has legacy PIN: " + hasLegacyPin);
+            
+            return isPinSet && ((hasHash && hasSalt) || hasLegacyPin);
         } catch (Exception e) {
             Log.e(TAG, "Error checking if PIN is set", e);
             return false;
@@ -132,7 +149,7 @@ public class AppLockManager {
     }
     
     /**
-     * Проверить PIN-код
+     * Проверить PIN-код с использованием безопасного хеширования
      */
     public boolean verifyPin(String enteredPin) {
         try {
@@ -141,14 +158,47 @@ public class AppLockManager {
             }
             
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-            String savedPin = prefs.getString(PREF_PIN_CODE, "");
             
-            if (savedPin == null || savedPin.isEmpty()) {
-                Log.e(TAG, "No PIN is saved, can't verify");
-                return false;
+            // Проверяем, есть ли хеш и соль для нового метода
+            if (prefs.contains(PREF_PIN_HASH) && prefs.contains(PREF_PIN_SALT)) {
+                String storedHash = prefs.getString(PREF_PIN_HASH, "");
+                String storedSalt = prefs.getString(PREF_PIN_SALT, "");
+                
+                if (storedHash.isEmpty() || storedSalt.isEmpty()) {
+                    Log.e(TAG, "Stored hash or salt is empty");
+                    return false;
+                }
+                
+                // Проверяем PIN с использованием хеша и соли
+                boolean isValid = SecurityUtils.verifyPassword(enteredPin, storedHash, storedSalt);
+                Log.d(TAG, "PIN verification result (secure method): " + isValid);
+                return isValid;
+            } 
+            // Обратная совместимость со старым методом
+            else if (prefs.contains(PREF_PIN_CODE)) {
+                String savedPin = prefs.getString(PREF_PIN_CODE, "");
+                
+                if (savedPin.isEmpty()) {
+                    Log.e(TAG, "Saved PIN is empty");
+                    return false;
+                }
+                
+                boolean isValid = savedPin.equals(enteredPin);
+                
+                // Если PIN верный, мигрируем на новый метод хранения
+                if (isValid) {
+                    Log.d(TAG, "PIN verified with legacy method, migrating to secure storage");
+                    setPin(enteredPin);
+                    // Удаляем старый PIN
+                    prefs.edit().remove(PREF_PIN_CODE).apply();
+                }
+                
+                Log.d(TAG, "PIN verification result (legacy method): " + isValid);
+                return isValid;
             }
             
-            return savedPin.equals(enteredPin);
+            Log.e(TAG, "No PIN storage method found");
+            return false;
         } catch (Exception e) {
             Log.e(TAG, "Error verifying PIN", e);
             return false;
@@ -449,7 +499,9 @@ public class AppLockManager {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
             SharedPreferences.Editor editor = prefs.edit();
             editor.remove(PREF_PIN_SET)
-                    .remove(PREF_PIN_CODE)
+                    .remove(PREF_PIN_HASH)
+                    .remove(PREF_PIN_SALT)
+                    .remove(PREF_PIN_CODE) // Удаляем и старый ключ для совместимости
                     .remove(PREF_LOCKED_APPS)
                     .remove(PREF_LAST_ACTIVE_APP)
                     .remove(PREF_APP_CATEGORIES);

@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -59,7 +60,7 @@ import okhttp3.Response;
 public class URLCheckerActivity extends AppCompatActivity {
 
     private static final String TAG = "URLCheckerActivity";
-    private static final String VIRUSTOTAL_API_KEY = "f07bcbac1cd67fd448a98464a2a694bc62aa61003a1ef7604e49b0ed10247988";
+    private static final String VIRUSTOTAL_API_KEY = "13bf36d397ad5f720bba5f2d81ca302101d58988ec6a8d7fc238979fe6839682";
     private static final String VIRUSTOTAL_API_URL = "https://www.virustotal.com/api/v3/urls";
     private static final int SUSPICIOUS_THRESHOLD = 1; // Number of engines needed to flag as suspicious
     private static final String PREF_URL_HISTORY = "url_history";
@@ -371,26 +372,39 @@ public class URLCheckerActivity extends AppCompatActivity {
         // Update browser preview URL immediately
         browserUrl.setText(url);
         
+        // Debug log - начало проверки URL
+        Log.d(TAG, "Starting URL check for: " + url);
+        
         executorService.execute(() -> {
             try {
                 // Step 1: Submit URL for scanning
+                Log.d(TAG, "Submitting URL to VirusTotal API: " + url);
                 String urlId = submitUrlToVirusTotal(url);
                 if (urlId == null) {
                     // Fallback to basic checks when API fails
+                    Log.e(TAG, "Failed to get urlId from VirusTotal API, falling back to basic check");
                     performBasicUrlCheck(url);
                     return;
                 }
                 
+                Log.d(TAG, "Successfully submitted URL, got ID: " + urlId);
+                
                 // Step 2: Allow time for processing (VirusTotal needs a moment)
-                Thread.sleep(2000);
+                Log.d(TAG, "Waiting for VirusTotal to process URL...");
+                Thread.sleep(3000); // Increased wait time for more reliable results
                 
                 // Step 3: Get scan results
+                Log.d(TAG, "Retrieving scan results for ID: " + urlId);
                 JSONObject scanResult = getVirusTotalResults(urlId);
                 if (scanResult == null) {
                     // Fallback to basic checks when API fails
+                    Log.e(TAG, "Failed to get scan results from VirusTotal API, falling back to basic check");
                     performBasicUrlCheck(url);
                     return;
                 }
+                
+                // Log the full response for debugging
+                Log.d(TAG, "Received scan results: " + scanResult.toString());
                 
                 // Step 4: Process the results
                 processVirusTotalResults(scanResult, url);
@@ -400,8 +414,9 @@ public class URLCheckerActivity extends AppCompatActivity {
                 Log.e(TAG, "URL checking interrupted", e);
             } catch (Exception e) {
                 // Fallback to basic checks when any exception occurs
-                performBasicUrlCheck(url);
                 Log.e(TAG, "Error checking URL with VirusTotal, falling back to basic check", e);
+                e.printStackTrace();
+                performBasicUrlCheck(url);
             }
         });
     }
@@ -488,11 +503,49 @@ public class URLCheckerActivity extends AppCompatActivity {
             int undetected = stats.getInt("undetected");
             int totalEngines = malicious + suspicious + harmless + undetected;
             
-            // Determine if the URL is dangerous
-            final boolean isDangerous = (malicious > 0 || suspicious >= SUSPICIOUS_THRESHOLD);
+            // Get detailed results from engines when available
+            StringBuilder detailedResults = new StringBuilder();
+            try {
+                JSONObject resultsObj = attributes.getJSONObject("results");
+                // Get names of engines that flagged as malicious
+                int enginesLogged = 0;
+                Iterator<String> keys = resultsObj.keys();
+                while (keys.hasNext() && enginesLogged < 5) { // Limit to 5 for brevity
+                    String engineName = keys.next();
+                    JSONObject engineResult = resultsObj.getJSONObject(engineName);
+                    String category = engineResult.optString("category", "");
+                    if ("malicious".equals(category) || "suspicious".equals(category)) {
+                        detailedResults.append(engineName).append(": ")
+                                      .append(category).append(", ");
+                        enginesLogged++;
+                    }
+                }
+                if (detailedResults.length() > 0) {
+                    // Remove trailing comma and space
+                    detailedResults.setLength(detailedResults.length() - 2);
+                    Log.d(TAG, "Engines that flagged as malicious/suspicious: " + detailedResults.toString());
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error extracting detailed results", e);
+            }
+            
+            // Determine if the URL is dangerous - improved detection logic
+            // Consider URL dangerous if ANY security engine marks it as malicious
+            final boolean isDangerous = (malicious > 0 || suspicious > 0);
             
             // Save to history
             saveUrlToHistory(url, !isDangerous);
+            
+            // Log detailed scan results for debugging
+            Log.d(TAG, "VirusTotal scan results for " + url + ":");
+            Log.d(TAG, "Malicious: " + malicious + ", Suspicious: " + suspicious + 
+                  ", Harmless: " + harmless + ", Undetected: " + undetected);
+            
+            // For easier debugging - final result
+            Log.d(TAG, "Final verdict for " + url + ": " + (isDangerous ? "DANGEROUS" : "SAFE"));
+            
+            // Store detailed results for UI
+            final String detailedResultsStr = detailedResults.toString();
             
             // Update UI on main thread
             mainHandler.post(() -> {
@@ -508,13 +561,28 @@ public class URLCheckerActivity extends AppCompatActivity {
                     browserContent.setBackgroundColor(ContextCompat.getColor(this, R.color.warning_red));
                     browserContent.setImageResource(R.drawable.ic_warning_triangle);
                     
-                    // Show detailed warning message
+                    // Show detailed warning message with engine details if available
                     String dangerMessage = String.format(
                         "DANGER: %d of %d security engines detected this URL as malicious", 
                         malicious + suspicious, 
                         totalEngines
                     );
+                    
+                    if (!detailedResultsStr.isEmpty()) {
+                        dangerMessage += "\nDetected by: " + detailedResultsStr;
+                    }
+                    
                     Toast.makeText(URLCheckerActivity.this, dangerMessage, Toast.LENGTH_LONG).show();
+                    
+                    // Update scan stats with detailed information
+                    TextView scanStatsText = findViewById(R.id.scan_stats_text);
+                    if (scanStatsText != null) {
+                        scanStatsText.setText(String.format(
+                            "Checked by %d security engines. Result: %d malicious, %d suspicious, %d harmless, %d undetected",
+                            totalEngines, malicious, suspicious, harmless, undetected
+                        ));
+                        scanStatsText.setVisibility(View.VISIBLE);
+                    }
                 } else {
                     // Update UI for safe URL
                     warningText.setText(getString(R.string.url_safe));
@@ -530,17 +598,6 @@ public class URLCheckerActivity extends AppCompatActivity {
                         totalEngines
                     );
                     Toast.makeText(URLCheckerActivity.this, safeMessage, Toast.LENGTH_LONG).show();
-                }
-                
-                // Add a TextView to show detailed scan statistics
-                TextView scanStatsText = findViewById(R.id.scan_stats_text);
-                if (scanStatsText != null) {
-                    String statsDetail = String.format(
-                        "Scan Results: %d malicious, %d suspicious, %d harmless, %d undetected", 
-                        malicious, suspicious, harmless, undetected
-                    );
-                    scanStatsText.setText(statsDetail);
-                    scanStatsText.setVisibility(View.VISIBLE);
                 }
             });
         } catch (JSONException e) {

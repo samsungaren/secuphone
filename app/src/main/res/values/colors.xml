@@ -48,8 +48,8 @@
     <color name="url_input_background">#0F1C3F</color>
 
     <!-- Find Phone Activity colors -->
-    <color name="success_green">#17C37B</color>
-    <color name="error_red">#FF4C8C</color>
+    <color name="success_green">#4CAF50</color>
+    <color name="error_red">#F44336</color>
     <color name="password_input_background">#192D55</color>
     <color name="button_primary">#00BFB2</color>
     <color name="button_secondary">#4A6FA5</color>
@@ -62,4 +62,6 @@
     <color name="accent_blue">#2196F3</color>
     <color name="accent_purple">#9C27B0</color>
     <color name="accent_light">#E0E0E0</color>
+
+    <color name="warning_yellow">#FFC107</color>
 </resources>
