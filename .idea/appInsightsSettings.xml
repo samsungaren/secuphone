@@ -9,7 +9,7 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.example.secuphone" />
-                  <option name="mobileSdkAppId" value="1:503364924114:android:a8e1a495f52ed648b8b30b" />
+                  <option name="mobileSdkAppId" value="1:503364924114:android:86c4660d6a8ec78ab8b30b" />
                   <option name="projectId" value="secuphone-f2660" />
                   <option name="projectNumber" value="503364924114" />
                 </ConnectionSetting>

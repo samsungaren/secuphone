@@ -61,10 +61,39 @@
     <string name="photo_saved">Intruder photo saved to gallery!</string>
     <string name="password_saved">Password saved successfully</string>
     <string name="setup_complete">Security setup complete</string>
-    <string name="find_phone_description">This feature takes a photo with the front camera after 3 failed password attempts</string>
+    <string name="find_phone_description">Locate and secure your device if it gets lost or stolen.</string>
     <string name="attempts_remaining">Attempts remaining: %1$d</string>
     <string name="camera_permission_required">Camera permission is required for this feature</string>
     <string name="storage_permission_required">Storage permission is required to save photos</string>
+    <string name="device_status">Device Status</string>
+    <string name="protected_status">Protected</string>
+    <string name="status">Status</string>
+    <string name="location">Location</string>
+    <string name="audio">Audio</string>
+    <string name="camera">Camera</string>
+    <string name="status_enabled">Enabled</string>
+    <string name="status_disabled">Disabled</string>
+    <string name="find_phone_features">Available Features</string>
+    <string name="real_time_location">Real-time Location</string>
+    <string name="real_time_location_desc">Track your device\'s location in real-time on a map</string>
+    <string name="audio_activation">Audio Activation</string>
+    <string name="audio_activation_desc">Remotely trigger a loud sound even in silent mode</string>
+    <string name="remote_lock">Lock</string>
+    <string name="remote_password_lock">Remote Password Lock</string>
+    <string name="remote_password_lock_desc">Lock your device with a secure password remotely</string>
+    <string name="delete_message">Deleted Message</string>
+    <string name="delete_message_desc">Display a custom message on the screen</string>
+    <string name="critical_files">Files</string>
+    <string name="critical_file_deletion">Critical Data Deletion</string>
+    <string name="critical_file_deletion_desc">Remotely delete sensitive information and files</string>
+    <string name="take_photos">Front Camera Photos</string>
+    <string name="take_photos_desc">Take photos of unauthorized users in the background</string>
+    <string name="activation_status">Protection Status</string>
+    <string name="activation_description">Activate Find Phone protection to enable all security features. This allows you to locate, lock, and secure your device if it\'s lost or stolen.</string>
+    <string name="activate_protection">Activate Protection</string>
+    <string name="deactivate_protection">Deactivate Protection</string>
+    <string name="back">Back</string>
+    <string name="arrow">Arrow</string>
 
     <!-- Hidden Files Activity Strings -->
     <string name="hidden_files_description">Hide your sensitive photos, documents and other files to keep them private and secure.</string>
@@ -148,8 +177,6 @@
     <string name="feature_pin_needed">Set a PIN to use this feature</string>
 
     <!-- Feature Status for Main Activity -->
-    <string name="status_enabled">Enabled</string>
-    <string name="status_disabled">Disabled</string>
     <string name="status_setup_needed">Setup Needed</string>
     <string name="status_coming_soon">Coming Soon</string>
 
@@ -471,7 +498,6 @@
     <string name="access_granted">Access Granted</string>
     <string name="incorrect_pin">Incorrect PIN</string>
     <string name="too_many_attempts">Too many failed attempts</string>
-    <string name="back">Back</string>
     <!-- End App Lock Strings -->
 
     <!-- New string resource for PIN entry UI -->
@@ -480,4 +506,11 @@
     <string name="locked">locked</string>
     <string name="unlocked">unlocked</string>
     <string name="next">Next</string>
+
+    <!-- New string resource for the improved Find Phone feature with map preview -->
+    <string name="location_map">Location Map</string>
+    <string name="location_accuracy">High Accuracy</string>
+    <string name="current_location">Current Location</string>
+    <string name="location_address_placeholder">1234 Example Street, City</string>
+    <string name="last_updated">Last updated: Just now</string>
 </resources>

@@ -675,8 +675,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         findViewById(R.id.find_phone_button).setOnClickListener(v -> {
             if (sessionManager.isLoggedIn()) {
                 if (checkAppPermissions()) {
-                    // Start FindPhoneActivity (to be implemented)
-                    Toast.makeText(this, "Find Phone feature activated", Toast.LENGTH_SHORT).show();
+                    // Start FindPhoneActivity
+                    startActivity(new Intent(this, FindPhoneActivity.class));
                 }
             } else {
                 showSignInRequiredDialog("Find Phone");

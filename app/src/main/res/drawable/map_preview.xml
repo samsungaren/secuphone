@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base map background -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#E8EAF6" />
+        </shape>
+    </item>
+    
+    <!-- Roads -->
+    <item>
+        <shape android:shape="rectangle">
+            <size android:width="240dp" android:height="2dp" />
+            <solid android:color="#BDBDBD" />
+        </shape>
+    </item>
+    
+    <item android:top="60dp">
+        <shape android:shape="rectangle">
+            <size android:width="300dp" android:height="3dp" />
+            <solid android:color="#BDBDBD" />
+        </shape>
+    </item>
+    
+    <item android:top="120dp" android:left="50dp">
+        <shape android:shape="rectangle">
+            <size android:width="200dp" android:height="2dp" />
+            <solid android:color="#BDBDBD" />
+        </shape>
+    </item>
+    
+    <item android:left="120dp">
+        <rotate android:fromDegrees="90">
+            <shape android:shape="rectangle">
+                <size android:width="160dp" android:height="2dp" />
+                <solid android:color="#BDBDBD" />
+            </shape>
+        </rotate>
+    </item>
+    
+    <item android:left="250dp">
+        <rotate android:fromDegrees="90">
+            <shape android:shape="rectangle">
+                <size android:width="140dp" android:height="2dp" />
+                <solid android:color="#BDBDBD" />
+            </shape>
+        </rotate>
+    </item>
+    
+    <item android:left="50dp">
+        <rotate android:fromDegrees="90">
+            <shape android:shape="rectangle">
+                <size android:width="180dp" android:height="2dp" />
+                <solid android:color="#BDBDBD" />
+            </shape>
+        </rotate>
+    </item>
+    
+    <!-- Buildings -->
+    <item android:left="80dp" android:top="20dp">
+        <shape android:shape="rectangle">
+            <size android:width="30dp" android:height="30dp" />
+            <solid android:color="#D7CCC8" />
+        </shape>
+    </item>
+    
+    <item android:left="180dp" android:top="30dp">
+        <shape android:shape="rectangle">
+            <size android:width="40dp" android:height="20dp" />
+            <solid android:color="#D7CCC8" />
+        </shape>
+    </item>
+    
+    <item android:left="70dp" android:top="90dp">
+        <shape android:shape="rectangle">
+            <size android:width="35dp" android:height="25dp" />
+            <solid android:color="#D7CCC8" />
+        </shape>
+    </item>
+    
+    <item android:left="140dp" android:top="70dp">
+        <shape android:shape="rectangle">
+            <size android:width="25dp" android:height="35dp" />
+            <solid android:color="#D7CCC8" />
+        </shape>
+    </item>
+    
+    <item android:left="200dp" android:top="90dp">
+        <shape android:shape="rectangle">
+            <size android:width="40dp" android:height="30dp" />
+            <solid android:color="#D7CCC8" />
+        </shape>
+    </item>
+    
+    <!-- Location marker -->
+    <item android:left="150dp" android:top="85dp">
+        <shape android:shape="oval">
+            <size android:width="20dp" android:height="20dp" />
+            <solid android:color="#2196F3" />
+            <stroke android:width="4dp" android:color="#FFFFFF" />
+        </shape>
+    </item>
+    
+    <!-- Location accuracy circle -->
+    <item android:left="135dp" android:top="70dp">
+        <shape android:shape="oval">
+            <size android:width="50dp" android:height="50dp" />
+            <solid android:color="#332196F3" />
+        </shape>
+    </item>
+</layer-list> 
