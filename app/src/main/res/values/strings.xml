@@ -129,7 +129,6 @@
     <string name="bullet_point">Bullet point</string>
     <string name="permission_denied">Features requiring storage access will be limited</string>
     <string name="permission_denied_explanation">You can grant this permission later in app settings</string>
-    <string name="open_settings">Open Settings</string>
 
     <!-- Splash Screen Strings -->
     <string name="splash_tagline">Advanced Protection for Your Device</string>
@@ -513,4 +512,41 @@
     <string name="current_location">Current Location</string>
     <string name="location_address_placeholder">1234 Example Street, City</string>
     <string name="last_updated">Last updated: Just now</string>
+
+    <!-- New Find Phone Feature strings -->
+    <string name="remote_block">Remote Block</string>
+    <string name="remote_block_desc">Remotely lock your device with a password</string>
+    <string name="wipe_data">Wipe Data</string>
+    <string name="wipe_data_desc">Delete all sensitive information remotely</string>
+    <string name="anti_theft_snapshot">Anti-Theft Snapshot</string>
+    <string name="anti_theft_snapshot_desc">Take photos of device users automatically</string>
+    <string name="loud_audio_signal">Loud Signal</string>
+    <string name="loud_audio_signal_desc">Trigger loud alarm even in silent mode</string>
+
+    <!-- Location Permission Strings -->
+    <string name="background_location_needed">Background Location Required</string>
+    <string name="background_location_rationale">To track your phone when lost, this app needs access to your location even when the app is closed or not in use. This allows the app to report your phone\'s location so you can find it.</string>
+    <string name="allow">Allow</string>
+    <string name="location_permission_required">Location permission is required for tracking your phone</string>
+    <string name="open_settings">Open Settings</string>
+
+    <!-- New string resource for "protection_active" -->
+    <string name="protection_active">Protection is active</string>
+    <string name="protection_inactive">Protection is inactive</string>
+    <string name="device_is_lost">This device is reported as lost</string>
+    <string name="activate">Activate</string>
+    <string name="deactivate">Deactivate</string>
+    <string name="tracking_notification_title">SecuPhone is protecting your device</string>
+    <string name="tracking_notification_text">Location tracking is active</string>
+    <string name="tracking_notification_channel">Location Tracking</string>
+    <string name="tracking_notification_channel_description">Used to keep location tracking service running</string>
+
+    <!-- New string resource for "real_time_tracking" -->
+    <string name="real_time_tracking">Real-time Tracking</string>
+    <string name="tracking_desc">Track your phone\'s location in real-time</string>
+    <string name="protection_features">Protection Features</string>
+    <string name="protection_features_desc">Enable protection to help locate and secure your device if it gets lost or stolen.</string>
+
+    <!-- New string resource for "updating_location" -->
+    <string name="updating_location">Updating location...</string>
 </resources>

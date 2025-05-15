@@ -64,4 +64,11 @@
     <color name="accent_light">#E0E0E0</color>
 
     <color name="warning_yellow">#FFC107</color>
+
+    <color name="colorSuccess">#4CAF50</color>
+    <color name="colorError">#F44336</color>
+    <color name="colorAccent">#2196F3</color>
+    <color name="remote_block_color">#FF5722</color>
+    <color name="wipe_data_color">#F44336</color>
+    <color name="audio_signal_color">#FFC107</color>
 </resources>

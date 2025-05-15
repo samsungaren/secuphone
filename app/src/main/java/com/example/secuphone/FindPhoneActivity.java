@@ -1,29 +1,44 @@
 package com.example.secuphone;
 
-import android.content.SharedPreferences;
+import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.View;
-import android.widget.ImageButton;
-import android.widget.ImageView;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ImageButton;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.fragment.app.FragmentTransaction;
 
-import com.google.android.material.button.MaterialButton;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Random;
+import com.example.secuphone.models.LocationData;
+import com.example.secuphone.services.LocationTrackingService;
+import com.example.secuphone.utils.DeviceUtils;
+import com.example.secuphone.utils.FirebaseAuthManager;
+import com.example.secuphone.utils.FirebaseLocationManager;
+import com.example.secuphone.utils.LocationPermissionManager;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.MapStyleOptions;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 
 /**
  * Find Phone Activity - Allows users to locate and secure their device
  * This is a redesigned version with improved UI/UX
  */
-public class FindPhoneActivity extends AppCompatActivity {
+public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCallback {
+
+    private static final String TAG = "FindPhoneActivity";
 
     private static final String PREFS_NAME = "FindPhonePrefs";
     private static final String PROTECTION_ACTIVE_KEY = "protection_active";
@@ -38,279 +53,718 @@ public class FindPhoneActivity extends AppCompatActivity {
             "321 Mountain View, Highland"
     };
 
-    // UI Elements
-    private TextView deviceStatus;
-    private TextView locationStatus;
-    private TextView audioStatus;
-    private TextView cameraStatus;
-    private MaterialButton activationToggle;
+    // Cards for features
+    private CardView trackingCard;
+    private CardView remoteBlockingCard;
+    private CardView dataWipeCard;
+    private CardView audioSignalCard;
+
+    // Indicators for active features
+    private View trackingActiveIndicator;
+    private View blockingActiveIndicator;
+    private View wipeActiveIndicator;
+    private View audioActiveIndicator;
+
+    // Activation elements
+    private CardView activationCard;
+    private Button activateButton;
+    private TextView activationStatus;
+
+    // Map Fragment
+    private MapFragment mapFragment;
     
-    // Map preview elements
-    private ImageView mapPreview;
-    private TextView locationAccuracy;
+    // Managers
+    private LocationPermissionManager permissionManager;
+    private FirebaseAuthManager authManager;
+    private FirebaseLocationManager locationManager;
+    
+    // Device ID
+    private String deviceId;
+    private boolean isTrackingActive = false;
+
+    // Map in location card
+    private GoogleMap locationCardMap;
     private TextView deviceLocation;
     private TextView locationAddress;
     private TextView lastUpdated;
-    private MaterialButton refreshLocation;
+    private Button refreshLocation;
+
+    // Expanded map UI elements
+    private TextView expandedDeviceLocation;
+    private TextView expandedLocationAddress;
+    private TextView expandedLastUpdated;
+    private TextView expandedMapAccuracy;
+    private Button expandedRefreshLocation;
     
-    // Status tracking
-    private boolean isProtectionActive = false;
-    private long lastUpdateTimestamp = 0;
-    private String currentAddress = "";
-    private final Handler handler = new Handler();
+    // Map controls
+    private ImageButton zoomInButton;
+    private ImageButton zoomOutButton;
+    private ImageButton recenterButton;
+    
+    // Expanded map
+    private GoogleMap expandedMap;
+    private boolean isMapExpanded = false;
+    private LatLng lastKnownLocation;
+    private float currentZoomLevel = 15f;
+
+    // Handler for periodic updates
+    private final Handler updateHandler = new Handler(Looper.getMainLooper());
+    private final Runnable updateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isTrackingActive) {
+                updateLocationCardMap();
+                // Schedule next update in 30 seconds
+                updateHandler.postDelayed(this, 30000);
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_find_phone);
+
+        // Initialize managers
+        permissionManager = new LocationPermissionManager(this);
+        authManager = FirebaseAuthManager.getInstance();
+        locationManager = FirebaseLocationManager.getInstance();
         
-        // Initialize UI elements
-        initializeViews();
+        // Get device ID
+        deviceId = DeviceUtils.getDeviceId(this);
         
-        // Load saved settings
-        loadSettings();
+        // Initialize location card elements
+        initializeLocationCard();
+
+        // Initialize feature cards
+        initializeFeatureCards();
         
-        // Update UI based on current settings
-        updateUI();
+        // Initialize activation card
+        initializeActivationCard();
         
-        // Set up click listeners
-        setupClickListeners();
+        // Check if tracking is already active
+        checkTrackingStatus();
+        
+        // Initialize Map Fragment but don't show it yet
+        initializeMapFragment();
+        
+        // Initialize expanded map UI elements
+        initializeExpandedMapUI();
+        
+        // Request necessary permissions
+        if (!permissionManager.hasLocationPermissions()) {
+            permissionManager.requestLocationPermissions(this);
+        } else if (!permissionManager.hasBackgroundLocationPermission()) {
+            // If we have basic location permission but not background, request it
+            permissionManager.requestBackgroundLocationPermission(this);
+        }
+        
+        // Set up the back button
+        ImageButton backButton = findViewById(R.id.back_button);
+        backButton.setOnClickListener(v -> finish());
     }
-    
-    /**
-     * Initialize all view references
-     */
-    private void initializeViews() {
-        // Status indicators
-        deviceStatus = findViewById(R.id.device_status);
-        locationStatus = findViewById(R.id.location_status);
-        audioStatus = findViewById(R.id.audio_status);
-        cameraStatus = findViewById(R.id.camera_status);
-        
-        // Map preview elements
-        mapPreview = findViewById(R.id.map_preview);
-        locationAccuracy = findViewById(R.id.location_accuracy);
+
+    private void initializeLocationCard() {
+        // Get location card elements
         deviceLocation = findViewById(R.id.device_location);
         locationAddress = findViewById(R.id.location_address);
         lastUpdated = findViewById(R.id.last_updated);
         refreshLocation = findViewById(R.id.refresh_location);
         
-        // Activation button
-        activationToggle = findViewById(R.id.activation_toggle);
-        
-        // Back button
-        ImageButton backButton = findViewById(R.id.back_button);
-        backButton.setOnClickListener(v -> finish());
-    }
-    
-    /**
-     * Load saved settings from SharedPreferences
-     */
-    private void loadSettings() {
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        isProtectionActive = settings.getBoolean(PROTECTION_ACTIVE_KEY, false);
-        lastUpdateTimestamp = settings.getLong(LAST_UPDATED_KEY, 0);
-        currentAddress = settings.getString(CURRENT_ADDRESS_KEY, SAMPLE_ADDRESSES[0]);
-        
-        // If it's the first time or no address saved, generate a random one
-        if (currentAddress.isEmpty()) {
-            currentAddress = getRandomAddress();
+        // Set up the map in the location card
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.mapInLocationCard);
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
         }
-    }
-    
-    /**
-     * Save current settings to SharedPreferences
-     */
-    private void saveSettings() {
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        SharedPreferences.Editor editor = settings.edit();
-        editor.putBoolean(PROTECTION_ACTIVE_KEY, isProtectionActive);
-        editor.putLong(LAST_UPDATED_KEY, lastUpdateTimestamp);
-        editor.putString(CURRENT_ADDRESS_KEY, currentAddress);
-        editor.apply();
-    }
-    
-    /**
-     * Update the UI based on current settings
-     */
-    private void updateUI() {
-        if (isProtectionActive) {
-            // Update status indicators
-            deviceStatus.setText(R.string.protected_status);
-            deviceStatus.setBackgroundResource(R.drawable.status_premium_indicator);
-            
-            locationStatus.setText(R.string.status_enabled);
-            locationStatus.setTextColor(getColor(R.color.success_green));
-            
-            audioStatus.setText(R.string.status_enabled);
-            audioStatus.setTextColor(getColor(R.color.success_green));
-            
-            cameraStatus.setText(R.string.status_enabled);
-            cameraStatus.setTextColor(getColor(R.color.success_green));
-            
-            // Enable map elements
-            mapPreview.setAlpha(1.0f);
-            locationAccuracy.setVisibility(View.VISIBLE);
-            locationAddress.setText(currentAddress);
-            
-            // Update last updated text
-            updateLastUpdatedText();
-            
-            // Update activation button
-            activationToggle.setText(R.string.deactivate_protection);
-        } else {
-            // Update status indicators
-            deviceStatus.setText(R.string.status_disabled);
-            deviceStatus.setBackgroundResource(R.drawable.status_disabled_indicator);
-            
-            locationStatus.setText(R.string.status_disabled);
-            locationStatus.setTextColor(getColor(R.color.text_disabled));
-            
-            audioStatus.setText(R.string.status_disabled);
-            audioStatus.setTextColor(getColor(R.color.text_disabled));
-            
-            cameraStatus.setText(R.string.status_disabled);
-            cameraStatus.setTextColor(getColor(R.color.text_disabled));
-            
-            // Disable map elements
-            mapPreview.setAlpha(0.5f);
-            locationAccuracy.setVisibility(View.INVISIBLE);
-            
-            // Show default last updated text
-            lastUpdated.setText(R.string.last_updated);
-            
-            // Update activation button
-            activationToggle.setText(R.string.activate_protection);
-        }
-    }
-    
-    /**
-     * Update the last updated text based on the last update timestamp
-     */
-    private void updateLastUpdatedText() {
-        if (lastUpdateTimestamp > 0) {
-            long now = System.currentTimeMillis();
-            long diff = now - lastUpdateTimestamp;
-            
-            String timeText;
-            if (diff < 60000) { // Less than a minute
-                timeText = "Last updated: Just now";
-            } else if (diff < 3600000) { // Less than an hour
-                int minutes = (int) (diff / 60000);
-                timeText = "Last updated: " + minutes + " minute" + (minutes > 1 ? "s" : "") + " ago";
-            } else if (diff < 86400000) { // Less than a day
-                int hours = (int) (diff / 3600000);
-                timeText = "Last updated: " + hours + " hour" + (hours > 1 ? "s" : "") + " ago";
-            } else {
-                SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault());
-                timeText = "Last updated: " + sdf.format(new Date(lastUpdateTimestamp));
-            }
-            
-            lastUpdated.setText(timeText);
-        } else {
-            lastUpdated.setText(R.string.last_updated);
-        }
-    }
-    
-    /**
-     * Set up click listeners for all interactive elements
-     */
-    private void setupClickListeners() {
-        // Activation toggle button
-        activationToggle.setOnClickListener(v -> {
-            isProtectionActive = !isProtectionActive;
-            
-            if (isProtectionActive) {
-                // Update timestamp and location on activation
-                refreshLocation();
-            }
-            
-            saveSettings();
-            updateUI();
-            
-            // Show appropriate toast message
-            if (isProtectionActive) {
-                Toast.makeText(this, "Find Phone protection activated", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Find Phone protection deactivated", Toast.LENGTH_SHORT).show();
-            }
-        });
         
-        // Refresh location button
-        refreshLocation.setOnClickListener(v -> {
-            if (isProtectionActive) {
-                refreshLocation();
-                Toast.makeText(this, "Location updated", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Please activate protection first", Toast.LENGTH_SHORT).show();
-            }
-        });
+        // Set up map click listener to expand map
+        View mapClickOverlay = findViewById(R.id.mapClickOverlay);
+        if (mapClickOverlay != null) {
+            mapClickOverlay.setOnClickListener(v -> expandMapView());
+        }
         
-        // Feature cards click listeners
-        setupFeatureCardListener(R.id.location_card, "Real-time location tracking");
-        setupFeatureCardListener(R.id.audio_card, "Audio activation");
-        setupFeatureCardListener(R.id.password_lock_card, "Remote password lock");
-        setupFeatureCardListener(R.id.delete_message_card, "Message on screen");
-        setupFeatureCardListener(R.id.critical_file_card, "Critical data deletion");
-        setupFeatureCardListener(R.id.take_photos_card, "Remote camera access");
+        // Find the map container and set initial visibility to GONE
+        View mapContainer = findViewById(R.id.mapContainer);
+        mapContainer.setVisibility(View.GONE);
+        
+        // Set up refresh button
+        refreshLocation.setOnClickListener(v -> updateLocationCardMap());
+        
+        // Set initial device location text
+        deviceLocation.setText(getString(R.string.current_location));
+        
+        // Set address initially
+        locationAddress.setText(DeviceUtils.getDeviceName(this));
+        
+        // Set initial timestamp
+        lastUpdated.setText(getString(R.string.last_updated));
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        locationCardMap = googleMap;
+        
+        // Configure map settings
+        locationCardMap.getUiSettings().setZoomControlsEnabled(false);
+        locationCardMap.getUiSettings().setMapToolbarEnabled(false);
+        locationCardMap.getUiSettings().setScrollGesturesEnabled(false);
+        locationCardMap.getUiSettings().setRotateGesturesEnabled(false);
+        locationCardMap.getUiSettings().setZoomGesturesEnabled(false);
+        
+        try {
+            if (permissionManager.hasLocationPermissions()) {
+                locationCardMap.setMyLocationEnabled(true);
+            }
+        } catch (SecurityException e) {
+            Log.e(TAG, "Error enabling map location", e);
+        }
+        
+        // Update the map with current location
+        updateLocationCardMap();
     }
     
-    /**
-     * Refresh the location data with animation
-     */
-    private void refreshLocation() {
-        // Show "Updating..." text
+    private void updateLocationCardMap() {
+        if (locationCardMap == null) {
+            return;
+        }
+        
+        // Update "updating..." text
         lastUpdated.setText("Updating location...");
         
-        // Add a loading animation to the map
-        mapPreview.setAlpha(0.7f);
-        
-        // Simulate a delay for network request
-        handler.postDelayed(() -> {
-            // Update timestamp
-            lastUpdateTimestamp = System.currentTimeMillis();
-            
-            // Generate a new random address
-            currentAddress = getRandomAddress();
-            locationAddress.setText(currentAddress);
-            
-            // Reset map opacity
-            mapPreview.setAlpha(1.0f);
-            
-            // Update UI
-            updateLastUpdatedText();
-            
-            // Save settings
-            saveSettings();
-        }, 1500);
-    }
-    
-    /**
-     * Get a random address from the sample list
-     */
-    private String getRandomAddress() {
-        Random random = new Random();
-        return SAMPLE_ADDRESSES[random.nextInt(SAMPLE_ADDRESSES.length)];
-    }
-    
-    /**
-     * Set up click listener for a feature card
-     * @param cardId The resource ID of the CardView
-     * @param featureName The name of the feature for the toast message
-     */
-    private void setupFeatureCardListener(int cardId, String featureName) {
-        CardView card = findViewById(cardId);
-        card.setOnClickListener(v -> {
-            if (isProtectionActive) {
-                Toast.makeText(this, featureName + " feature ready", Toast.LENGTH_SHORT).show();
-                
-                // Special handling for location card
-                if (cardId == R.id.location_card) {
-                    refreshLocation();
-                }
+        try {
+            if (permissionManager.hasLocationPermissions()) {
+                FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+                fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+                    if (location != null) {
+                        // Update map with current location
+                        LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                        locationCardMap.clear();
+                        locationCardMap.addMarker(new MarkerOptions().position(currentLocation).title("Current Location"));
+                        locationCardMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15f));
+                        
+                        // Update address
+                        String deviceName = DeviceUtils.getDeviceName(this);
+                        locationAddress.setText(deviceName);
+                        
+                        // Update timestamp
+                        lastUpdated.setText("Last updated: Just now");
+                        
+                        // If tracking is active, update the Firebase location
+                        if (isTrackingActive) {
+                            LocationData locationData = new LocationData(
+                                    location.getLatitude(),
+                                    location.getLongitude(),
+                                    System.currentTimeMillis(),
+                                    deviceId,
+                                    location.getAccuracy(),
+                                    location.getAltitude(),
+                                    location.getSpeed(),
+                                    DeviceUtils.getBatteryLevel(this)
+                            );
+                            
+                            locationManager.updateLocationData(deviceId, locationData, null);
+                        }
+                    } else {
+                        lastUpdated.setText("Could not get location");
+                    }
+                }).addOnFailureListener(e -> {
+                    Log.e(TAG, "Error getting location", e);
+                    lastUpdated.setText("Error getting location");
+                });
             } else {
-                Toast.makeText(this, "Please activate protection first", Toast.LENGTH_SHORT).show();
+                lastUpdated.setText("Location permission required");
+            }
+        } catch (SecurityException e) {
+            Log.e(TAG, "Security exception getting location", e);
+            lastUpdated.setText("Location permission required");
+        }
+    }
+
+    private void initializeFeatureCards() {
+        // Feature cards
+        trackingCard = findViewById(R.id.trackingCard);
+        remoteBlockingCard = findViewById(R.id.remoteBlockingCard);
+        dataWipeCard = findViewById(R.id.dataWipeCard);
+        audioSignalCard = findViewById(R.id.audioSignalCard);
+
+        // Feature active indicators
+        trackingActiveIndicator = findViewById(R.id.trackingActiveIndicator);
+        blockingActiveIndicator = findViewById(R.id.blockingActiveIndicator);
+        wipeActiveIndicator = findViewById(R.id.wipeActiveIndicator);
+        audioActiveIndicator = findViewById(R.id.audioActiveIndicator);
+
+        // Set click listeners for feature cards
+        trackingCard.setOnClickListener(v -> handleTrackingCardClick());
+        remoteBlockingCard.setOnClickListener(v -> handleRemoteBlockingCardClick());
+        dataWipeCard.setOnClickListener(v -> handleDataWipeCardClick());
+        audioSignalCard.setOnClickListener(v -> handleAudioSignalCardClick());
+    }
+
+    private void initializeActivationCard() {
+        activationCard = findViewById(R.id.activationCard);
+        activateButton = findViewById(R.id.activateButton);
+        activationStatus = findViewById(R.id.activationStatus);
+
+        activateButton.setOnClickListener(v -> toggleProtection());
+    }
+
+    private void initializeMapFragment() {
+        // Make sure map container is GONE initially
+        View mapContainer = findViewById(R.id.mapContainer);
+        mapContainer.setVisibility(View.GONE);
+        
+        // Initialize map fragment
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.mapFragment);
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(map -> {
+                expandedMap = map;
+                configureExpandedMap();
+            });
+        }
+    }
+
+    private void checkTrackingStatus() {
+        // Check if location service is running
+        isTrackingActive = LocationTrackingService.isServiceRunning();
+        
+        // Update UI based on tracking status
+        updateProtectionUI(isTrackingActive);
+        
+        // Check with Firebase if device is marked as lost
+        locationManager.isDeviceLost(deviceId, task -> {
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                // Device is marked as lost in Firebase
+                showLostDeviceUI();
             }
         });
+    }
+
+    private void showLostDeviceUI() {
+        // Additional UI updates when device is reported as lost
+        runOnUiThread(() -> {
+            activationStatus.setText(R.string.device_is_lost);
+            activationStatus.setTextColor(getResources().getColor(R.color.colorError, getTheme()));
+        });
+    }
+
+    private void toggleProtection() {
+        if (!authManager.isUserLoggedIn()) {
+            // User is not logged in, prompt for sign in
+            Toast.makeText(this, "You need to sign in to use this feature", Toast.LENGTH_SHORT).show();
+            // TODO: Navigate to sign in screen
+            return;
+        }
+        
+        if (!permissionManager.hasLocationPermissions()) {
+            // Request location permissions
+            permissionManager.requestLocationPermissions(this);
+            return;
+        }
+        
+        if (isTrackingActive) {
+            // Stop tracking
+            stopLocationTracking();
+        } else {
+            // Start tracking
+            startLocationTracking();
+        }
+    }
+
+    private void startLocationTracking() {
+        // Request background location permission if needed (Android 10+)
+        if (!permissionManager.hasBackgroundLocationPermission()) {
+            permissionManager.requestBackgroundLocationPermission(this);
+            return;
+        }
+        
+        // Request notification permission if needed (Android 13+)
+        if (!permissionManager.hasNotificationPermission()) {
+            // This will be handled in the permission result
+            permissionManager.requestLocationPermissions(this);
+            return;
+        }
+        
+        // Start the location tracking service
+        Intent serviceIntent = new Intent(this, LocationTrackingService.class);
+        startForegroundService(serviceIntent);
+        
+        // Update Firebase to mark device as active
+        LocationData initialLocation = new LocationData(0, 0, System.currentTimeMillis(), deviceId);
+        initialLocation.setBatteryLevel(DeviceUtils.getBatteryLevel(this));
+        
+        locationManager.updateLocationData(deviceId, initialLocation, task -> {
+            if (task.isSuccessful()) {
+                Log.d(TAG, "Initial location data sent to Firebase");
+                // Update the map card
+                updateLocationCardMap();
+            } else {
+                Log.e(TAG, "Failed to send initial location data", task.getException());
+            }
+        });
+        
+        // Update UI
+        isTrackingActive = true;
+        updateProtectionUI(true);
+        
+        // Start periodic updates
+        updateHandler.post(updateRunnable);
+    }
+
+    private void stopLocationTracking() {
+        // Stop the location tracking service
+        Intent serviceIntent = new Intent(this, LocationTrackingService.class);
+        stopService(serviceIntent);
+        
+        // Update device status in Firebase as not lost
+        locationManager.setDeviceLostStatus(deviceId, false, task -> {
+            if (task.isSuccessful()) {
+                Log.d(TAG, "Device marked as not lost in Firebase");
+            } else {
+                Log.e(TAG, "Failed to update device status in Firebase", task.getException());
+            }
+        });
+        
+        // Update UI
+        isTrackingActive = false;
+        updateProtectionUI(false);
+        
+        // Stop periodic updates
+        updateHandler.removeCallbacks(updateRunnable);
+    }
+
+    private void updateProtectionUI(boolean isActive) {
+        runOnUiThread(() -> {
+            // Update activation button text
+            activateButton.setText(isActive ? R.string.deactivate : R.string.activate);
+            
+            // Update status text
+            activationStatus.setText(isActive ? R.string.protection_active : R.string.protection_inactive);
+            activationStatus.setTextColor(getResources().getColor(
+                    isActive ? R.color.colorSuccess : R.color.colorAccent, 
+                    getTheme()));
+            
+            // Update active indicators
+            trackingActiveIndicator.setVisibility(isActive ? View.VISIBLE : View.INVISIBLE);
+            
+            // For demo purposes, we'll also toggle the other indicators
+            // In a real app, these would be controlled by their respective features
+            blockingActiveIndicator.setVisibility(View.INVISIBLE);
+            wipeActiveIndicator.setVisibility(View.INVISIBLE);
+            audioActiveIndicator.setVisibility(View.INVISIBLE);
+        });
+    }
+
+    // Feature card click handlers
+    private void handleTrackingCardClick() {
+        // Only update the map in the location card
+        updateLocationCardMap();
+        
+        // Scroll to the top to show the map card
+        findViewById(R.id.scrollView).scrollTo(0, 0);
+        
+        // Show toast with location status
+        Toast.makeText(this, "Updating real-time location", Toast.LENGTH_SHORT).show();
+    }
+
+    private void handleRemoteBlockingCardClick() {
+        Toast.makeText(this, "Remote blocking feature coming soon", Toast.LENGTH_SHORT).show();
+    }
+
+    private void handleDataWipeCardClick() {
+        Toast.makeText(this, "Data wipe feature coming soon", Toast.LENGTH_SHORT).show();
+    }
+
+    private void handleAudioSignalCardClick() {
+        Toast.makeText(this, "Audio signal feature coming soon", Toast.LENGTH_SHORT).show();
+    }
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        
+        boolean permissionsGranted = permissionManager.handlePermissionResult(
+                requestCode, permissions, grantResults);
+        
+        if (permissionsGranted) {
+            // If background location was requested and granted, start tracking
+            if (requestCode == LocationPermissionManager.REQUEST_BACKGROUND_LOCATION) {
+                startLocationTracking();
+            } else if (requestCode == LocationPermissionManager.REQUEST_LOCATION_PERMISSION) {
+                // Check if background permission is needed
+                if (!permissionManager.hasBackgroundLocationPermission()) {
+                    permissionManager.requestBackgroundLocationPermission(this);
+                } else {
+                    startLocationTracking();
+                }
+            }
+        } else {
+            // Permissions denied, show error message
+            Toast.makeText(this, R.string.location_permission_required, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Check if the expanded map is visible
+        View mapContainer = findViewById(R.id.mapContainer);
+        if (mapContainer.getVisibility() == View.VISIBLE) {
+            // Hide the map with animation
+            hideExpandedMap();
+            return;
+        }
+        
+        // Otherwise perform default back behavior
+        super.onBackPressed();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        
+        // Start periodic updates if tracking is active
+        if (isTrackingActive) {
+            updateHandler.post(updateRunnable);
+        }
+    }
+    
+    @Override
+    protected void onPause() {
+        super.onPause();
+        
+        // Remove any pending update callbacks
+        updateHandler.removeCallbacks(updateRunnable);
+    }
+
+    /**
+     * Initialize UI elements for the expanded map view
+     */
+    private void initializeExpandedMapUI() {
+        // Setup close button for expanded map
+        ImageButton closeButton = findViewById(R.id.closeExpandedMapButton);
+        closeButton.setOnClickListener(v -> hideExpandedMap());
+        
+        // Initialize expanded map UI elements
+        expandedDeviceLocation = findViewById(R.id.expanded_device_location);
+        expandedLocationAddress = findViewById(R.id.expanded_location_address);
+        expandedLastUpdated = findViewById(R.id.expanded_last_updated);
+        expandedMapAccuracy = findViewById(R.id.expanded_map_accuracy);
+        expandedRefreshLocation = findViewById(R.id.expanded_refresh_location);
+        
+        // Initialize map control buttons
+        zoomInButton = findViewById(R.id.zoomInButton);
+        zoomOutButton = findViewById(R.id.zoomOutButton);
+        recenterButton = findViewById(R.id.recenterButton);
+        
+        // Set click listeners for map controls
+        zoomInButton.setOnClickListener(v -> zoomIn());
+        zoomOutButton.setOnClickListener(v -> zoomOut());
+        recenterButton.setOnClickListener(v -> recenterMap());
+        
+        // Set click listener for refresh button in expanded map
+        expandedRefreshLocation.setOnClickListener(v -> {
+            updateLocationData();
+            Toast.makeText(this, R.string.updating_location, Toast.LENGTH_SHORT).show();
+        });
+    }
+    
+    /**
+     * Zoom in on the map
+     */
+    private void zoomIn() {
+        if (expandedMap != null) {
+            currentZoomLevel = Math.min(currentZoomLevel + 1, 20);
+            expandedMap.animateCamera(CameraUpdateFactory.zoomTo(currentZoomLevel));
+        }
+    }
+    
+    /**
+     * Zoom out on the map
+     */
+    private void zoomOut() {
+        if (expandedMap != null) {
+            currentZoomLevel = Math.max(currentZoomLevel - 1, 5);
+            expandedMap.animateCamera(CameraUpdateFactory.zoomTo(currentZoomLevel));
+        }
+    }
+    
+    /**
+     * Recenter the map on the last known location
+     */
+    private void recenterMap() {
+        if (expandedMap != null && lastKnownLocation != null) {
+            expandedMap.animateCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLocation, currentZoomLevel));
+        } else {
+            updateLocationData();
+        }
+    }
+    
+    /**
+     * Hide the expanded map
+     */
+    private void hideExpandedMap() {
+        View mapContainer = findViewById(R.id.mapContainer);
+        
+        // Animate hiding the map
+        mapContainer.animate()
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction(() -> {
+                    mapContainer.setVisibility(View.GONE);
+                    isMapExpanded = false;
+                })
+                .start();
+    }
+
+    /**
+     * Configure the expanded map settings
+     */
+    private void configureExpandedMap() {
+        if (expandedMap == null) return;
+        
+        // Configure expanded map settings
+        expandedMap.getUiSettings().setZoomControlsEnabled(false);
+        expandedMap.getUiSettings().setMapToolbarEnabled(false);
+        expandedMap.getUiSettings().setCompassEnabled(true);
+        expandedMap.getUiSettings().setRotateGesturesEnabled(true);
+        expandedMap.getUiSettings().setTiltGesturesEnabled(true);
+        
+        try {
+            // Apply custom dark map style
+            boolean success = expandedMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style));
+            if (!success) {
+                Log.e(TAG, "Style parsing failed");
+            }
+            
+            if (permissionManager.hasLocationPermissions()) {
+                expandedMap.setMyLocationEnabled(true);
+                expandedMap.getUiSettings().setMyLocationButtonEnabled(false);
+            }
+        } catch (SecurityException e) {
+            Log.e(TAG, "Error enabling expanded map location", e);
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find map style JSON", e);
+        }
+    }
+
+    /**
+     * Expands the map view when the map in location card is clicked
+     */
+    private void expandMapView() {
+        // The map container
+        View mapContainer = findViewById(R.id.mapContainer);
+        
+        // If map container is not already showing
+        if (mapContainer.getVisibility() != View.VISIBLE) {
+            // Make sure the map is configured
+            if (expandedMap == null) {
+                SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.mapFragment);
+                if (mapFragment != null) {
+                    mapFragment.getMapAsync(map -> {
+                        expandedMap = map;
+                        configureExpandedMap();
+                        updateExpandedMap();
+                    });
+                }
+            } else {
+                updateExpandedMap();
+            }
+            
+            // Copy data from location card to expanded map UI
+            if (expandedDeviceLocation != null && deviceLocation != null) {
+                expandedDeviceLocation.setText(deviceLocation.getText());
+            }
+            
+            if (expandedLocationAddress != null && locationAddress != null) {
+                expandedLocationAddress.setText(locationAddress.getText());
+            }
+            
+            if (expandedLastUpdated != null && lastUpdated != null) {
+                expandedLastUpdated.setText(lastUpdated.getText());
+            }
+            
+            if (expandedMapAccuracy != null) {
+                TextView locationAccuracy = findViewById(R.id.location_accuracy);
+                if (locationAccuracy != null) {
+                    expandedMapAccuracy.setText(locationAccuracy.getText());
+                }
+            }
+            
+            // Show the map container with animation
+            mapContainer.setAlpha(0f);
+            mapContainer.setVisibility(View.VISIBLE);
+            mapContainer.animate()
+                    .alpha(1f)
+                    .setDuration(300)
+                    .withEndAction(() -> isMapExpanded = true)
+                    .start();
+            
+        } else {
+            // Hide map if already visible
+            hideExpandedMap();
+        }
+    }
+    
+    /**
+     * Update the expanded map with current location
+     */
+    private void updateExpandedMap() {
+        if (expandedMap == null) {
+            return;
+        }
+        
+        try {
+            if (permissionManager.hasLocationPermissions()) {
+                FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+                fusedLocationClient.getLastLocation().addOnSuccessListener(location -> {
+                    if (location != null) {
+                        // Update map with current location
+                        lastKnownLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                        expandedMap.clear();
+                        expandedMap.addMarker(new MarkerOptions().position(lastKnownLocation).title("Current Location"));
+                        expandedMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastKnownLocation, currentZoomLevel));
+                        
+                        // Update accuracy info
+                        if (expandedMapAccuracy != null) {
+                            String accuracyText = "Accuracy: " + Math.round(location.getAccuracy()) + "m";
+                            expandedMapAccuracy.setText(accuracyText);
+                        }
+                    }
+                });
+            }
+        } catch (SecurityException e) {
+            Log.e(TAG, "Security exception getting location for expanded map", e);
+        }
+    }
+
+    /**
+     * Updates the location data from Firebase and refreshes the UI
+     */
+    private void updateLocationData() {
+        // Update both the card map and expanded map
+        updateLocationCardMap();
+        if (isMapExpanded) {
+            updateExpandedMap();
+        }
+        
+        // Update expanded map UI if it's visible
+        View mapContainer = findViewById(R.id.mapContainer);
+        if (mapContainer.getVisibility() == View.VISIBLE) {
+            // Copy data from location card to expanded map UI
+            if (expandedDeviceLocation != null && deviceLocation != null) {
+                expandedDeviceLocation.setText(deviceLocation.getText());
+            }
+            
+            if (expandedLocationAddress != null && locationAddress != null) {
+                expandedLocationAddress.setText(locationAddress.getText());
+            }
+            
+            if (expandedLastUpdated != null && lastUpdated != null) {
+                expandedLastUpdated.setText(lastUpdated.getText());
+            }
+        }
     }
 } 

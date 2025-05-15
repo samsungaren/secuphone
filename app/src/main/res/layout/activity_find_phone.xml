@@ -21,8 +21,8 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
@@ -35,18 +35,18 @@
                     android:contentDescription="@string/back"
                     android:src="@drawable/ic_arrow_back" />
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:layout_weight="1"
+                android:layout_weight="1"
                     android:text="@string/find_phone"
                     android:textColor="@color/white"
                     android:textSize="20sp"
-                    android:textStyle="bold" />
+                android:textStyle="bold" />
 
-            </LinearLayout>
-        </androidx.appcompat.widget.Toolbar>
+        </LinearLayout>
+    </androidx.appcompat.widget.Toolbar>
 
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -61,6 +61,7 @@
 
     <!-- Main Content -->
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
@@ -74,179 +75,14 @@
             android:paddingHorizontal="24dp"
             android:paddingVertical="20dp">
 
-            <!-- Status Card -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:contentDescription="@string/status"
-                            android:src="@drawable/ic_shield_check"
-                            app:tint="@color/accent_primary" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:text="@string/device_status"
-                            android:textColor="@color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="1dp"
-                            android:layout_weight="1" />
-
-                        <TextView
-                            android:id="@+id/device_status"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/status_premium_indicator"
-                            android:paddingHorizontal="12dp"
-                            android:paddingVertical="6dp"
-                            android:text="@string/protected_status"
-                            android:textColor="@color/background"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginVertical="16dp"
-                        android:background="@color/divider" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical">
-
-                            <ImageView
-                                android:layout_width="28dp"
-                                android:layout_height="28dp"
-                                android:contentDescription="@string/location"
-                                android:src="@drawable/ic_location"
-                                app:tint="@color/accent_primary" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="@string/location"
-                                android:textColor="@color/text"
-                                android:textSize="16sp" />
-
-                            <TextView
-                                android:id="@+id/location_status"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="@string/status_enabled"
-                                android:textColor="@color/success_green"
-                                android:textSize="14sp" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical">
-
-                            <ImageView
-                                android:layout_width="28dp"
-                                android:layout_height="28dp"
-                                android:contentDescription="@string/audio"
-                                android:src="@drawable/ic_mic"
-                                app:tint="@color/accent_primary" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="@string/audio"
-                                android:textColor="@color/text"
-                                android:textSize="16sp" />
-
-                            <TextView
-                                android:id="@+id/audio_status"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="@string/status_enabled"
-                                android:textColor="@color/success_green"
-                                android:textSize="14sp" />
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center"
-                            android:orientation="vertical">
-
-                            <ImageView
-                                android:layout_width="28dp"
-                                android:layout_height="28dp"
-                                android:contentDescription="@string/camera"
-                                android:src="@drawable/ic_camera"
-                                app:tint="@color/accent_primary" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="@string/camera"
-                                android:textColor="@color/text"
-                                android:textSize="16sp" />
-
-                            <TextView
-                                android:id="@+id/camera_status"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="@string/status_enabled"
-                                android:textColor="@color/success_green"
-                                android:textSize="14sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Features Section -->
+            <!-- Features Title -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="24dp"
                 android:text="@string/find_phone_features"
                 android:textColor="@color/white"
-                android:textSize="22sp"
+                android:textSize="26sp"
                 android:textStyle="bold" />
 
             <!-- Real-time Location Card with Map Preview -->
@@ -273,13 +109,20 @@
                         android:layout_width="match_parent"
                         android:layout_height="180dp">
                         
-                        <ImageView
-                            android:id="@+id/map_preview"
+                        <androidx.fragment.app.FragmentContainerView
+                            android:id="@+id/mapInLocationCard"
+                            android:name="com.google.android.gms.maps.SupportMapFragment"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent" />
+                        
+                        <!-- Clickable overlay for map expansion -->
+                        <View
+                            android:id="@+id/mapClickOverlay"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:scaleType="centerCrop"
-                            android:src="@drawable/map_preview"
-                            android:contentDescription="@string/location_map" />
+                            android:background="@android:color/transparent"
+                            android:clickable="true"
+                            android:focusable="true" />
                             
                         <View
                             android:layout_width="match_parent"
@@ -295,7 +138,7 @@
                             android:paddingHorizontal="12dp"
                             android:paddingVertical="6dp">
                             
-                            <ImageView
+            <ImageView
                                 android:layout_width="16dp"
                                 android:layout_height="16dp"
                                 android:layout_gravity="center_vertical"
@@ -354,7 +197,7 @@
                         android:orientation="horizontal"
                         android:padding="20dp">
 
-                        <LinearLayout
+            <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
@@ -401,326 +244,308 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Audio Activation Card - Updated styling for consistency -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/audio_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="20dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:contentDescription="@string/audio"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_mic"
-                        android:background="@drawable/feature_icon_bg"
-                        app:tint="@color/accent_primary" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/audio_activation"
-                            android:textColor="@color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="@string/audio_activation_desc"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center_vertical"
-                        android:contentDescription="@string/arrow"
-                        android:src="@drawable/ic_arrow_back"
-                        android:rotation="180"
-                        app:tint="@color/arrow" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Apply same consistent styling pattern to other feature cards -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/password_lock_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="20dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:contentDescription="@string/remote_lock"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_lock"
-                        android:background="@drawable/feature_icon_bg"
-                        app:tint="@color/accent_primary" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/remote_password_lock"
-                            android:textColor="@color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="@string/remote_password_lock_desc"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center_vertical"
-                        android:contentDescription="@string/arrow"
-                        android:src="@drawable/ic_arrow_back"
-                        android:rotation="180"
-                        app:tint="@color/arrow" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Delete Message Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/delete_message_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="20dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:contentDescription="@string/delete_message"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_delete"
-                        android:background="@drawable/feature_icon_bg"
-                        app:tint="@color/accent_primary" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/delete_message"
-                            android:textColor="@color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="@string/delete_message_desc"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center_vertical"
-                        android:contentDescription="@string/arrow"
-                        android:src="@drawable/ic_arrow_back"
-                        android:rotation="180"
-                        app:tint="@color/arrow" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Critical File Deletion Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/critical_file_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="20dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:contentDescription="@string/critical_files"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_file_generic"
-                        android:background="@drawable/feature_icon_bg"
-                        app:tint="@color/accent_primary" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/critical_file_deletion"
-                            android:textColor="@color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="@string/critical_file_deletion_desc"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center_vertical"
-                        android:contentDescription="@string/arrow"
-                        android:src="@drawable/ic_arrow_back"
-                        android:rotation="180"
-                        app:tint="@color/arrow" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Take Photos Card -->
-            <androidx.cardview.widget.CardView
-                android:id="@+id/take_photos_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:foreground="?android:attr/selectableItemBackground"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="20dp">
-
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:contentDescription="@string/take_photos"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_camera"
-                        android:background="@drawable/feature_icon_bg"
-                        app:tint="@color/accent_primary" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/take_photos"
-                            android:textColor="@color/white"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="@string/take_photos_desc"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="center_vertical"
-                        android:contentDescription="@string/arrow"
-                        android:src="@drawable/ic_arrow_back"
-                        android:rotation="180"
-                        app:tint="@color/arrow" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- Activation Button -->
-            <androidx.cardview.widget.CardView
+            <!-- Grid for Feature Cards - 2 columns -->
+            <androidx.gridlayout.widget.GridLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginVertical="16dp"
+                app:columnCount="2"
+                app:rowCount="2"
+                app:alignmentMode="alignMargins"
+                app:columnOrderPreserved="true"
+                app:useDefaultMargins="true">
+
+                <!-- Remote Block Phone Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/remoteBlockingCard"
+                    android:layout_width="0dp"
+                    android:layout_height="180dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    app:cardBackgroundColor="@color/card_background"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:layout_columnWeight="1">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <!-- Card background gradient overlay -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/card_gradient_overlay_red" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:gravity="center_horizontal"
+                            android:padding="16dp">
+
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+                                <View
+                                    android:id="@+id/blockingActiveIndicator"
+                                    android:layout_width="12dp"
+                                    android:layout_height="12dp"
+                                    android:layout_gravity="end"
+                                    android:background="@drawable/feature_active_indicator"
+                                    android:visibility="invisible" />
+                            </FrameLayout>
+
+                            <ImageView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="8dp"
+                                android:src="@drawable/ic_lock"
+                                app:tint="@color/remote_block_color" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:text="@string/remote_block"
+                                android:textAlignment="center"
+                                android:textColor="@color/white"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="@string/remote_block_desc"
+                                android:textAlignment="center"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </FrameLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Wipe Data Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/dataWipeCard"
+                    android:layout_width="0dp"
+                    android:layout_height="180dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    app:cardBackgroundColor="@color/card_background"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:layout_columnWeight="1">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <!-- Card background gradient overlay -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/card_gradient_overlay_orange" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:gravity="center_horizontal"
+                            android:padding="16dp">
+
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+                                <View
+                                    android:id="@+id/wipeActiveIndicator"
+                                    android:layout_width="12dp"
+                                    android:layout_height="12dp"
+                                    android:layout_gravity="end"
+                                    android:background="@drawable/feature_active_indicator"
+                                    android:visibility="invisible" />
+                            </FrameLayout>
+
+                            <ImageView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="8dp"
+                                android:src="@drawable/ic_delete"
+                                app:tint="@color/wipe_data_color" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:text="@string/wipe_data"
+                                android:textAlignment="center"
+                                android:textColor="@color/white"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="@string/wipe_data_desc"
+                                android:textAlignment="center"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </FrameLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Tracking Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/trackingCard"
+                    android:layout_width="0dp"
+                    android:layout_height="180dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    app:cardBackgroundColor="@color/card_background"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:layout_columnWeight="1">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <!-- Card background gradient overlay -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/card_gradient_overlay_blue" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:gravity="center_horizontal"
+                            android:padding="16dp">
+
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+                                <View
+                                    android:id="@+id/trackingActiveIndicator"
+                                    android:layout_width="12dp"
+                                    android:layout_height="12dp"
+                                    android:layout_gravity="end"
+                                    android:background="@drawable/feature_active_indicator"
+                                    android:visibility="invisible" />
+                            </FrameLayout>
+
+                            <ImageView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="8dp"
+                                android:src="@drawable/ic_location"
+                                app:tint="@color/accent_primary" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:text="@string/real_time_tracking"
+                                android:textAlignment="center"
+                                android:textColor="@color/white"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="@string/tracking_desc"
+                                android:textAlignment="center"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </FrameLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- Audio Signal Card -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/audioSignalCard"
+                    android:layout_width="0dp"
+                    android:layout_height="180dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    app:cardBackgroundColor="@color/card_background"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="8dp"
+                    app:layout_columnWeight="1">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <!-- Card background gradient overlay -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/card_gradient_overlay_yellow" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:gravity="center_horizontal"
+                            android:padding="16dp">
+
+                            <FrameLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+                                <View
+                                    android:id="@+id/audioActiveIndicator"
+                                    android:layout_width="12dp"
+                                    android:layout_height="12dp"
+                                    android:layout_gravity="end"
+                                    android:background="@drawable/feature_active_indicator"
+                                    android:visibility="invisible" />
+                            </FrameLayout>
+
+                            <ImageView
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="8dp"
+                                android:src="@drawable/ic_volume"
+                                app:tint="@color/audio_signal_color" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:text="@string/loud_audio_signal"
+                                android:textAlignment="center"
+                                android:textColor="@color/white"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="@string/loud_audio_signal_desc"
+                                android:textAlignment="center"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </FrameLayout>
+                </androidx.cardview.widget.CardView>
+            </androidx.gridlayout.widget.GridLayout>
+
+            <!-- Activation Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/activationCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
                 app:cardBackgroundColor="@color/card_background"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="4dp">
@@ -729,39 +554,237 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp">
+                    android:padding="24dp">
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:id="@+id/activationTitle"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/activation_status"
+                        android:text="@string/protection_features"
                         android:textColor="@color/white"
-                        android:textSize="18sp"
+                        android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:id="@+id/activationStatus"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:layout_marginBottom="16dp"
-                        android:text="@string/activation_description"
+                        android:text="@string/protection_inactive"
+                        android:textColor="@color/colorAccent"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/protection_features_desc"
                         android:textColor="@color/text_secondary"
                         android:textSize="14sp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/activation_toggle"
+                    <Button
+                        android:id="@+id/activateButton"
                         android:layout_width="match_parent"
-                        android:layout_height="60dp"
-                        android:text="@string/activate_protection"
-                        android:textAllCaps="false"
-                        android:textSize="16sp"
-                        app:backgroundTint="@color/button_primary"
-                        app:cornerRadius="12dp"
-                        app:icon="@drawable/ic_shield_check"
-                        app:iconGravity="textStart"
-                        app:iconPadding="8dp" />
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:background="@drawable/rounded_button_background"
+                        android:paddingVertical="12dp"
+                        android:text="@string/activate"
+                        android:textColor="@color/white"
+                        android:textSize="16sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <!-- Map Container - positioned on top when visible -->
+    <FrameLayout
+        android:id="@+id/mapContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:visibility="gone"
+        android:background="@color/background"
+        android:elevation="20dp"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <!-- Map Fragment -->
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/mapFragment"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Top Panel with Controls -->
+        <RelativeLayout
+            android:id="@+id/mapTopControlsPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp">
+
+            <!-- Location Accuracy -->
+            <LinearLayout
+                android:id="@+id/accuracyContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/map_control_background"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:gravity="center_vertical">
+                
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_location"
+                    app:tint="@color/accent_primary" />
+                    
+                <TextView
+                    android:id="@+id/expanded_map_accuracy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/location_accuracy"
+                    android:textColor="@color/white"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Close Button -->
+            <ImageButton
+                android:id="@+id/closeExpandedMapButton"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/map_close_button_background"
+                android:src="@drawable/ic_close"
+                android:padding="12dp"
+                android:contentDescription="Close map" />
+        </RelativeLayout>
+
+        <!-- Map Controls -->
+        <LinearLayout
+            android:id="@+id/mapControlsPanel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:orientation="vertical"
+            android:layout_marginEnd="16dp">
+
+            <!-- Zoom In Button -->
+            <ImageButton
+                android:id="@+id/zoomInButton"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/map_control_background"
+                android:src="@drawable/ic_zoom_in"
+                android:padding="8dp"
+                android:layout_marginBottom="8dp"
+                android:contentDescription="Zoom in" />
+
+            <!-- Zoom Out Button -->
+            <ImageButton
+                android:id="@+id/zoomOutButton"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/map_control_background"
+                android:src="@drawable/ic_zoom_out"
+                android:padding="8dp"
+                android:layout_marginBottom="8dp"
+                android:contentDescription="Zoom out" />
+
+            <!-- Recenter Button -->
+            <ImageButton
+                android:id="@+id/recenterButton"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:background="@drawable/map_control_background"
+                android:src="@drawable/ic_my_location"
+                android:padding="8dp"
+                android:contentDescription="Center on location" />
+        </LinearLayout>
+
+        <!-- Bottom Info Panel -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/bottomInfoPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_margin="16dp"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Location Info Header -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_location"
+                        app:tint="@color/accent_primary" />
+
+                    <TextView
+                        android:id="@+id/expanded_device_location"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/current_location"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                        
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/expanded_refresh_location"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="@string/refresh"
+                        android:textAllCaps="false"
+                        app:icon="@drawable/ic_refresh"
+                        app:iconGravity="textStart"
+                        app:cornerRadius="20dp"
+                        app:strokeColor="@color/accent_primary"
+                        app:strokeWidth="1dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                </LinearLayout>
+
+                <!-- Address -->
+                <TextView
+                    android:id="@+id/expanded_location_address"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginStart="32dp"
+                    android:text="@string/location_address_placeholder"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+
+                <!-- Last Updated Text -->
+                <TextView
+                    android:id="@+id/expanded_last_updated"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginStart="32dp"
+                    android:text="@string/last_updated"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </FrameLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 
