@@ -549,4 +549,18 @@
 
     <!-- New string resource for "updating_location" -->
     <string name="updating_location">Updating location...</string>
+    
+    <!-- Loud Signal feature strings -->
+    <string name="select_device_for_signal">Select which device should play the loud signal</string>
+    <string name="this_device">This device</string>
+    <string name="paired_device">Remote paired device</string>
+    <string name="signal_duration">Signal Duration</string>
+    <string name="volume_level">Volume Level</string>
+    <string name="start_signal">Start Signal</string>
+    <string name="stop_signal">Stop Signal</string>
+    <string name="signal_active">Signal Active</string>
+    <string name="signal_stopped">Signal Stopped</string>
+    <string name="signal_in_progress">Loud signal in progress</string>
+    <string name="seconds_left">%d seconds left</string>
+    <string name="no_paired_device">No paired device available</string>
 </resources>

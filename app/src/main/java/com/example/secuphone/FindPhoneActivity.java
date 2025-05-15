@@ -2,6 +2,7 @@ package com.example.secuphone;
 
 import android.content.Intent;
 import android.content.res.Resources;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,12 +17,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.secuphone.dialogs.LoudSignalDialog;
 import com.example.secuphone.models.LocationData;
 import com.example.secuphone.services.LocationTrackingService;
+import com.example.secuphone.services.LoudSignalService;
 import com.example.secuphone.utils.DeviceUtils;
 import com.example.secuphone.utils.FirebaseAuthManager;
 import com.example.secuphone.utils.FirebaseLocationManager;
 import com.example.secuphone.utils.LocationPermissionManager;
+import com.example.secuphone.utils.RemoteSignalManager;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -77,6 +81,7 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
     private LocationPermissionManager permissionManager;
     private FirebaseAuthManager authManager;
     private FirebaseLocationManager locationManager;
+    private RemoteSignalManager remoteSignalManager;
     
     // Device ID
     private String deviceId;
@@ -120,6 +125,9 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         }
     };
 
+    // For paired device (can be null if no paired device)
+    private String pairedDeviceId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -129,9 +137,26 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         permissionManager = new LocationPermissionManager(this);
         authManager = FirebaseAuthManager.getInstance();
         locationManager = FirebaseLocationManager.getInstance();
+        remoteSignalManager = RemoteSignalManager.getInstance();
         
         // Get device ID
         deviceId = DeviceUtils.getDeviceId(this);
+        
+        // For demo purposes - in a real app, this would be retrieved from a pairing system
+        pairedDeviceId = getPairedDeviceId();
+        
+        // Start listening for signal commands
+        remoteSignalManager.listenForSignalCommands(deviceId, new RemoteSignalManager.SignalCommandListener() {
+            @Override
+            public void onSignalCommand(int durationSeconds, int volumeLevel) {
+                startSignalFromRemote(durationSeconds, volumeLevel);
+            }
+
+            @Override
+            public void onSignalStop() {
+                stopSignalFromRemote();
+            }
+        });
         
         // Initialize location card elements
         initializeLocationCard();
@@ -477,7 +502,19 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     private void handleAudioSignalCardClick() {
-        Toast.makeText(this, "Audio signal feature coming soon", Toast.LENGTH_SHORT).show();
+        try {
+            // Show dialog to configure and start signal
+            LoudSignalDialog dialog = LoudSignalDialog.newInstance(deviceId, pairedDeviceId);
+            dialog.show(getSupportFragmentManager(), "loud_signal_dialog");
+        } catch (Exception e) {
+            // Fallback to direct start in case the dialog has issues
+            try {
+                Toast.makeText(this, "Starting emergency signal...", Toast.LENGTH_SHORT).show();
+                startSignalFromRemote(30, 100); // Use default values
+            } catch (Exception ex) {
+                Toast.makeText(this, "Could not start signal: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
     }
     
     @Override
@@ -766,5 +803,79 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
                 expandedLastUpdated.setText(lastUpdated.getText());
             }
         }
+    }
+
+    // Get the paired device ID (demo implementation)
+    private String getPairedDeviceId() {
+        // In a real app, this would be retrieved from a pairing system
+        // For demo purposes, we'll return an empty string to indicate no paired device
+        // or you could return a hardcoded ID for testing
+        return "";
+    }
+    
+    // Start the signal service from a remote command
+    private void startSignalFromRemote(int durationSeconds, int volumeLevel) {
+        try {
+            Intent intent = new Intent(this, LoudSignalService.class);
+            intent.putExtra(LoudSignalService.EXTRA_DURATION, durationSeconds);
+            intent.putExtra(LoudSignalService.EXTRA_VOLUME, volumeLevel);
+            
+            // Add an action to the intent for better compatibility
+            intent.setAction("com.example.secuphone.START_SIGNAL");
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent);
+            } else {
+                startService(intent);
+            }
+            
+            runOnUiThread(() -> {
+                try {
+                    Toast.makeText(this, R.string.signal_in_progress, Toast.LENGTH_SHORT).show();
+                    // Update UI if needed
+                    if (audioActiveIndicator != null) {
+                        audioActiveIndicator.setVisibility(View.VISIBLE);
+                    }
+                } catch (Exception e) {
+                    // Ignore UI update errors
+                }
+            });
+        } catch (Exception e) {
+            runOnUiThread(() -> {
+                Toast.makeText(this, "Error starting signal: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+    
+    // Stop the signal service from a remote command
+    private void stopSignalFromRemote() {
+        try {
+            Intent intent = new Intent(this, LoudSignalService.class);
+            intent.setAction(LoudSignalService.ACTION_STOP_SIGNAL);
+            startService(intent);
+            
+            runOnUiThread(() -> {
+                try {
+                    Toast.makeText(this, R.string.signal_stopped, Toast.LENGTH_SHORT).show();
+                    // Update UI if needed
+                    if (audioActiveIndicator != null) {
+                        audioActiveIndicator.setVisibility(View.INVISIBLE);
+                    }
+                } catch (Exception e) {
+                    // Ignore UI update errors
+                }
+            });
+        } catch (Exception e) {
+            runOnUiThread(() -> {
+                Toast.makeText(this, "Error stopping signal: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        // Stop listening for signal commands
+        remoteSignalManager.stopListeningForSignalCommands(deviceId);
+        super.onDestroy();
     }
 } 
