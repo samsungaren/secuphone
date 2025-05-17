@@ -167,6 +167,31 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         // Get paired device ID
         pairedDeviceId = getPairedDeviceId();
         
+        // Initialize UI components
+        initializeFeatureCards();
+        initializeActivationCard();
+        initializeLocationCard();
+        initializeMapFragment();
+        initializeExpandedMapUI();
+        
+        // Set up signal command listener
+        remoteSignalManager.listenForSignalCommands(deviceId, new RemoteSignalManager.SignalCommandListener() {
+            @Override
+            public void onSignalCommand(int durationSeconds, int volumeLevel) {
+                // Start the signal service when a command is received
+                startSignalFromRemote(durationSeconds, volumeLevel);
+            }
+            
+            @Override
+            public void onSignalStop() {
+                // Stop the signal service when a stop command is received
+                stopSignalFromRemote();
+            }
+        });
+        
+        // Check if we should start the Remote Lock Service
+        checkAndStartRemoteLockService();
+        
         // Register this device with Firebase
         deviceRegistrationManager.registerDevice(task -> {
             if (task.isSuccessful()) {
@@ -176,34 +201,13 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
             }
         });
         
-        // Initialize UI components
-        initializeLocationCard();
-        initializeFeatureCards();
-        initializeActivationCard();
-        initializeMapFragment();
-        initializeExpandedMapUI();
-        
-        // Setup remote signal listener
-        remoteSignalManager.listenForSignalCommands(deviceId, new RemoteSignalManager.SignalCommandListener() {
-            @Override
-            public void onSignalCommand(int durationSeconds, int volumeLevel) {
-                startSignalFromRemote(durationSeconds, volumeLevel);
-            }
-            
-            @Override
-            public void onSignalStop() {
-                stopSignalFromRemote();
-            }
+        // Listen for device updates
+        deviceRegistrationManager.startListeningForDeviceUpdates(snapshot -> {
+            Log.d(TAG, "Device updates received");
         });
-        
-        // Check if device admin is active and start the Remote Lock Service
-        checkAndStartRemoteLockService();
         
         // Check if tracking is active
         checkTrackingStatus();
-        
-        // For testing/demo purposes only
-        // setupDevicePairing();
         
         // Log device and paired device information for debugging
         Log.d(TAG, "Device ID: " + deviceId);
@@ -1187,25 +1191,35 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
      * Check if device admin is active and start the Remote Lock Service if it is
      */
     private void checkAndStartRemoteLockService() {
-        // Check if device admin permission is granted
-        if (remoteLockManager.isAdminActive()) {
-            // Start the service
-            Log.d(TAG, "Device admin is active, starting Remote Lock Service");
-            remoteLockManager.startRemoteLockService();
-            
-            // Update UI to show blocking is active
-            if (blockingActiveIndicator != null) {
-                blockingActiveIndicator.setVisibility(View.VISIBLE);
+        try {
+            // Ensure remoteLockManager is initialized
+            if (remoteLockManager == null) {
+                remoteLockManager = RemoteLockManager.getInstance(this);
             }
-        } else {
-            Log.d(TAG, "Device admin is not active, requesting permission");
-            // Request device admin permission
-            remoteLockManager.requestAdminPermission(this);
             
-            // Update UI to show blocking is not active
-            if (blockingActiveIndicator != null) {
-                blockingActiveIndicator.setVisibility(View.INVISIBLE);
+            // Check if device admin permission is granted
+            if (remoteLockManager.isAdminActive()) {
+                // Start the service
+                Log.d(TAG, "Device admin is active, starting Remote Lock Service");
+                remoteLockManager.startRemoteLockService();
+                
+                // Update UI to show blocking is active
+                if (blockingActiveIndicator != null) {
+                    blockingActiveIndicator.setVisibility(View.VISIBLE);
+                }
+            } else {
+                Log.d(TAG, "Device admin is not active, requesting permission");
+                // Request device admin permission
+                remoteLockManager.requestAdminPermission(this);
+                
+                // Update UI to show blocking is not active
+                if (blockingActiveIndicator != null) {
+                    blockingActiveIndicator.setVisibility(View.INVISIBLE);
+                }
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking device admin status", e);
+            Toast.makeText(this, "Error checking device admin status: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -1216,16 +1230,25 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         
-        // Let RemoteLockManager handle the result
-        boolean handled = remoteLockManager.handleActivityResult(requestCode, resultCode, data);
-        
-        if (handled) {
-            // Update UI to show service is active
-            if (blockingActiveIndicator != null) {
-                blockingActiveIndicator.setVisibility(View.VISIBLE);
+        try {
+            // Let RemoteLockManager handle the result
+            if (remoteLockManager != null) {
+                boolean handled = remoteLockManager.handleActivityResult(requestCode, resultCode, data);
+                
+                if (handled) {
+                    // Update UI to show service is active
+                    if (blockingActiveIndicator != null) {
+                        blockingActiveIndicator.setVisibility(View.VISIBLE);
+                    }
+                    
+                    Toast.makeText(this, R.string.remote_lock_admin_enabled, Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Log.e(TAG, "RemoteLockManager is null in onActivityResult");
             }
-            
-            Toast.makeText(this, R.string.remote_lock_admin_enabled, Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.e(TAG, "Error handling activity result", e);
+            Toast.makeText(this, "Error enabling device admin: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     

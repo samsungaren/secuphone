@@ -196,17 +196,22 @@ public class RemoteLockManager {
      * Process Activity Result from the admin permission request
      */
     public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CODE_ENABLE_ADMIN) {
-            if (resultCode == Activity.RESULT_OK) {
-                // Admin permission granted, start the service
-                startRemoteLockService();
-                return true;
-            } else {
-                Log.w(TAG, "Admin permission request was denied");
-                return false;
+        try {
+            if (requestCode == REQUEST_CODE_ENABLE_ADMIN) {
+                if (resultCode == Activity.RESULT_OK) {
+                    // Admin permission granted, start the service
+                    startRemoteLockService();
+                    return true;
+                } else {
+                    Log.w(TAG, "Admin permission request was denied");
+                    return false;
+                }
             }
+            return false;
+        } catch (Exception e) {
+            Log.e(TAG, "Error handling activity result", e);
+            return false;
         }
-        return false;
     }
     
     /**
