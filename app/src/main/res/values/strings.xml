@@ -356,7 +356,6 @@
     <string name="error_passwords_do_not_match">Passwords don\'t match</string>
 
     <!-- Dialog Strings -->
-    <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="logout_confirmation">Are you sure you want to logout?</string>
     <string name="user">User</string>
@@ -440,7 +439,6 @@
     <string name="password_required">Password is required</string>
     <string name="encrypt">Encrypt</string>
     <string name="view">View</string>
-    <string name="cancel">Cancel</string>
     <string name="encrypting_file">Encrypting File</string>
     <string name="decrypting_file">Decrypting File</string>
     <string name="please_wait">Please wait...</string>
@@ -563,4 +561,52 @@
     <string name="signal_in_progress">Loud signal in progress</string>
     <string name="seconds_left">%d seconds left</string>
     <string name="no_paired_device">No paired device available</string>
+    
+    <!-- Remote Lock Feature Strings -->
+    <string name="remote_lock_title">Remote Lock</string>
+    <string name="remote_lock_desc">Lock your phone remotely if lost or stolen</string>
+    <string name="activate_device_admin">Activate Device Admin</string>
+    <string name="remote_lock_admin_enabled">Remote device locking enabled</string>
+    <string name="remote_lock_admin_disabled">Remote device locking disabled</string>
+    <string name="device_locked_remotely">This device has been locked remotely by SecuPhone</string>
+    <string name="unlock_device">Unlock Device</string>
+    <string name="lock_message">Lock message (optional)</string>
+    <string name="lock_device_confirmation">Are you sure you want to remotely lock this device?</string>
+    <string name="yes">Yes</string>
+    <string name="cancel">Cancel</string>
+    <string name="device_locked_success">Device has been locked successfully</string>
+    <string name="device_lock_failed">Failed to lock device</string>
+    <string name="device_admin_required">Device admin permission required</string>
+    <string name="remote_lock_explanation">To enable remote locking, SecuPhone needs Device Administrator permissions. This allows you to lock your device remotely if it\'s lost or stolen.</string>
+
+    <!-- New string resource for "select_device_to_lock" -->
+    <string name="select_device_to_lock">Select device to lock</string>
+    <string name="lock_message_optional">Lock message (optional):</string>
+    <string name="lock_message_hint">Enter message to display on locked device</string>
+    <string name="selected_device">Selected device: %1$s</string>
+    <string name="paired_device_name">Paired device</string>
+    <string name="select_paired_device">Select paired device</string>
+    <string name="no_device_selected">No device selected</string>
+
+    <!-- Strings for device selection dialog -->
+    <string name="remote_lock_service_running">Service is running to respond to remote lock commands</string>
+    <string name="remote_lock_active">Remote Lock Protection Active</string>
+    <string name="device_blocking">Device blocking</string>
+    <string name="remote_lock_help">Lock this device or a paired device remotely</string>
+    <string name="remote_lock_who">Which device do you want to lock?</string>
+    <string name="device_blocked_sender">Your remote lock command was sent</string>
+    <string name="device_blocked_receiver">This device was remotely locked</string>
+
+    <!-- Find My Device strings -->
+    <string name="remote_lock_confirmation">Are you sure you want to lock this device? Once locked, you will need the device password to unlock it.</string>
+    <string name="sending_lock_command">Sending lock command</string>
+    <string name="unknown_error">Unknown error occurred</string>
+    <string name="no_paired_device_message">You don\'t have any paired devices to lock. Add a device from another device using your account.</string>
+    <string name="lock_device">Lock Device</string>
+
+    <!-- New strings for device selection -->
+    <string name="loading_devices">Loading Devices</string>
+    <string name="failed_to_load_devices">Failed to load devices. Please try again.</string>
+    <string name="no_devices_found">No devices found</string>
+    <string name="no_other_devices">No other devices found</string>
 </resources>

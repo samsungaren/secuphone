@@ -12,10 +12,16 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ImageButton;
+import android.app.AlertDialog;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RadioGroup;
+import android.widget.RadioButton;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.annotation.Nullable;
 
 import com.example.secuphone.dialogs.LoudSignalDialog;
 import com.example.secuphone.models.LocationData;
@@ -35,6 +41,17 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.example.secuphone.admin.RemoteLockDeviceAdmin;
+import com.example.secuphone.services.RemoteLockService;
+import com.example.secuphone.utils.RemoteLockManager;
+import com.example.secuphone.utils.DeviceRegistrationManager;
+import com.google.firebase.database.DataSnapshot;
+import android.widget.ArrayAdapter;
+import android.view.ViewGroup;
+import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Find Phone Activity - Allows users to locate and secure their device
@@ -82,6 +99,8 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
     private FirebaseAuthManager authManager;
     private FirebaseLocationManager locationManager;
     private RemoteSignalManager remoteSignalManager;
+    private RemoteLockManager remoteLockManager;
+    private DeviceRegistrationManager deviceRegistrationManager;
     
     // Device ID
     private String deviceId;
@@ -132,61 +151,63 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_find_phone);
-
+        
         // Initialize managers
         permissionManager = new LocationPermissionManager(this);
         authManager = FirebaseAuthManager.getInstance();
         locationManager = FirebaseLocationManager.getInstance();
         remoteSignalManager = RemoteSignalManager.getInstance();
+        remoteLockManager = RemoteLockManager.getInstance(this);
+        deviceRegistrationManager = DeviceRegistrationManager.getInstance(this);
         
         // Get device ID
-        deviceId = DeviceUtils.getDeviceId(this);
+        deviceId = android.provider.Settings.Secure.getString(
+                getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
         
-        // For demo purposes - in a real app, this would be retrieved from a pairing system
+        // Get paired device ID
         pairedDeviceId = getPairedDeviceId();
         
-        // Start listening for signal commands
+        // Register this device with Firebase
+        deviceRegistrationManager.registerDevice(task -> {
+            if (task.isSuccessful()) {
+                Log.d(TAG, "Device registered successfully with Firebase");
+            } else {
+                Log.e(TAG, "Failed to register device with Firebase", task.getException());
+            }
+        });
+        
+        // Initialize UI components
+        initializeLocationCard();
+        initializeFeatureCards();
+        initializeActivationCard();
+        initializeMapFragment();
+        initializeExpandedMapUI();
+        
+        // Setup remote signal listener
         remoteSignalManager.listenForSignalCommands(deviceId, new RemoteSignalManager.SignalCommandListener() {
             @Override
             public void onSignalCommand(int durationSeconds, int volumeLevel) {
                 startSignalFromRemote(durationSeconds, volumeLevel);
             }
-
+            
             @Override
             public void onSignalStop() {
                 stopSignalFromRemote();
             }
         });
         
-        // Initialize location card elements
-        initializeLocationCard();
-
-        // Initialize feature cards
-        initializeFeatureCards();
+        // Check if device admin is active and start the Remote Lock Service
+        checkAndStartRemoteLockService();
         
-        // Initialize activation card
-        initializeActivationCard();
-        
-        // Check if tracking is already active
+        // Check if tracking is active
         checkTrackingStatus();
         
-        // Initialize Map Fragment but don't show it yet
-        initializeMapFragment();
+        // For testing/demo purposes only
+        // setupDevicePairing();
         
-        // Initialize expanded map UI elements
-        initializeExpandedMapUI();
-        
-        // Request necessary permissions
-        if (!permissionManager.hasLocationPermissions()) {
-            permissionManager.requestLocationPermissions(this);
-        } else if (!permissionManager.hasBackgroundLocationPermission()) {
-            // If we have basic location permission but not background, request it
-            permissionManager.requestBackgroundLocationPermission(this);
-        }
-        
-        // Set up the back button
-        ImageButton backButton = findViewById(R.id.back_button);
-        backButton.setOnClickListener(v -> finish());
+        // Log device and paired device information for debugging
+        Log.d(TAG, "Device ID: " + deviceId);
+        Log.d(TAG, "Paired Device ID: " + pairedDeviceId);
     }
 
     private void initializeLocationCard() {
@@ -251,9 +272,9 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
     
     private void updateLocationCardMap() {
         if (locationCardMap == null) {
-            return;
-        }
-        
+                return;
+            }
+            
         // Update "updating..." text
         lastUpdated.setText("Updating location...");
         
@@ -379,9 +400,9 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
             // User is not logged in, prompt for sign in
             Toast.makeText(this, "You need to sign in to use this feature", Toast.LENGTH_SHORT).show();
             // TODO: Navigate to sign in screen
-            return;
-        }
-        
+                return;
+            }
+            
         if (!permissionManager.hasLocationPermissions()) {
             // Request location permissions
             permissionManager.requestLocationPermissions(this);
@@ -408,9 +429,9 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         if (!permissionManager.hasNotificationPermission()) {
             // This will be handled in the permission result
             permissionManager.requestLocationPermissions(this);
-            return;
-        }
-        
+                return;
+            }
+            
         // Start the location tracking service
         Intent serviceIntent = new Intent(this, LocationTrackingService.class);
         startForegroundService(serviceIntent);
@@ -494,7 +515,201 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     private void handleRemoteBlockingCardClick() {
-        Toast.makeText(this, "Remote blocking feature coming soon", Toast.LENGTH_SHORT).show();
+        // Always show device selection dialog
+        showDeviceSelectionDialog();
+    }
+
+    /**
+     * Shows a dialog for selecting which device to lock
+     */
+    private void showDeviceSelectionDialog() {
+        // Show progress dialog while fetching devices
+        AlertDialog progressDialog = new AlertDialog.Builder(this)
+            .setTitle(R.string.loading_devices)
+            .setMessage(R.string.please_wait)
+            .setCancelable(false)
+            .show();
+            
+        // Get all devices for the current user
+        deviceRegistrationManager.getUserDevices(task -> {
+            // Dismiss progress dialog
+            progressDialog.dismiss();
+            
+            if (!task.isSuccessful() || task.getResult() == null) {
+                // Show error message
+                new AlertDialog.Builder(this)
+                    .setTitle(R.string.error)
+                    .setMessage(R.string.failed_to_load_devices)
+                    .setPositiveButton(R.string.ok, null)
+                    .show();
+                return;
+            }
+            
+            // Get devices from snapshot
+            DataSnapshot devicesSnapshot = task.getResult();
+            if (!devicesSnapshot.exists() || !devicesSnapshot.hasChildren()) {
+                // No devices found
+                new AlertDialog.Builder(this)
+                    .setTitle(R.string.remote_lock_title)
+                    .setMessage(R.string.no_devices_found)
+                    .setPositiveButton(R.string.ok, null)
+                    .show();
+                return;
+            }
+            
+            // Create a list of devices
+            final Map<String, String> deviceMap = new HashMap<>();
+            final List<String> deviceNames = new ArrayList<>();
+            final List<String> deviceIds = new ArrayList<>();
+            final List<Boolean> deviceOnlineStatus = new ArrayList<>();
+            
+            // Current device ID
+            String currentDeviceId = deviceRegistrationManager.getDeviceId();
+            
+            // Populate device lists
+            for (DataSnapshot deviceSnapshot : devicesSnapshot.getChildren()) {
+                String deviceId = deviceSnapshot.getKey();
+                
+                // Skip current device
+                if (deviceId.equals(currentDeviceId)) {
+                    continue;
+                }
+                
+                // Get device info
+                String model = deviceSnapshot.child("model").getValue(String.class);
+                String name = deviceSnapshot.child("name").getValue(String.class);
+                Long lastSeen = deviceSnapshot.child("last_seen").getValue(Long.class);
+                
+                // Create display name
+                String displayName = (model != null ? model : "Unknown Device");
+                if (name != null && !name.isEmpty()) {
+                    displayName += " (" + name + ")";
+                }
+                
+                // Check if device is online
+                boolean isOnline = false;
+                if (lastSeen != null) {
+                    isOnline = deviceRegistrationManager.isDeviceOnline(lastSeen);
+                }
+                
+                // Add to lists
+                deviceNames.add(displayName);
+                deviceIds.add(deviceId);
+                deviceOnlineStatus.add(isOnline);
+                deviceMap.put(deviceId, displayName);
+            }
+            
+            // Check if we have any other devices
+            if (deviceIds.isEmpty()) {
+                new AlertDialog.Builder(this)
+                    .setTitle(R.string.remote_lock_title)
+                    .setMessage(R.string.no_other_devices)
+                    .setPositiveButton(R.string.ok, null)
+                    .show();
+                return;
+            }
+            
+            // Create adapter for device list
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, 
+                android.R.layout.simple_list_item_1, deviceNames) {
+    @Override
+                public View getView(int position, View convertView, ViewGroup parent) {
+                    View view = super.getView(position, convertView, parent);
+                    TextView textView = (TextView) view.findViewById(android.R.id.text1);
+                    
+                    // Add online/offline indicator
+                    if (deviceOnlineStatus.get(position)) {
+                        textView.setCompoundDrawablesWithIntrinsicBounds(
+                            R.drawable.ic_online_indicator, 0, 0, 0);
+                } else {
+                        textView.setCompoundDrawablesWithIntrinsicBounds(
+                            R.drawable.ic_offline_indicator, 0, 0, 0);
+                    }
+                    
+                    textView.setCompoundDrawablePadding(16);
+                    return view;
+                }
+            };
+            
+            // Show device selection dialog
+            new AlertDialog.Builder(this)
+                .setTitle(R.string.select_device_to_lock)
+                .setAdapter(adapter, (dialog, which) -> {
+                    // Get selected device
+                    String selectedDeviceId = deviceIds.get(which);
+                    String selectedDeviceName = deviceNames.get(which);
+                    
+                    // Show lock confirmation dialog
+                    showLockConfirmationDialog(selectedDeviceId, selectedDeviceName);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+        });
+    }
+    
+    /**
+     * Shows a confirmation dialog for locking a device
+     */
+    private void showLockConfirmationDialog(String targetDeviceId, String deviceName) {
+        // Create a dialog to send a lock command to the selected device
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_remote_lock_device_selection, null);
+        builder.setView(dialogView);
+        
+        // Set up the device name
+        TextView deviceNameText = dialogView.findViewById(R.id.deviceNameText);
+        deviceNameText.setText(getString(R.string.selected_device, deviceName));
+        
+        // Set up the lock message field
+        EditText lockMessageInput = dialogView.findViewById(R.id.lockMessageInput);
+        
+        // Build and show the dialog
+        builder.setTitle(R.string.remote_lock_title)
+               .setMessage(R.string.remote_lock_confirmation)
+               .setPositiveButton(R.string.lock_device, null)  // We'll override this below
+               .setNegativeButton(R.string.cancel, null);
+        
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        
+        // Override the positive button to prevent automatic dismissal
+        Button lockButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        lockButton.setOnClickListener(v -> {
+            // Get message if provided
+            String message = lockMessageInput.getText().toString().trim();
+            
+            // Show progress dialog
+            AlertDialog progressDialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.sending_lock_command)
+                .setMessage(R.string.please_wait)
+                .setCancelable(false)
+                .show();
+            
+            // Send lock command to selected device
+            remoteLockManager.sendLockCommand(targetDeviceId, message, task -> {
+                // Dismiss progress dialog
+                progressDialog.dismiss();
+                
+                // Dismiss the original dialog
+                dialog.dismiss();
+                
+                if (task.isSuccessful()) {
+                    // Show success message
+                    Toast.makeText(this, R.string.device_locked_success, Toast.LENGTH_LONG).show();
+            } else {
+                    // Show error message
+                    String errorMsg = task.getException() != null ? 
+                            task.getException().getMessage() : 
+                            getString(R.string.unknown_error);
+                    
+                    new AlertDialog.Builder(this)
+                        .setTitle(R.string.device_lock_failed)
+                        .setMessage(errorMsg)
+                        .setPositiveButton(R.string.ok, null)
+                        .show();
+                }
+            });
+        });
     }
 
     private void handleDataWipeCardClick() {
@@ -515,9 +730,9 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
                 Toast.makeText(this, "Could not start signal: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
-    }
-    
-    @Override
+        }
+        
+        @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         
@@ -536,13 +751,13 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
                     startLocationTracking();
                 }
             }
-        } else {
+            } else {
             // Permissions denied, show error message
             Toast.makeText(this, R.string.location_permission_required, Toast.LENGTH_LONG).show();
         }
-    }
-
-    @Override
+        }
+        
+        @Override
     public void onBackPressed() {
         // Check if the expanded map is visible
         View mapContainer = findViewById(R.id.mapContainer);
@@ -554,9 +769,9 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         
         // Otherwise perform default back behavior
         super.onBackPressed();
-    }
-
-    @Override
+        }
+        
+        @Override
     protected void onResume() {
         super.onResume();
         
@@ -564,14 +779,20 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         if (isTrackingActive) {
             updateHandler.post(updateRunnable);
         }
-    }
-    
-    @Override
+        
+        // Update device online status
+        deviceRegistrationManager.updateOnlineStatus();
+        }
+        
+        @Override
     protected void onPause() {
         super.onPause();
         
         // Remove any pending update callbacks
         updateHandler.removeCallbacks(updateRunnable);
+        
+        // Update device online status before pausing
+        deviceRegistrationManager.updateOnlineStatus();
     }
 
     /**
@@ -805,12 +1026,102 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         }
     }
 
-    // Get the paired device ID (demo implementation)
+    /**
+     * Gets paired device ID from shared preferences
+     */
     private String getPairedDeviceId() {
-        // In a real app, this would be retrieved from a pairing system
-        // For demo purposes, we'll return an empty string to indicate no paired device
-        // or you could return a hardcoded ID for testing
-        return "";
+        // Look for stored paired device ID
+        String storedPairedDeviceId = getSharedPreferences("device_prefs", MODE_PRIVATE)
+                .getString("paired_device_id", "");
+                
+        if (storedPairedDeviceId.isEmpty()) {
+            // For demo/testing, retrieve a test paired device ID if none is stored
+            // This allows testing the feature without proper pairing flow
+            return getDemoPairedDeviceId();
+        }
+                
+        return storedPairedDeviceId;
+    }
+    
+    /**
+     * Gets the name of the paired device
+     */
+    private String getPairedDeviceName() {
+        // First try to get from preferences
+        String storedName = getSharedPreferences("device_prefs", MODE_PRIVATE)
+                .getString("paired_device_name", "");
+                
+        if (!storedName.isEmpty()) {
+            return storedName;
+        }
+        
+        // If no stored name but we have an ID, use a generic name
+        if (pairedDeviceId != null && !pairedDeviceId.isEmpty()) {
+            return getString(R.string.paired_device_name);
+        }
+        
+        // No device paired
+        return getString(R.string.no_paired_device);
+    }
+    
+    /**
+     * Get a demo paired device ID for testing
+     * In a real app, this would be retrieved from a proper device pairing system
+     */
+    private String getDemoPairedDeviceId() {
+        // Get this device's ID
+        String thisDeviceId = android.provider.Settings.Secure.getString(
+                getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+        
+        // For testing purposes, we'll create a consistent paired device ID
+        // that is different from this device's ID but deterministic
+        if (thisDeviceId != null && !thisDeviceId.isEmpty()) {
+            // Create a reversed version of the ID to ensure it's different
+            StringBuilder reversedId = new StringBuilder(thisDeviceId).reverse();
+            
+            // Log both IDs for debugging
+            Log.d(TAG, "This device ID: " + thisDeviceId);
+            Log.d(TAG, "Generated paired device ID: " + reversedId.toString());
+            
+            // Store the paired device name for UI display
+            getSharedPreferences("device_prefs", MODE_PRIVATE)
+                .edit()
+                .putString("paired_device_name", "Test Paired Device")
+                .apply();
+            
+            return reversedId.toString();
+        }
+        
+        // Fallback to a static ID if we can't get the device ID
+        return "DEMO-PAIRED-DEVICE-ID";
+    }
+    
+    /**
+     * Handles manually testing/pairing devices
+     * This is a development helper method not suitable for production
+     */
+    private void setupDevicePairing() {
+        // Used only for demo to create device pairing
+        String thisDeviceId = android.provider.Settings.Secure.getString(
+                getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+                
+        // Check if this device ID ends with "1" or "2" to differentiate
+        if (thisDeviceId != null && thisDeviceId.length() > 3) {
+            String lastDigits = thisDeviceId.substring(thisDeviceId.length() - 3);
+            
+            // Store pairing based on device ID pattern
+            String pairedDeviceId = "DEVICE-" + 
+                    (lastDigits.equals("001") ? "002" : "001");
+                    
+            // Store in preferences
+            getSharedPreferences("device_prefs", MODE_PRIVATE)
+                    .edit()
+                    .putString("paired_device_id", pairedDeviceId)
+                    .putString("paired_device_name", "Test Paired Device")
+                    .apply();
+                    
+            Toast.makeText(this, "Device paired with: " + pairedDeviceId, Toast.LENGTH_SHORT).show();
+        }
     }
     
     // Start the signal service from a remote command
@@ -872,10 +1183,60 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         }
     }
 
+    /**
+     * Check if device admin is active and start the Remote Lock Service if it is
+     */
+    private void checkAndStartRemoteLockService() {
+        // Check if device admin permission is granted
+        if (remoteLockManager.isAdminActive()) {
+            // Start the service
+            Log.d(TAG, "Device admin is active, starting Remote Lock Service");
+            remoteLockManager.startRemoteLockService();
+            
+            // Update UI to show blocking is active
+            if (blockingActiveIndicator != null) {
+                blockingActiveIndicator.setVisibility(View.VISIBLE);
+            }
+        } else {
+            Log.d(TAG, "Device admin is not active, requesting permission");
+            // Request device admin permission
+            remoteLockManager.requestAdminPermission(this);
+            
+            // Update UI to show blocking is not active
+            if (blockingActiveIndicator != null) {
+                blockingActiveIndicator.setVisibility(View.INVISIBLE);
+            }
+        }
+    }
+
+    /**
+     * Handle activity result from admin permission request
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        
+        // Let RemoteLockManager handle the result
+        boolean handled = remoteLockManager.handleActivityResult(requestCode, resultCode, data);
+        
+        if (handled) {
+            // Update UI to show service is active
+            if (blockingActiveIndicator != null) {
+                blockingActiveIndicator.setVisibility(View.VISIBLE);
+            }
+            
+            Toast.makeText(this, R.string.remote_lock_admin_enabled, Toast.LENGTH_SHORT).show();
+        }
+    }
+    
     @Override
     protected void onDestroy() {
         // Stop listening for signal commands
         remoteSignalManager.stopListeningForSignalCommands(deviceId);
+        
+        // Stop listening for device updates
+        deviceRegistrationManager.stopListeningForDeviceUpdates();
+        
         super.onDestroy();
     }
 } 

@@ -98,9 +98,11 @@ public class LoudSignalService extends Service {
                 Log.e(TAG, "Error setting volume", e);
             }
             
-            // Initialize MediaPlayer with system default alarm sound
+            // Initialize MediaPlayer with a more attention-grabbing alarm sound
             try {
-                mediaPlayer = MediaPlayer.create(this, android.provider.Settings.System.DEFAULT_RINGTONE_URI);
+                // Try to use the system alarm sound first (more attention-grabbing than ringtone)
+                Uri alarmSound = android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI;
+                mediaPlayer = MediaPlayer.create(this, alarmSound);
                 
                 if (mediaPlayer != null) {
                     mediaPlayer.setLooping(true);
@@ -127,8 +129,8 @@ public class LoudSignalService extends Service {
         try {
             final ToneGenerator toneGen = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
             
-            // Play initial tone
-            toneGen.startTone(ToneGenerator.TONE_CDMA_EMERGENCY_RINGBACK, 3000);
+            // Play initial tone - use a more aggressive/attention-grabbing tone
+            toneGen.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 3000);
             
             // Schedule repeating tones
             final Handler handler = new Handler(Looper.getMainLooper());
@@ -136,8 +138,14 @@ public class LoudSignalService extends Service {
                 @Override
                 public void run() {
                     if (isRunning) {
-                        toneGen.startTone(ToneGenerator.TONE_CDMA_EMERGENCY_RINGBACK, 1000);
-                        handler.postDelayed(this, 1200);
+                        // Alternate between different emergency tones for maximum attention
+                        toneGen.startTone(ToneGenerator.TONE_CDMA_EMERGENCY_RINGBACK, 800);
+                        handler.postDelayed(() -> {
+                            if (isRunning) {
+                                toneGen.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 800);
+                                handler.postDelayed(this, 400);
+                            }
+                        }, 800);
                     } else {
                         toneGen.release();
                     }
@@ -253,6 +261,11 @@ public class LoudSignalService extends Service {
             );
             channel.setDescription("Channel for loud signal notifications");
             
+            // Disable notification sound so only the signal sound plays
+            channel.setSound(null, null);
+            channel.enableVibration(false);
+            channel.enableLights(false);
+            
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
@@ -276,6 +289,8 @@ public class LoudSignalService extends Service {
                 .setContentIntent(pendingIntent)
                 .addAction(R.drawable.ic_close, getString(R.string.stop_signal), stopPendingIntent)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setOnlyAlertOnce(true)
+                .setSilent(true)
                 .build();
     }
     

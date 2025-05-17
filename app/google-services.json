@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "700965783920",
+    "project_id": "secu-fbd47",
+    "storage_bucket": "secu-fbd47.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700965783920:android:4db232aedb72001d9767b5",
+        "android_client_info": {
+          "package_name": "com.example.secuphone"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApGzcyv21VD_7xkLFSwOXQvaZdB7_uMEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
