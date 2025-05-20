@@ -584,6 +584,7 @@
     <string name="activate_device_admin">Activate Device Admin</string>
     <string name="remote_lock_admin_enabled">Remote device locking enabled</string>
     <string name="remote_lock_admin_disabled">Remote device locking disabled</string>
+    <string name="remote_lock_admin_denied">Remote device locking permission denied</string>
     <string name="device_locked_remotely">This device has been locked remotely by SecuPhone</string>
     <string name="unlock_device">Unlock Device</string>
     <string name="lock_message">Lock message (optional)</string>

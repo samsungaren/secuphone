@@ -25,7 +25,7 @@ import com.google.firebase.database.FirebaseDatabase;
  */
 public class RemoteLockManager {
     private static final String TAG = "RemoteLockManager";
-    private static final int REQUEST_CODE_ENABLE_ADMIN = 1001;
+    public static final int REQUEST_CODE_ENABLE_ADMIN = 1001;
     
     private static RemoteLockManager instance;
     
@@ -194,24 +194,11 @@ public class RemoteLockManager {
     
     /**
      * Process Activity Result from the admin permission request
+     * @return true if this was a device admin request, false otherwise
      */
     public boolean handleActivityResult(int requestCode, int resultCode, Intent data) {
-        try {
-            if (requestCode == REQUEST_CODE_ENABLE_ADMIN) {
-                if (resultCode == Activity.RESULT_OK) {
-                    // Admin permission granted, start the service
-                    startRemoteLockService();
-                    return true;
-                } else {
-                    Log.w(TAG, "Admin permission request was denied");
-                    return false;
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            Log.e(TAG, "Error handling activity result", e);
-            return false;
-        }
+        // Just check if this was a device admin request
+        return requestCode == REQUEST_CODE_ENABLE_ADMIN;
     }
     
     /**

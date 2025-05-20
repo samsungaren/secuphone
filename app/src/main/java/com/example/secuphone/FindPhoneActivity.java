@@ -1202,37 +1202,40 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
      */
     private void checkAndStartRemoteLockService() {
         try {
-            // First check if we have the necessary permissions
-            if (!permissionManager.hasLocationPermissions() || !permissionManager.hasNotificationPermission()) {
-                // Request basic permissions first
-                permissionManager.requestLocationPermissions(this);
-                return;
-            }
-            
-            // Ensure remoteLockManager is initialized
+            // Initialize remoteLockManager first if null
             if (remoteLockManager == null) {
                 remoteLockManager = RemoteLockManager.getInstance(this);
             }
             
-            // Check if device admin permission is granted
+            // First check if we already have device admin permission
             if (remoteLockManager.isAdminActive()) {
-                // Start the service
-                Log.d(TAG, "Device admin is active, starting Remote Lock Service");
+                // We already have admin permission, start the service directly
+                Log.d(TAG, "Device admin is already active, starting Remote Lock Service");
                 remoteLockManager.startRemoteLockService();
                 
                 // Update UI to show blocking is active
                 if (blockingActiveIndicator != null) {
                     blockingActiveIndicator.setVisibility(View.VISIBLE);
                 }
-            } else {
-                Log.d(TAG, "Device admin is not active, requesting permission");
-                // Request device admin permission
-                remoteLockManager.requestAdminPermission(this);
+                return;
+            }
+            
+            // We don't have admin permission, so check for location and notification first
+            if (!permissionManager.hasLocationPermissions() || !permissionManager.hasNotificationPermission()) {
+                // Request basic permissions first and return
+                Log.d(TAG, "Requesting basic permissions before device admin");
+                permissionManager.requestLocationPermissions(this);
+                return;
+            }
+            
+            // At this point, we have basic permissions but not admin
+            // Now it's safe to request device admin permission
+            Log.d(TAG, "Basic permissions granted, requesting device admin permission");
+            remoteLockManager.requestAdminPermission(this);
                 
-                // Update UI to show blocking is not active
-                if (blockingActiveIndicator != null) {
-                    blockingActiveIndicator.setVisibility(View.INVISIBLE);
-                }
+            // Update UI to show blocking is not active
+            if (blockingActiveIndicator != null) {
+                blockingActiveIndicator.setVisibility(View.INVISIBLE);
             }
         } catch (Exception e) {
             Log.e(TAG, "Error checking device admin status", e);
@@ -1248,31 +1251,47 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         super.onActivityResult(requestCode, resultCode, data);
         
         try {
-            // First ensure we have the necessary permissions before handling admin result
-            if (!permissionManager.hasLocationPermissions() || !permissionManager.hasNotificationPermission()) {
-                // We need to request basic permissions first
-                permissionManager.requestLocationPermissions(this);
-                return;
-            }
-            
-            // Let RemoteLockManager handle the result
-            if (remoteLockManager != null) {
-                boolean handled = remoteLockManager.handleActivityResult(requestCode, resultCode, data);
+            // Check if this is a device admin request
+            if (requestCode == RemoteLockManager.REQUEST_CODE_ENABLE_ADMIN) {
+                // Check if remoteLockManager is initialized
+                if (remoteLockManager == null) {
+                    remoteLockManager = RemoteLockManager.getInstance(this);
+                }
                 
-                if (handled) {
-                    // Update UI to show service is active
+                if (resultCode == RESULT_OK) {
+                    // Admin permission was granted
+                    Log.d(TAG, "Device admin permission granted");
+                    
+                    // Start the service
+                    remoteLockManager.startRemoteLockService();
+                    
+                    // Update UI
                     if (blockingActiveIndicator != null) {
                         blockingActiveIndicator.setVisibility(View.VISIBLE);
                     }
                     
                     Toast.makeText(this, R.string.remote_lock_admin_enabled, Toast.LENGTH_SHORT).show();
+                } else {
+                    // Admin permission was denied
+                    Log.d(TAG, "Device admin permission denied");
+                    
+                    // Update UI
+                    if (blockingActiveIndicator != null) {
+                        blockingActiveIndicator.setVisibility(View.INVISIBLE);
+                    }
+                    
+                    Toast.makeText(this, R.string.remote_lock_admin_denied, Toast.LENGTH_SHORT).show();
                 }
-            } else {
-                Log.e(TAG, "RemoteLockManager is null in onActivityResult");
+                return;
+            }
+            
+            // For other activity results, let RemoteLockManager handle it
+            if (remoteLockManager != null) {
+                remoteLockManager.handleActivityResult(requestCode, resultCode, data);
             }
         } catch (Exception e) {
             Log.e(TAG, "Error handling activity result", e);
-            Toast.makeText(this, "Error enabling device admin: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error processing result: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
     
