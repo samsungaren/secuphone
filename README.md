@@ -97,7 +97,7 @@
 
 ## 📥 Как установить SecuPhone
 
-1. Перейдите по [ссылке для скачивания APK](https://www.dropbox.com/scl/fi/aqwnp6ahylmzu6jh1fo9d/SecuPhone-by-Aren-Derdzyan-v2.8.apk?rlkey=w9wqdclz4oqdl031byae69ac3&st=dhc55zmd&dl=0).
+1. Перейдите по [ссылке для скачивания APK](https://www.dropbox.com/scl/fi/ygs1dfzsss2v38xiu9ra4/SecuPhone-v2.9-by-Aren-Derdzyan.apk?rlkey=yo2ppafaipmdzke6i1utyb624&st=uxj0wg11&dl=0).
 2. Скачайте файл.
 3. Разрешите установку из неизвестных источников в настройках телефона.
 4. Установите приложение и начните защищать свой цифровой мир.
