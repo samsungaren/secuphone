@@ -749,18 +749,27 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
             if (requestCode == LocationPermissionManager.REQUEST_BACKGROUND_LOCATION) {
                 startLocationTracking();
             } else if (requestCode == LocationPermissionManager.REQUEST_LOCATION_PERMISSION) {
-                // Check if background permission is needed
-                if (!permissionManager.hasBackgroundLocationPermission()) {
-                    permissionManager.requestBackgroundLocationPermission(this);
-                } else {
-                    startLocationTracking();
+                // Check if all permissions were granted
+                if (permissionManager.hasLocationPermissions() && permissionManager.hasNotificationPermission()) {
+                    // Now that we have basic permissions, check if we need device admin permission
+                    if (remoteLockManager != null && !remoteLockManager.isAdminActive()) {
+                        // Request device admin permission now that we have notification/location permissions
+                        remoteLockManager.requestAdminPermission(this);
+                    }
+                    
+                    // Check if background permission is needed for tracking
+                    if (!permissionManager.hasBackgroundLocationPermission()) {
+                        permissionManager.requestBackgroundLocationPermission(this);
+                    } else {
+                        startLocationTracking();
+                    }
                 }
             }
-            } else {
+        } else {
             // Permissions denied, show error message
             Toast.makeText(this, R.string.location_permission_required, Toast.LENGTH_LONG).show();
         }
-        }
+    }
         
         @Override
     public void onBackPressed() {
@@ -1193,6 +1202,13 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
      */
     private void checkAndStartRemoteLockService() {
         try {
+            // First check if we have the necessary permissions
+            if (!permissionManager.hasLocationPermissions() || !permissionManager.hasNotificationPermission()) {
+                // Request basic permissions first
+                permissionManager.requestLocationPermissions(this);
+                return;
+            }
+            
             // Ensure remoteLockManager is initialized
             if (remoteLockManager == null) {
                 remoteLockManager = RemoteLockManager.getInstance(this);
@@ -1232,6 +1248,13 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         super.onActivityResult(requestCode, resultCode, data);
         
         try {
+            // First ensure we have the necessary permissions before handling admin result
+            if (!permissionManager.hasLocationPermissions() || !permissionManager.hasNotificationPermission()) {
+                // We need to request basic permissions first
+                permissionManager.requestLocationPermissions(this);
+                return;
+            }
+            
             // Let RemoteLockManager handle the result
             if (remoteLockManager != null) {
                 boolean handled = remoteLockManager.handleActivityResult(requestCode, resultCode, data);
