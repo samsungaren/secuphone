@@ -3,7 +3,6 @@ package com.example.secuphone.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -51,14 +50,14 @@ public class HiddenFilesAdapter extends RecyclerView.Adapter<HiddenFilesAdapter.
         // Format the file size
         long fileSizeInBytes = file.length();
         String fileSizeText = formatFileSize(fileSizeInBytes);
-        holder.fileInfo.setText(fileSizeText + " • " + 
+        holder.fileSize.setText(fileSizeText + " • " + 
                 dateFormat.format(new Date(file.lastModified())));
         
         // Set file type icon based on extension
-        setFileTypeIcon(holder.fileTypeIcon, file.getName());
+        setFileTypeIcon(holder.fileIcon, file.getName());
         
-        // Set click listener for unhide button
-        holder.actionButton.setOnClickListener(v -> {
+        // Set click listener for the whole item
+        holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onUnhideFile(file);
             }
@@ -92,20 +91,20 @@ public class HiddenFilesAdapter extends RecyclerView.Adapter<HiddenFilesAdapter.
         
         // Set icon based on file type
         if (extension.equals("pdf")) {
-            imageView.setImageResource(R.drawable.ic_file_pdf);
+            imageView.setImageResource(android.R.drawable.ic_menu_agenda);
         } else if (extension.equals("doc") || extension.equals("docx")) {
-            imageView.setImageResource(R.drawable.ic_file_doc);
+            imageView.setImageResource(android.R.drawable.ic_menu_edit);
         } else if (extension.equals("jpg") || extension.equals("jpeg") || 
                    extension.equals("png") || extension.equals("gif")) {
-            imageView.setImageResource(R.drawable.ic_file_image);
+            imageView.setImageResource(android.R.drawable.ic_menu_gallery);
         } else if (extension.equals("mp4") || extension.equals("mov") || 
                    extension.equals("avi")) {
-            imageView.setImageResource(R.drawable.ic_file_video);
+            imageView.setImageResource(android.R.drawable.ic_media_play);
         } else if (extension.equals("mp3") || extension.equals("wav") || 
                    extension.equals("ogg")) {
-            imageView.setImageResource(R.drawable.ic_file_audio);
+            imageView.setImageResource(android.R.drawable.ic_lock_silent_mode_off);
         } else {
-            imageView.setImageResource(R.drawable.ic_file_generic);
+            imageView.setImageResource(android.R.drawable.ic_menu_save);
         }
     }
     
@@ -122,16 +121,14 @@ public class HiddenFilesAdapter extends RecyclerView.Adapter<HiddenFilesAdapter.
 
     static class FileViewHolder extends RecyclerView.ViewHolder {
         TextView fileName;
-        TextView fileInfo;
-        ImageView fileTypeIcon;
-        ImageButton actionButton;
+        TextView fileSize;
+        ImageView fileIcon;
 
         FileViewHolder(View itemView) {
             super(itemView);
             fileName = itemView.findViewById(R.id.file_name);
-            fileInfo = itemView.findViewById(R.id.file_info);
-            fileTypeIcon = itemView.findViewById(R.id.file_type_icon);
-            actionButton = itemView.findViewById(R.id.file_action_button);
+            fileSize = itemView.findViewById(R.id.file_size);
+            fileIcon = itemView.findViewById(R.id.file_icon);
         }
     }
 } 

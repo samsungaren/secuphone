@@ -104,6 +104,22 @@
     <string name="file_hidden_success">File hidden successfully</string>
     <string name="file_unhidden_success">File unhidden successfully and moved to Downloads</string>
     <string name="storage_access_required">Storage access is required for this feature</string>
+    
+    <!-- File Hider New Strings -->
+    <string name="file_hider_title">Hidden Files</string>
+    <string name="select_file_to_hide">Select File to Hide</string>
+    <string name="no_files_hidden">No hidden files yet.\nSelect a file to hide it from gallery and other apps.</string>
+    <string name="delete_original">Delete Original File?</string>
+    <string name="delete_original_question">Would you like to delete the original file?</string>
+    <string name="original_deleted">Original file deleted</string>
+    <string name="original_not_deleted">Could not delete original file</string>
+    <string name="file_options">File Options</string>
+    <string name="open_file">Open File</string>
+    <string name="delete_file">Delete File</string>
+    <string name="confirm_delete">Are you sure you want to delete this file? This cannot be undone.</string>
+    <string name="file_deleted">File deleted</string>
+    <string name="file_delete_failed">Failed to delete file</string>
+    <string name="no_app_for_file">No app found to open this type of file</string>
 
     <!-- Navigation Drawer Strings -->
     <string name="profile">Profile</string>
@@ -216,6 +232,7 @@
     <string name="file_type">File type</string>
     <string name="hide_folder">Hide Entire Folder</string>
     <string name="select_files">Select Files</string>
+    <string name="no_app_to_open_file">No app found to open this file</string>
 
     <!-- Navigation Drawer New Strings -->
     <string name="app_tagline">Your All-in-One Security Solution</string>
@@ -246,6 +263,9 @@
     <string name="setup_app_lock">Set up App Lock</string>
     <string name="app_locked_message">This app is locked</string>
     <string name="unlock_app">Unlock App</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="cancel">Cancel</string>
 
     <!-- New image viewer strings -->
     <string name="hidden_file_image">Hidden file image</string>
@@ -356,7 +376,6 @@
     <string name="error_passwords_do_not_match">Passwords don\'t match</string>
 
     <!-- Dialog Strings -->
-    <string name="no">No</string>
     <string name="logout_confirmation">Are you sure you want to logout?</string>
     <string name="user">User</string>
     <string name="sign_in_required">Sign In Required</string>
@@ -427,9 +446,7 @@
     <string name="add_encrypted_file">Add Encrypted File</string>
     <string name="add_file">Add File</string>
     <string name="empty_state_icon">Empty state icon</string>
-    <string name="delete_file">Delete File</string>
     <string name="delete_file_confirmation">Are you sure you want to delete this file? This action cannot be undone.</string>
-    <string name="file_deleted">File deleted</string>
     <string name="error_deleting_file">Error deleting file</string>
     <string name="enter_encryption_password">Enter Encryption Password</string>
     <string name="enter_decryption_password">Enter Decryption Password</string>
@@ -445,7 +462,6 @@
     <string name="file_encrypted_successfully">File encrypted successfully</string>
     <string name="encryption_error">Encryption error: %1$s</string>
     <string name="decryption_error">Decryption error: %1$s</string>
-    <string name="no_app_to_open_file">No app found to open this type of file</string>
     <string name="error_opening_file">Error opening file</string>
     <string name="encrypted_image">Encrypted image</string>
     <string name="error_displaying_image">Error displaying image</string>
@@ -572,8 +588,6 @@
     <string name="unlock_device">Unlock Device</string>
     <string name="lock_message">Lock message (optional)</string>
     <string name="lock_device_confirmation">Are you sure you want to remotely lock this device?</string>
-    <string name="yes">Yes</string>
-    <string name="cancel">Cancel</string>
     <string name="device_locked_success">Device has been locked successfully</string>
     <string name="device_lock_failed">Failed to lock device</string>
     <string name="device_admin_required">Device admin permission required</string>
@@ -609,4 +623,13 @@
     <string name="failed_to_load_devices">Failed to load devices. Please try again.</string>
     <string name="no_devices_found">No devices found</string>
     <string name="no_other_devices">No other devices found</string>
+    
+    <!-- Loud Signal Device Selection Dialog -->
+    <string name="select_device_to_signal">Select Device to Signal</string>
+    <string name="signal_device_description">Select which device should play the loud signal to help you locate it</string>
+    <string name="signal_volume">Signal Volume</string>
+    <string name="sending_signal_command">Sending signal command</string>
+    <string name="signal_sent_success">Signal command sent successfully</string>
+    <string name="signal_failed">Failed to send signal command</string>
+    <string name="signal_device">Signal Device</string>
 </resources>

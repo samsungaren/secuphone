@@ -42,8 +42,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SecuPhoneByCoursor"
-        tools:targetApi="31">
+        android:theme="@style/Theme.SecuPhone">
         
         <activity
             android:name=".SplashActivity"
@@ -118,6 +117,16 @@
             android:name=".HiddenFilesActivity"
             android:parentActivityName=".MainActivity"
             android:exported="false">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".MainActivity" />
+        </activity>
+        
+        <activity
+            android:name=".FileHiderActivity"
+            android:parentActivityName=".MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SecuPhone.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />

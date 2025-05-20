@@ -24,6 +24,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.annotation.Nullable;
 
 import com.example.secuphone.dialogs.LoudSignalDialog;
+import com.example.secuphone.dialogs.SignalDeviceSelectionDialog;
 import com.example.secuphone.models.LocationData;
 import com.example.secuphone.services.LocationTrackingService;
 import com.example.secuphone.services.LoudSignalService;
@@ -196,7 +197,7 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         deviceRegistrationManager.registerDevice(task -> {
             if (task.isSuccessful()) {
                 Log.d(TAG, "Device registered successfully with Firebase");
-            } else {
+        } else {
                 Log.e(TAG, "Failed to register device with Firebase", task.getException());
             }
         });
@@ -722,9 +723,9 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
 
     private void handleAudioSignalCardClick() {
         try {
-            // Show dialog to configure and start signal
-            LoudSignalDialog dialog = LoudSignalDialog.newInstance(deviceId, pairedDeviceId);
-            dialog.show(getSupportFragmentManager(), "loud_signal_dialog");
+            // Show the new device selection dialog instead of the old dialog
+            SignalDeviceSelectionDialog dialog = SignalDeviceSelectionDialog.newInstance();
+            dialog.show(getSupportFragmentManager(), "signal_device_selection_dialog");
         } catch (Exception e) {
             // Fallback to direct start in case the dialog has issues
             try {
@@ -1150,8 +1151,8 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
                     // Update UI if needed
                     if (audioActiveIndicator != null) {
                         audioActiveIndicator.setVisibility(View.VISIBLE);
-                    }
-                } catch (Exception e) {
+            }
+        } catch (Exception e) {
                     // Ignore UI update errors
                 }
             });

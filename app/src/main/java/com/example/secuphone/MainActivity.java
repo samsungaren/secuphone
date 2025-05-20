@@ -686,7 +686,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Setup Hidden Files Button
         findViewById(R.id.hidden_files_button).setOnClickListener(v -> {
             if (sessionManager.isLoggedIn()) {
-                startActivity(new Intent(this, HiddenFilesActivity.class));
+                startActivity(new Intent(this, FileHiderActivity.class));
             } else {
                 showSignInRequiredDialog("Hidden Files");
             }

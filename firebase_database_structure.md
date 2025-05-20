@@ -1,109 +1,132 @@
-# Firebase Realtime Database Structure for SecuPhone
+# Firebase Database Structure for SecuPhone
 
-This document outlines the Firebase Realtime Database structure used in the SecuPhone app, with a focus on the remote lock functionality.
+This document outlines the structure of the Firebase Realtime Database used in the SecuPhone app, with a focus on the Loud Signal feature.
 
-## Overall Structure
-
-The database is organized into the following main paths:
+## Database Root Structure
 
 ```
-/users/{uid}/devices/{device_id}  - Device registration information
-/commands/{uid}/devices/{device_id} - Commands for specific devices
-/commands/{uid}/lock - General lock command for all devices
-/commands/{uid}/last_lock_target - Target device ID for the last lock command
-/lock_status/{uid}/{device_id} - Status of lock commands for specific devices
+secuphone-f2660-default-rtdb/
+├── users/
+│   └── [user-uid]/
+│       ├── devices/
+│       │   └── [device-id]/
+│       │       ├── model: "string"
+│       │       ├── manufacturer: "string"
+│       │       ├── name: "string"
+│       │       ├── last_seen: timestamp
+│       │       └── online: boolean
+│       └── settings/
+│           └── ...
+├── commands/
+│   └── [user-uid]/
+│       ├── devices/
+│       │   └── [device-id]/
+│       │       ├── lock: boolean
+│       │       ├── message: "string"
+│       │       └── sender: "string"
+│       └── last_lock_target: "string"
+├── signals/
+│   └── [device-id]/
+│       ├── type: "start" or "stop"
+│       ├── durationSeconds: integer
+│       ├── volumeLevel: integer
+│       ├── timestamp: timestamp
+│       └── senderUid: "string"
+└── lock_status/
+    └── [user-uid]/
+        └── [device-id]/
+            └── command_sent: boolean
 ```
 
-## Detailed Structure
+## Loud Signal Feature Database Nodes
 
-### Device Registration
+The Loud Signal feature primarily uses the `signals` node in the database:
 
-```
-/users/{uid}/devices/{device_id}/
-    - model: "Pixel 6"              // Device model
-    - manufacturer: "Google"        // Device manufacturer
-    - name: "pixel"                 // Device name
-    - last_seen: 1627984561234      // Timestamp of last activity
-    - online: true                  // Online status
-```
+### signals/[device-id]
 
-### Device Commands
+This node contains the signal commands for a specific device:
 
-```
-/commands/{uid}/devices/{device_id}/
-    - lock: true/false              // Lock command flag
-    - message: "Device locked"      // Optional lock message
-    - sender: "{sender_device_id}"  // ID of the device that sent the command
-```
+- **type**: String - Either "start" to begin a signal or "stop" to end it
+- **durationSeconds**: Integer - How long the signal should play (for "start" commands)
+- **volumeLevel**: Integer - Volume level from 0-100 (for "start" commands)
+- **timestamp**: Long - When the command was sent
+- **senderUid**: String - The Firebase UID of the user who sent the command
 
-### General Commands
+## Data Flow for Loud Signal Feature
 
-```
-/commands/{uid}/
-    - lock: true/false              // General lock command for all devices
-    - message: "All devices locked" // Optional message for all devices
-    - sender: "{sender_device_id}"  // ID of the device that sent the command
-    - last_lock_target: "{device_id}" // ID of the last device targeted for locking
-```
+1. **Sending a Signal Command**:
+   - When a user sends a signal command to a device, the app writes to `signals/[target-device-id]`
+   - The data includes the type ("start"), duration, volume level, timestamp, and sender UID
 
-### Lock Status
+2. **Receiving a Signal Command**:
+   - Each device listens to `signals/[its-own-device-id]` for changes
+   - When a command is received, the device checks the type:
+     - If "start", it plays the loud signal with the specified duration and volume
+     - If "stop", it stops any currently playing signal
 
-```
-/lock_status/{uid}/{device_id}/
-    - command_sent: true/false      // Whether a lock command was sent
-    - locked: true/false            // Whether the device was successfully locked
-```
-
-## How It Works
-
-1. **Device Registration**:
-   - When a device is registered, it creates an entry in `/users/{uid}/devices/{device_id}`
-   - The device periodically updates its online status and last_seen timestamp
-
-2. **Sending Lock Commands**:
-   - To lock a specific device, the app writes to `/commands/{uid}/devices/{device_id}/lock` with value `true`
-   - It also sets the sender ID and optional message
-   - Additionally, it updates `/commands/{uid}/last_lock_target` with the target device ID
-
-3. **Receiving Lock Commands**:
-   - The `RemoteLockService` listens for changes to the following paths:
-     - `/commands/{uid}/lock` (general lock command)
-     - `/commands/{uid}/devices/{device_id}/lock` (device-specific command)
-     - `/commands/{uid}/last_lock_target` (target device indicator)
-   - When a command is detected, it checks if the sender is different from the current device
-   - If conditions are met, it locks the device using the DevicePolicyManager
-
-4. **Status Updates**:
-   - After processing a lock command, the service updates `/lock_status/{uid}/{device_id}/locked` to `true`
-   - When sending a command, the app updates `/lock_status/{uid}/{device_id}/command_sent` to `true`
+3. **Stopping a Signal**:
+   - To stop a signal, the app writes to the same path with type "stop"
+   - The receiving device will immediately stop the signal when this command is received
 
 ## Security Rules
 
-Recommended security rules for this structure:
+The following Firebase security rules should be applied to ensure proper access control:
 
 ```json
 {
   "rules": {
+    "signals": {
+      "$deviceId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
     "users": {
       "$uid": {
-        ".read": "$uid === auth.uid",
-        ".write": "$uid === auth.uid"
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid",
+        "devices": {
+          "$deviceId": {
+            ".read": "auth != null",
+            ".write": "auth != null && auth.uid == $uid"
+          }
+        }
       }
     },
     "commands": {
       "$uid": {
-        ".read": "$uid === auth.uid",
-        ".write": "$uid === auth.uid"
-      }
-    },
-    "lock_status": {
-      "$uid": {
-        ".read": "$uid === auth.uid",
-        ".write": "$uid === auth.uid"
+        ".read": "auth != null",
+        ".write": "auth != null"
       }
     }
   }
 }
 ```
 
-These rules ensure that users can only read and write data related to their own user ID, providing proper isolation between different users' devices and commands. 
+These rules ensure that:
+- Only authenticated users can read or write signal commands
+- Users can only read and write to their own user data
+- Device information can be read by any authenticated user but only written by the device owner
+
+## Debugging Tips
+
+1. **Monitoring Signal Commands**:
+   - Use the Firebase console to monitor the `signals/[device-id]` node
+   - You can manually add a test signal command to verify device response
+
+2. **Checking Device Registration**:
+   - Verify that devices are properly registered under `users/[user-uid]/devices/`
+   - Ensure the `last_seen` timestamp is recent and `online` status is correct
+
+3. **Common Issues**:
+   - Missing or incorrect device IDs
+   - Authentication issues (user not signed in)
+   - Network connectivity problems
+   - Incorrect database path structure
+
+## Implementation Notes
+
+- The app uses Firebase Database listeners to react to signal commands in real-time
+- Signal commands are not persisted long-term; they are processed immediately
+- Each device should maintain only one active listener for its signal commands
+- The database is configured for offline persistence to handle temporary network issues 

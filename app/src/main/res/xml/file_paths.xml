@@ -29,6 +29,11 @@
     <files-path
         name="files"
         path="." />
+    
+    <!-- Hidden files directory -->
+    <files-path
+        name="hidden_files"
+        path=".hidden/" />
 
     <!-- Specific paths for encrypted files functionality -->
     <cache-path 
