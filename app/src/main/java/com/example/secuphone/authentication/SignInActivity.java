@@ -28,11 +28,15 @@ public class SignInActivity extends AppCompatActivity {
     private TextInputLayout emailLayout, passwordLayout;
     private TextInputEditText emailEditText, passwordEditText;
     private Button signInButton;
+    private Button testAccountButton;
     private TextView forgotPasswordText, signUpText;
     private ProgressBar progressBar;
     
     private FirebaseAuth firebaseAuth;
     private UserSessionManager sessionManager;
+    
+    private static final String TEST_EMAIL = "individualproject2025@gmail.com";
+    private static final String TEST_PASSWORD = "Samsung2025";
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +56,7 @@ public class SignInActivity extends AppCompatActivity {
         emailEditText = findViewById(R.id.email_input);
         passwordEditText = findViewById(R.id.password_input);
         signInButton = findViewById(R.id.sign_in_button);
+        testAccountButton = findViewById(R.id.test_account_button);
         forgotPasswordText = findViewById(R.id.forgot_password);
         signUpText = findViewById(R.id.sign_up_link);
         progressBar = findViewById(R.id.loading_indicator);
@@ -61,6 +66,7 @@ public class SignInActivity extends AppCompatActivity {
         signInButton.setOnClickListener(v -> signIn());
         forgotPasswordText.setOnClickListener(v -> forgotPassword());
         signUpText.setOnClickListener(v -> navigateToSignUp());
+        testAccountButton.setOnClickListener(v -> fillTestAccountCredentials());
     }
     
     @Override
@@ -199,6 +205,11 @@ public class SignInActivity extends AppCompatActivity {
     private void showProgress(boolean show) {
         progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
         signInButton.setEnabled(!show);
+    }
+    
+    private void fillTestAccountCredentials() {
+        emailEditText.setText(TEST_EMAIL);
+        passwordEditText.setText(TEST_PASSWORD);
     }
     
     @Override

@@ -248,6 +248,7 @@
     <string name="ad_blocker_description">Block unwanted ads and trackers</string>
     <string name="qr_scanner">QR Scanner</string>
     <string name="qr_scanner_description">Scan and verify QR codes securely</string>
+    <string name="test_account">Use Test Account</string>
 
     <!-- New string for App Lock real apps -->
     <string name="installed_apps">Installed Apps</string>
