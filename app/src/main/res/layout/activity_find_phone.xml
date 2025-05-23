@@ -244,6 +244,30 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Track All Devices Button -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                app:cardBackgroundColor="@color/accent_primary"
+                app:cardCornerRadius="16dp">
+
+                <Button
+                    android:id="@+id/trackAllDevicesButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:drawableEnd="@drawable/ic_chevron_right"
+                    android:gravity="center_vertical"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:text="@string/track_all_devices"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </androidx.cardview.widget.CardView>
+
             <!-- Grid for Feature Cards - 2 columns -->
             <androidx.gridlayout.widget.GridLayout
                 android:layout_width="match_parent"

@@ -148,6 +148,15 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
     // For paired device (can be null if no paired device)
     private String pairedDeviceId;
 
+    private Button trackAllDevicesButton;
+    
+    /**
+     * Returns whether the tracking service is active
+     */
+    public boolean isTrackingActive() {
+        return isTrackingActive;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -174,6 +183,7 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         initializeLocationCard();
         initializeMapFragment();
         initializeExpandedMapUI();
+        initializeTrackAllDevicesButton();
         
         // Set up signal command listener
         remoteSignalManager.listenForSignalCommands(deviceId, new RemoteSignalManager.SignalCommandListener() {
@@ -1304,5 +1314,18 @@ public class FindPhoneActivity extends AppCompatActivity implements OnMapReadyCa
         deviceRegistrationManager.stopListeningForDeviceUpdates();
         
         super.onDestroy();
+    }
+
+    private void initializeTrackAllDevicesButton() {
+        trackAllDevicesButton = findViewById(R.id.trackAllDevicesButton);
+        trackAllDevicesButton.setOnClickListener(v -> {
+            // Use existing MapFragment
+            if (mapFragment != null) {
+                mapFragment.toggleDeviceDisplay();
+                
+                // Show the full screen map
+                expandMapView();
+            }
+        });
     }
 } 

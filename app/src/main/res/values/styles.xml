@@ -2,10 +2,12 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Splash Screen Theme -->
     <style name="SplashTheme" parent="Theme.SecuPhoneByCoursor">
-        <item name="android:statusBarColor">@color/navbar_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowBackground">@color/navbar_background</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
+
 
     <!-- Translucent Theme for Lock Screen -->
     <style name="Theme.AppCompat.Translucent" parent="Theme.AppCompat.NoActionBar">
@@ -14,6 +16,7 @@
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowAnimationStyle">@android:style/Animation</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
     <!-- New Neomorphic Card Style -->
@@ -99,4 +102,5 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:enforceNavigationBarContrast" tools:targetApi="29">false</item>
     </style>
-</resources> 
+
+</resources>

@@ -177,6 +177,15 @@
             android:exported="false"
             android:theme="@style/Theme.SecuPhone.NoActionBar" />
         
+        <activity
+            android:name=".MultiDeviceTrackingActivity"
+            android:parentActivityName=".FindPhoneActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".FindPhoneActivity" />
+        </activity>
+        
         <service
             android:name=".services.AppLockService"
             android:enabled="true"

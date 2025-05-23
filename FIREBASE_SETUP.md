@@ -93,4 +93,60 @@ If you prefer, you can manually edit the configuration:
 
 - [Firebase Authentication Documentation](https://firebase.google.com/docs/auth)
 - [Add Firebase to Android Project](https://firebase.google.com/docs/android/setup)
-- [Firebase Authentication on Android](https://firebase.google.com/docs/auth/android/start) 
+- [Firebase Authentication on Android](https://firebase.google.com/docs/auth/android/start)
+
+# Multi-Device Tracking Feature
+
+For the multi-device tracking feature, the app uses the following Firebase Realtime Database structure:
+
+```
+signals/
+└── [user-uid]/
+    └── [device-id]/
+        ├── latitude: double
+        ├── longitude: double
+        ├── last_seen: timestamp
+        └── device_name: string
+```
+
+Each device uploads its real-time location to the signals path under the user's UID. This allows all devices associated with the same UID to view each other's locations.
+
+## Firebase Security Rules
+
+The following security rules should be applied to ensure proper access control:
+
+```json
+{
+  "rules": {
+    "signals": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid",
+        "devices": {
+          "$deviceId": {
+            ".read": "auth != null",
+            ".write": "auth != null && auth.uid == $uid"
+          }
+        }
+      }
+    },
+    "commands": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    }
+  }
+}
+```
+
+These rules ensure that:
+- Only authenticated users can read or write to their own signals
+- Users can only read and write to their own user data
+- Device information can be read by any authenticated user but only written by the device owner 

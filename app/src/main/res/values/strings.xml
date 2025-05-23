@@ -94,6 +94,17 @@
     <string name="deactivate_protection">Deactivate Protection</string>
     <string name="back">Back</string>
     <string name="arrow">Arrow</string>
+    <string name="show_all_devices">Show All Devices</string>
+    <string name="show_current_device">Show Current Device</string>
+    <string name="devices_connected">Devices Connected: %1$d</string>
+    <string name="refresh">Refresh</string>
+    <string name="last_seen">Last seen: %1$s</string>
+    <string name="battery_level">Battery: %1$s</string>
+    <string name="accuracy_meters">Accuracy: %1$d m</string>
+    <string name="location_accuracy">High Accuracy</string>
+    <string name="current_location">Current Location</string>
+    <string name="location_address_placeholder">Loading address…</string>
+    <string name="last_updated">Last updated: Just now</string>
 
     <!-- Hidden Files Activity Strings -->
     <string name="hidden_files_description">Hide your sensitive photos, documents and other files to keep them private and secure.</string>
@@ -282,7 +293,6 @@
     <string name="enable_vpn_recommendation">Connect to VPN for secure browsing</string>
     <string name="fix_now">Fix Now</string>
     <string name="real_time_status">Real-time Status</string>
-    <string name="refresh">Refresh</string>
     <string name="last_scan">Last Scan:</string>
     <string name="just_now">Just now</string>
     <string name="threats_detected">Threats Detected:</string>
@@ -523,11 +533,6 @@
 
     <!-- New string resource for the improved Find Phone feature with map preview -->
     <string name="location_map">Location Map</string>
-    <string name="location_accuracy">High Accuracy</string>
-    <string name="current_location">Current Location</string>
-    <string name="location_address_placeholder">1234 Example Street, City</string>
-    <string name="last_updated">Last updated: Just now</string>
-
     <!-- New Find Phone Feature strings -->
     <string name="remote_block">Remote Block</string>
     <string name="remote_block_desc">Remotely lock your device with a password</string>
@@ -634,4 +639,22 @@
     <string name="signal_sent_success">Signal command sent successfully</string>
     <string name="signal_failed">Failed to send signal command</string>
     <string name="signal_device">Signal Device</string>
+
+    <!-- Multi-Device Tracking Strings -->
+    <string name="connected_devices">Connected Devices</string>
+    <string name="device_list_description">Tap a device to locate it on the map</string>
+    <string name="device_name">Device Name</string>
+    <string name="device_online">Online</string>
+    <string name="device_offline">Offline</string>
+
+    <string name="last_seen_default">Last seen: Just now</string>
+    <string name="view_device">View Device</string>
+    <string name="focus_on_current_device">Focus on Current Device</string>
+    <string name="refresh_devices">Refresh Devices</string>
+    <string name="fit_all_devices">Fit All Devices</string>
+    <string name="current_location_not_available">Current location not available</string>
+    <string name="location_permission_denied">Location permission is required for device tracking</string>
+    <string name="device_options">Options for %1$s</string>
+    <string name="multi_device_tracking">Find All Devices</string>
+    <string name="track_all_devices">Track All Devices</string>
 </resources>

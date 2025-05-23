@@ -3,17 +3,21 @@
     <style name="Base.Theme.SecuPhoneByCoursor" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/navbar_background</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     </style>
 
     <style name="Theme.SecuPhoneByCoursor" parent="Base.Theme.SecuPhoneByCoursor" />
-    
+
     <!-- Theme for the encrypted files activity -->
     <style name="Theme.SecuPhone.NoActionBar" parent="Theme.SecuPhoneByCoursor">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
-    
+
     <!-- Main application theme referenced in AndroidManifest.xml -->
     <style name="Theme.SecuPhone" parent="Theme.SecuPhoneByCoursor">
         <!-- Keep the same styling as the existing theme -->

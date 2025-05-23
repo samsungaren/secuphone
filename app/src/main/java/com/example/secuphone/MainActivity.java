@@ -2,6 +2,7 @@ package com.example.secuphone;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -75,8 +76,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        
+
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
+        
+        // Make status bar transparent explicitly
+        getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
+        getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         
         // Initialize Firebase Auth and User Session Manager
         firebaseAuth = FirebaseAuth.getInstance();
@@ -119,6 +126,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     protected void onResume() {
         super.onResume();
+        
+        // Ensure status bar stays transparent
+        getWindow().setStatusBarColor(getResources().getColor(android.R.color.transparent));
         
         // Update feature statuses whenever we return to the main activity
         checkFeatureStatuses();
